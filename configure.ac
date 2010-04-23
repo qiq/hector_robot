@@ -28,6 +28,7 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.5.0])
 PKG_CHECK_MODULES([LOG4CXX], [liblog4cxx >= 0.10.0])
 PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
 PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
+HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
@@ -228,19 +229,12 @@ fi
 AM_CONDITIONAL(WITH_PYTHON, [test "x$PYTHON" != x])
 
 AC_CONFIG_FILES([Makefile
-                src/Makefile
-		lib/Makefile
-		lib/processing_engine/Makefile
-		lib/processing_engine/modules/Makefile
-		lib/processing_engine/modules/perl/Makefile
-		lib/processing_engine/modules/java/Makefile
-		lib/processing_engine/modules/python/Makefile
-		lib/processing_engine/resources/Makefile
-		lib/processing_engine/servers/Makefile
-		lib/server/Makefile
-		lib/perl/Makefile
-		lib/java/Makefile
-		lib/python/Makefile
+		resources/Makefile
+                modules/Makefile
+		modules/perl/Makefile
+		modules/java/Makefile
+		modules/python/Makefile
+		servers/Makefile
 		test/Makefile
 ])
 AC_OUTPUT

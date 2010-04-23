@@ -5,8 +5,8 @@
 
 #include <assert.h>
 #include "common.h"
-#include "TestInput.h"
 #include "TestResource.h"
+#include "TestInput.h"
 
 TestInput::TestInput(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;

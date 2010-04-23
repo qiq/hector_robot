@@ -2,8 +2,8 @@
  *
  */
 
-#ifndef _TEST_SERVER_
-#define _TEST_SERVER_
+#ifndef _ROBOT_SERVER_
+#define _ROBOT_SERVER_
 
 #include <pthread.h>
 #include <log4cxx/logger.h>
@@ -11,13 +11,13 @@
 #include "SimpleHTTPServer.h"
 #include "SimpleHTTPConn.h"
 
-class TestServer : public SimpleHTTPServer {
+class RobotServer : public SimpleHTTPServer {
 	ObjectRegistry *objects;
 
 	static log4cxx::LoggerPtr logger;
 public:
-	TestServer(ObjectRegistry *objects);
-	~TestServer();
+	RobotServer(ObjectRegistry *objects);
+	~RobotServer();
 	bool HandleRequest(SimpleHTTPConn *conn);
 };
 

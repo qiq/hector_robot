@@ -1,11 +1,11 @@
-AM_CXXFLAGS = @LIBXML2_CFLAGS@ @LOG4CXX_CFLAGS@ -I$(top_srcdir)/lib -I$(top_srcdir)/lib/server
-AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ -module -avoid-version
+AM_CXXFLAGS = @LIBXML2_CFLAGS@ @LOG4CXX_CFLAGS@ @HECTOR_CORE_CFLAGS@
+AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ @HECTOR_CORE_LIBS@ -module -avoid-version
 AM_LIBTOOLFLAGS = --tag=disable-static
 
 
 serverdir = $(libdir)/hector
-server_LTLIBRARIES = TestServer.la
+server_LTLIBRARIES = RobotServer.la
 
-TestServer_la_SOURCES = TestServer.h TestServer.cc
-TestServer_la_CXXFLAGS = $(AM_CXXFLAGS)
-TestServer_la_LDFLAGS = $(AM_LDFLAGS)
+RobotServer_la_SOURCES = RobotServer.h RobotServer.cc
+RobotServer_la_CXXFLAGS = $(AM_CXXFLAGS)
+RobotServer_la_LDFLAGS = $(AM_LDFLAGS)

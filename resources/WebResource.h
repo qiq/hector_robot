@@ -18,26 +18,37 @@ using namespace std;
 
 class WebResource : public Resource {
 protected:
-	hector::resources::WebResource r;
-
-	static log4cxx::LoggerPtr logger;
 public:
 	WebResource();
 	~WebResource() {};
+	// create copy of a resource
 	Resource *Clone();
+	// type id of a resource (to be used by Resources::CreateResource(typeid))
+	int getType();
+	// id should be unique across all resources
 	int getId();
 	void setId(int id);
+	// status may be tested in Processor to select target queue
 	int getStatus();
 	void setStatus(int status);
+	// save and restore resource
+	string *serialize();
+	bool deserialize(string *s);
+	// used by queues in case there is limit on queue size
 	int getSize();
-	resource_t getType();
 
 	void setURL(const char *url);
 	const char *getURL();
 
-	string *serialize();
-	bool deserialize(string *s);
+protected:
+	hector::resources::WebResource r;
+
+	static log4cxx::LoggerPtr logger;
 };
+
+inline int WebResource::getType() {
+	return 1;
+}
 
 inline int WebResource::getId() {
 	return r.id();
@@ -55,16 +66,12 @@ inline void WebResource::setStatus(int status) {
 	r.set_status(status);
 }
 
-inline resource_t WebResource::getType() {
-	return RESOURCE_WEB;
+inline void WebResource::setURL(const char *url) {
+	r.set_url(url);
 }
 
 inline const char *WebResource::getURL() {
 	return r.url().c_str();
-}
-
-inline void WebResource::setURL(const char *url) {
-	r.set_url(url);
 }
 
 #endif

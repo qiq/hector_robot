@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = lib src test
+SUBDIRS = resources modules servers test
 
-EXTRA_DIST = configure hector_config.dtd hector_config.xml.example hector_server.log.props.example
+EXTRA_DIST = configure
