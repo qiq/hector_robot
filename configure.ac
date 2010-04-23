@@ -27,6 +27,7 @@ AC_CHECK_PROG(PERL, perl, perl)
 PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.5.0])
 PKG_CHECK_MODULES([LOG4CXX], [liblog4cxx >= 0.10.0])
 PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
+PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
