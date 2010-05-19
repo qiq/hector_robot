@@ -6,15 +6,21 @@ class WebResource : public Resource {
 public:
         WebResource();
         ~WebResource();
+        Resource *Clone();
+        int getTypeId();
+        const char *getTypeStr();
         int getId();
         void setId(int id);
         int getStatus();
         void setStatus(int status);
+        string *Serialize();
+        bool Deserialize(string *s);
+        int getSerializedSize();
+        bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+        bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getSize();
 
         void setURL(const char *url);
-        string *getURL();
+        const char *getURL();
 
-        string *serialize();
-        bool deserialize(string *s);
 };
