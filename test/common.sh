@@ -22,7 +22,8 @@ function doinit {
 	base=`readlink -f "$base"`'/..'
 	base=`readlink -f "$base"`
 	export PATH=$base/src:$PATH
-	export LD_LIBRARY_PATH=$base/lib/.libs:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$base/lib:$base/lib/processing_engine/servers:$base/lib/processing_engine/modules:$base/lib/processing_engine/resources:$base/lib/perl/.libs:$LD_LIBRARY_PATH
+	export PERL5LIB=$base/lib/perl:$base/lib/processing_engine/modules/perl:$PERL5LIB
 
 	rm -f test.log
 }
@@ -42,8 +43,8 @@ function server_start {
                 clean=1
         fi
 	if [ "$USE_VALGRIND" == 1 ]; then
-		( cd $base; libtool --mode=execute valgrind --leak-check=full --trace-children=yes server -c $base/test/$id-config.xml -f test 2>${id}.log.valgrind & )
-		sleep 15;
+		( cd $base; libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --num-callers=20 --trace-children=yes --log-file=${id}.log.valgrind server -c $base/test/$id-config.xml -f test & )
+		client_wait robot_processing_engine.run 0 1
 	else
 		if ! server -c $base/test/$id-config.xml test; then
 			cat test.log 2>/dev/null
@@ -67,11 +68,23 @@ function client_get {
 	echo "get $1" | ( client || doexit ) | sed -e 's/.*= //'
 }
 
+function client_get_dontfail {
+	echo "get $1" | client 2>/dev/null | sed -e 's/.*= //'
+}
+
 function client_wait {
-	x=`client_get $1`;
-	while [ -n "$x" -a "$x" != "$2" ]; do
-		bash -c "$SLEEP"
+	if [ -z "$3" ]; then
 		x=`client_get $1`;
+	else
+		x=`client_get_dontfail $1`
+	fi
+	while [ -z "$x" -o "$x" != "$2" ]; do
+		bash -c "$SLEEP"
+		if [ -z "$3" ]; then
+			x=`client_get $1`;
+		else
+			x=`client_get_dontfail $1`
+		fi
 		echo "sleeping"
 	done
 }
