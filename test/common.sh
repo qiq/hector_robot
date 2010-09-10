@@ -22,8 +22,8 @@ function doinit {
 	base=`readlink -f "$base"`'/..'
 	base=`readlink -f "$base"`
 	export PATH=$base/src:$PATH
-	export LD_LIBRARY_PATH=$base/lib:$base/lib/processing_engine/servers:$base/lib/processing_engine/modules:$base/lib/processing_engine/resources:$base/lib/perl/.libs:$LD_LIBRARY_PATH
-	export PERL5LIB=$base/lib/perl:$base/lib/processing_engine/modules/perl:$PERL5LIB
+	export LD_LIBRARY_PATH=$base/servers:$base/modules:$base/resources:$base/perl/.libs:$LD_LIBRARY_PATH
+	export PERL5LIB=$base/perl:$base/modules/perl:$PERL5LIB
 
 	rm -f test.log
 }

@@ -1,4 +1,4 @@
-TESTS_ENVIRONMENT = PATH='$(top_srcdir)/test:$(PATH)' LD_LIBRARY_PATH=$(top_builddir)/lib/processing_engine/modules:$(top_builddir)/lib/processing_engine/resources:$(top_builddir)/lib/processing_engine/servers:$(LD_LIBRARY_PATH) $(SHELL)
+TESTS_ENVIRONMENT = PATH='$(top_srcdir)/test:$(PATH)' LD_LIBRARY_PATH=$(top_builddir)/modules:$(top_builddir)/resources:$(top_builddir)/servers:$(LD_LIBRARY_PATH) $(SHELL)
 
 TESTS =
 EXTRA_DIST = common.sh test.log.props

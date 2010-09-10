@@ -13,7 +13,7 @@ test1: read-write: one reader(1), one writer(1)
 			<Processor id="P_load_resource">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_load_resource" lib="TestInput.la">
+					<Module id="M_create_resource" lib="GenerateWebResource.la">
 						<param name="maxItems" value="1000"/>
 					</Module>
 				</modules>
@@ -24,7 +24,9 @@ test1: read-write: one reader(1), one writer(1)
 			<Processor id="P_save_resource">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_save_resource" lib="TestOutput.la"/>
+					<Module id="M_save_resource" lib="SaveResource.la">
+						<param name="filename" value="test/test1-resources"/>
+					</Module>
 				</modules>
 				<input>
 					<queue/>

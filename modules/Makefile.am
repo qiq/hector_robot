@@ -1,20 +1,12 @@
 SUBDIRS = perl java python
 
-AM_CXXFLAGS = @LIBXML2_CFLAGS@ @LOG4CXX_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@
+AM_CXXFLAGS = @LIBXML2_CFLAGS@ @LOG4CXX_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@ -I$(top_srcdir)/resources
 AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@ -module -avoid-version
 AM_LIBTOOLFLAGS = --tag=disable-static
 
 modulesdir = $(libdir)/hector/modules
-#modules_LTLIBRARIES = TestInput.la TestOutput.la TestSimple.la TestMulti.la
+modules_LTLIBRARIES = GenerateWebResource.la
 
-#TestInput_la_SOURCES = \
-#		TestInput.h TestInput.cc
+GenerateWebResource_la_SOURCES = GenerateWebResource.h GenerateWebResource.cc
+GenerateWebResource_la_LIBADD = ../resources/libWebResource.la
 
-#TestOutput_la_SOURCES = \
-#	TestOutput.h TestOutput.cc
-
-#TestSimple_la_SOURCES = \
-#		TestSimple.h TestSimple.cc
-
-#TestMulti_la_SOURCES = \
-#		TestMulti.h TestMulti.cc
