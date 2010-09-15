@@ -1,3 +1,6 @@
+%newobject TestProtobufResource::Serialize();
+%newobject TestProtobufResource::toString();
+
 %{
 #include "WebResource.h"
 %}
@@ -19,6 +22,7 @@ public:
         bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
         bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getSize();
+        char *toString();
 
         void setURL(const char *url);
         const char *getURL();

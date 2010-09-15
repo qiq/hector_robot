@@ -14,8 +14,6 @@
 #include "ProtobufResource.h"
 #include "WebResource.pb.h"
 
-using namespace std;
-
 class WebResource : public ProtobufResource {
 public:
 	WebResource();
@@ -33,16 +31,20 @@ public:
 	int getStatus();
 	void setStatus(int status);
 	// save and restore resource
-	string *Serialize();
-	bool Deserialize(string *s);
+	std::string *Serialize();
+	bool Deserialize(std::string *s);
 	int getSerializedSize();
 	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
 	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// used by queues in case there is limit on queue size
 	int getSize();
+	// return string representation of the resource (e.g. for debugging purposes)
+	char *toString();
 
 	void setURL(const char *url);
 	const char *getURL();
+
+	static const int typeId = 10;
 
 protected:
 	hector::resources::WebResource r;
@@ -51,7 +53,7 @@ protected:
 };
 
 inline int WebResource::getTypeId() {
-	return 10;
+	return typeId;
 }
 
 inline const char *WebResource::getTypeStr() {
@@ -74,11 +76,11 @@ inline void WebResource::setStatus(int status) {
 	r.set_status(status);
 }
 
-inline string *WebResource::Serialize() {
+inline std::string *WebResource::Serialize() {
 	return MessageSerialize(&r);
 }
 
-inline bool WebResource::Deserialize(string *s) {
+inline bool WebResource::Deserialize(std::string *s) {
 	return MessageDeserialize(&r, s);
 }
 
