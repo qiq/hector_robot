@@ -29,6 +29,8 @@ PKG_CHECK_MODULES([LOG4CXX], [liblog4cxx >= 0.10.0])
 PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
 PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
+HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
+AC_SUBST(HECTOR_CORE_PREFIX)
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10

@@ -1,23 +1,17 @@
 http://docs.bor.org.ua/eBooks/Perl/Manning.Extending_and_Embedding_Perl.2002.pdf
 
-TODO:
-	- rozdelit hectora na helen (core) a hectora (robot)
-	- v helen udelat jen univerzalni server
-
 Obecne
 
 - C++ (+ nejake bindingy?)
 	- predevsim kvuli velikosti retezcu, dostupnosti knihoven
 - knihovny:
-	- curl
-	- c-ares: async DNS
-	- libcurl: download
+	- libcurl: download stranek
 	- libxml2: config soubory, html parser, uri
 	- libtidy (HTML -> XHTML)
-- programy:
-	- djbcache: name server
-	- pdns_recursor, nebo si cachovat sam(?)
-	- unbound?
+- DNS resolving:
+	- unbound: caching name server (bude cachovat informace)
+	- libunbound + libevent (libev): async DNS
+
 - celkove: max. 8-16 GB RAM
 
 Coding style:

@@ -1,31 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test1: read-write: one reader(1), one writer(1)
+test1: CreateWebResource module testing.
 -->
 <Config>
-	<Server id="test" lib="RobotServer.la">
+	<Server id="test" lib="TestServer.la">
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
 		<logConfig>test.log.props</logConfig>
-		<ProcessingEngine id="robot_processing_engine">
-			<Processor id="P_load_resource">
+		<ProcessingEngine id="test_processing_engine">
+			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_create_resource" lib="GenerateWebResource.la">
-						<param name="maxItems" value="1000"/>
+					<Module id="M_input" type="perl" lib="CreateWebResource.pm">
+						<param name="urlList">
+							http://url1.com/
+							http://url2.com/
+<![CDATA[
+http://url3.com/
+http://url4.com/
+]]>
+							<![CDATA[
+							http://url5.com/
+							http://url6.com/
+							]]>
+						</param>
+						<param name="urlFile" value="test1.data.url"/>
 					</Module>
 				</modules>
 				<output>
-					<nextProcessor ref="P_save_resource"/>
+					<nextProcessor ref="P_output"/>
 				</output>
 			</Processor>
-			<Processor id="P_save_resource">
+			<Processor id="P_output">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_save_resource" lib="SaveResource.la">
-						<param name="filename" value="test/test1-resources"/>
+					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_save" lib="Save.la">
+						<param name="filename" value="test1.data.out"/>
 					</Module>
 				</modules>
 				<input>

@@ -34,8 +34,7 @@ all-local: $(ALIASES)
 	for i in $(ALIASES); do \
 		h=`echo $$i|sed -e 's/\.la/\.h/'`; \
 		id=`grep "int typeId" $(top_srcdir)/resources/$$h|sed -e 's/.*int typeId = \([0-9]\+\).*/\1/'`; \
-		rm -f $${id}.la; \
-		ln -s $$i $${id}.la; \
+		ln -fs $$i $${id}.la; \
 	done
 
 clean-local:
@@ -46,5 +45,5 @@ install-exec-local:
 	for i in $(ALIASES); do \
 		h=`echo $$i|sed -e 's/\.la/\.h/'`; \
 		id=`grep "int typeId" $(top_srcdir)/resources/$$h|sed -e 's/.*int typeId = \([0-9]\+\).*/\1/'`; \
-		ln -s $$i $(DESTDIR)$(resourcesdir)/$${id}.la; \
+		ln -fs $$i $(DESTDIR)$(resourcesdir)/$${id}.la; \
 	done
