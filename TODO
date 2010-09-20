@@ -1,0 +1,36 @@
+- testovaci moduly v Perlu
+	- FilterWebResource: filtrovaci modul:
+		- URL
+		- IP adresa (prefix)
+		- mime type
+		- content <![CDATA[ content =~ /test/ DROP content =~ /test/
+		  ACCEPT url =~ s/xxx/yyy/g ]]>
+		- napsat to v C++ by taky nebylo tak tezke, spomoci pcre
+		struct { id, regex_type, regexp, action-if-match }
+		- umoznovat i zmenu (pamatovat si, co je dirty a nakonec to zapsat (ne v C++, ale v Perlu)
+- url parsing module
+	- dostane URL, udela z nej komponenty (pomoci google-url knihovny)
+	- ty preda dal
+- resolver module v C++
+  	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
+	- bude pouzivat libunbound -- standardni operace, ale s pouzitim libev
+	- vezme host, vrati IP adresu (plus do kdy je platna)
+- resolver module (blokujici, v Perlu)
+	- jen obyc prevede jmeno na IP adresu
+- stahovaci modul (mozna pro zacatek i v Perlu)
+	- jednoduchy
+	- nejaky jednoduchy, pak v C++ pomoci curl (a libevent/libev)
+
+- seznam modulu, jejich parametru, vyzadovane knihovny a jejich licence
+
+- vyzkouset stahnout stranku
+
+- ostatni moduly asi zatim v Perlu, napsat testy
+
+DONE
+- CreateWebResource: precist seznam URL a vygenerovat WebResources
+	- bylo by pekne, aby slo pridavat URL i za chodu, jenze aby to
+	  slo snadno, tak se to musi napsat v C++ (v Perlu to nejde,
+	  kvuli zamcenemu objektu, kdyz dojdou URL, musi se modul uspat
+	  -- a na to musi byt condition variable. Jenze do Perlu muze
+	  jen jedno vlakno naraz.

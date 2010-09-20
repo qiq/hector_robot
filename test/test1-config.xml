@@ -4,7 +4,7 @@
 test1: CreateWebResource module testing.
 -->
 <Config>
-	<Server id="test" lib="TestServer.la">
+	<Server id="test" lib="RobotServer.la">
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
