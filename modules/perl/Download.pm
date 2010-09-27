@@ -1,12 +1,11 @@
 # items: number of resources created
-# urlList: list of URL (text or CDATA section)
-# urlFile: file with list of URL
 
-package CreateWebResource;
+package Download;
 
 use warnings;
 use strict;
 use HectorRobot;
+use LWP::UserAgent;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
@@ -15,10 +14,11 @@ sub new {
 		'_object' => $object,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
+		'_ua' => undef,
+		'userAgent' => 'Mozilla/5.0 (compatible; hector_robot/Download.pm 1.0; +http://hector.ms.mff.cuni.cz/bot.html)',
+		'from' => 'spousta@ufal.mff.cuni.cz',
+		'timeout' => 10,
 		'items' => 0,
-		'urlList' => undef,
-		'urlFile' => undef,
-		'_url' => [],
 	};
 	bless($self, $class);
 	return $self;
@@ -47,27 +47,18 @@ sub Init {
 			$self->{$p->[0]} = $p->[1];
 		}
 	}
-	my @url;
-	if (defined $self->{'urlList'}) {
-		push(@url, @{$self->createUrlList($self->{'urlList'})});
-	}
-	if (defined $self->{'urlFile'}) {
-		if (defined open(my $fh, '<'.$self->{'urlFile'})) {
-			my @lines = <$fh>;
-			close($fh);
-			push(@url, @{$self->createUrlList(join("\n", @lines))});
-		} else {
-			$self->{'_object'}->log_error("Cannot open file: ".$self->{'urlFile'});
-			return 0;
-		}
-	}
-	$self->{'_url'} = \@url;
+	my %options = ();
+	$options{'agent'} = $self->{'userAgent'} if (defined $self->{'userAgent'});
+	$options{'from'} = $self->{'from'} if (defined $self->{'from'});
+	$options{'timeout'} = $self->{'timeout'} if (defined $self->{'timeout'});
+	$self->{'_ua'} = LWP::UserAgent->new(%options);
+
 	return 1;
 }
 
 sub getType {
 	my ($self) = @_;
-	return $Hector::Module::INPUT;
+	return $Hector::Module::SIMPLE;
 }
 
 sub getValueSync {
@@ -109,17 +100,23 @@ sub RestoreCheckpoint {
 sub Process() {
 	my ($self, $resource) = @_;
 
-	if (defined $resource) {
-		$self->{'_object'}->log_error("Resource is already defined.");
-		return undef;
+	my $url = $resource->getUrl();
+	if (not defined $url) {
+		$self->{'_object'}->log_error("Resource does not contain URL: ".$resource->getId());
+		return $resource;
 	}
-	if (@{$self->{'_url'}} == 0) {
-		$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
-		return undef;
+	my $response = $self->{'_ua'}->get($url);
+	my $v = Hector::StringVector->new();
+	foreach my $name ($response->header_field_names()) {
+		$v->push($name.': '.$response->header($name));
 	}
-	$resource = HectorRobot::WebResource->new();
-	$resource->setId($self->{'_threadIndex'}*10000+$self->{'items'});
-	$resource->setUrl(shift(@{$self->{'_url'}}));
+	$resource->setHeaderFields($v);
+	if ($response->is_success) {
+		$resource->setMimeType($response->header('Content-Type'));
+		$resource->setContent($response->decoded_content);
+	} else {
+		$resource->setContent('');
+	}
 	$self->{'items'}++;
 	return $resource;
 }

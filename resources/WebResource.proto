@@ -9,12 +9,25 @@ message WebResource {
 	required uint32 id = 1;			// id of a resource
 	required int32 status = 2;		// status to be used by filters
 
-	optional string url = 3;		// URL
-	optional uint32 time = 4;	 	// last check
+	optional string url = 3;		// complete URL
+	optional fixed32 time = 4;	 	// last check
 	optional string mime_type = 5;		// resource MIME type
 	optional string content = 6;		// content of a resource
 
-	repeated string header_field = 10;	// response header fields
-	repeated string extracted_url = 11;	// URLs extracted from the resource
-	optional fixed32 ip_addr = 12;		// IPv4 address (result of DNS query)
+	repeated string header_fields = 10;	// response header fields
+	repeated string extracted_urls = 11;	// URLs extracted from the resource
+	optional fixed32 ip_addr4 = 12;		// IPv4 address (result of DNS query)
+	optional fixed64 ip_addr6_1 = 13;	// IPv6 address, part 1
+	optional fixed64 ip_addr6_2 = 14;	// IPv6 address, part 2
+	optional fixed32 ip_addr_expire = 15;	// IP address mapping expire time
+
+	// parsed url
+	optional string url_scheme = 30;	// parts of URL
+	optional string url_username = 31;
+	optional string url_password = 32;
+	optional string url_host = 33;
+	optional uint32 url_port = 34;
+	optional string url_path = 35;
+	optional string url_query = 36;
+	optional string url_ref = 37;
 }

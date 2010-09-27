@@ -17,7 +17,7 @@
 class WebResource : public ProtobufResource {
 public:
 	WebResource();
-	~WebResource() {};
+	~WebResource();
 	// create copy of a resource
 	ProtobufResource *Clone();
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
@@ -41,14 +41,45 @@ public:
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
-	char *toString();
+	char *toString(Object::LogLevel = Object::INFO);
 
-	void setURL(const char *url);
-	const char *getURL();
+	void setUrl(const char *url);
+	const char *getUrl();
+	void setTime(unsigned int time);
+	unsigned int getTime();
+	void setMimeType(const char *mimeType);
+	const char *getMimeType();
+	void setContent(const char *content);
+	const char *getContent();
+	void setHeaderFields(std::vector<std::string> *header_fields);
+	std::vector<std::string> *getHeaderFields();
+	std::vector<std::string> *getHeaderFieldNames();
+	bool setHeaderField(const char *name, const char *value);
+	const char *getHeaderField(const char *name);
+	void setExtractedUrls(std::vector<std::string> *extracted_urls);
+	std::vector<std::string> *getExtractedUrls();
+
+        void setUrlScheme(const char *urlScheme);
+        const char *getUrlScheme();
+        void setUrlUsername(const char *urlUsername);
+        const char *getUrlUsername();
+        void setUrlPassword(const char *urlPassword);
+        const char *getUrlPassword();
+        void setUrlHost(const char *urlHost);
+        const char *getUrlHost();
+        void setUrlPort(int port);
+        int getUrlPort();
+        void setUrlPath(const char *urlPath);
+        const char *getUrlPath();
+        void setUrlQuery(const char *urlQuery);
+        const char *getUrlQuery();
+        void setUrlRef(const char *urlRef);
+        const char *getUrlRef();
 
 	static const int typeId = 10;
 
 protected:
+	// saved properties
 	hector::resources::WebResource r;
 
 	static log4cxx::LoggerPtr logger;
@@ -95,19 +126,108 @@ inline int WebResource::getSerializedSize() {
 }
 
 inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
-	return MessageGetSerializedSize(&r);
+	return MessageSerialize(&r, output);
 }
 
 inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
 	return MessageDeserialize(&r, input, size);
 }
 
-inline void WebResource::setURL(const char *url) {
+
+inline void WebResource::setUrl(const char *url) {
 	r.set_url(url);
 }
 
-inline const char *WebResource::getURL() {
+inline const char *WebResource::getUrl() {
 	return r.url().c_str();
+}
+
+inline void WebResource::setTime(unsigned int time) {
+	r.set_time(time);
+}
+
+inline unsigned int WebResource::getTime() {
+	return r.time();
+}
+
+inline void WebResource::setMimeType(const char *mimeType) {
+	r.set_mime_type(mimeType);
+}
+
+inline const char *WebResource::getMimeType() {
+	return r.mime_type().c_str();
+}
+
+inline void WebResource::setContent(const char *content) {
+	r.set_content(content);
+}
+
+inline const char *WebResource::getContent() {
+	return r.content().c_str();
+}
+
+inline void WebResource::setUrlScheme(const char *urlScheme) {
+	r.set_url_scheme(urlScheme);
+}
+
+inline const char *WebResource::getUrlScheme() {
+	return r.url_scheme().c_str();
+}
+
+inline void WebResource::setUrlUsername(const char *urlUsername) {
+	r.set_url_username(urlUsername);
+}
+
+inline const char *WebResource::getUrlUsername() {
+	return r.url_username().c_str();
+}
+
+inline void WebResource::setUrlPassword(const char *urlPassword) {
+	r.set_url_password(urlPassword);
+}
+
+inline const char *WebResource::getUrlPassword() {
+	return r.url_password().c_str();
+}
+
+inline void WebResource::setUrlHost(const char *urlHost) {
+	r.set_url_host(urlHost);
+}
+
+inline const char *WebResource::getUrlHost() {
+	return r.url_host().c_str();
+}
+
+inline void WebResource::setUrlPort(int urlPort) {
+	r.set_url_port(urlPort);
+}
+
+inline int WebResource::getUrlPort() {
+	return r.url_port();
+}
+
+inline void WebResource::setUrlPath(const char *urlPath) {
+	r.set_url_path(urlPath);
+}
+
+inline const char *WebResource::getUrlPath() {
+	return r.url_path().c_str();
+}
+
+inline void WebResource::setUrlQuery(const char *urlQuery) {
+	r.set_url_query(urlQuery);
+}
+
+inline const char *WebResource::getUrlQuery() {
+	return r.url_query().c_str();
+}
+
+inline void WebResource::setUrlRef(const char *urlRef) {
+	r.set_url_ref(urlRef);
+}
+
+inline const char *WebResource::getUrlRef() {
+	return r.url_ref().c_str();
 }
 
 #endif

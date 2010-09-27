@@ -1,25 +1,51 @@
 - testovaci moduly v Perlu
 	- FilterWebResource: filtrovaci modul:
+- rozmyslet, co by vsechno mel delat
+	- menit status (OK/not OK)
+	- mazat resource (vracet NULL)
+	- pracovat s cisly i stringy
 		- URL
 		- IP adresa (prefix)
 		- mime type
 		- content <![CDATA[ content =~ /test/ DROP content =~ /test/
 		  ACCEPT url =~ s/xxx/yyy/g ]]>
-		- napsat to v C++ by taky nebylo tak tezke, spomoci pcre
-		struct { id, regex_type, regexp, action-if-match }
+
+length(content) > 100 && mimeType != "text/html" => mimeType = "aaa", DROP
+length(content) > 100 => content = "", STATUS = 10
+header[Content-Type] == "text/html" => ACCEPT
+mimeType != "text/html" => ACCEPT
+ipAddr4 =~ 124.123.123.0/24 => DROP
+hostname =~ /\.cuni\.cz$/ => ACCEPT
+hostname =~ s/xxx/yyy/g => CONTINUE
+* => DROP
+
+ACCEPT/DROP/STATUS = xxx/CONTINUE/nastaveni promenne (hodnota dle typu)
+
+- do webresources pridat zpracovani hlavicky (hash_map) a jeji zapis zpet (asi pri serializaci)
+
++ substitute???
+
+struct condition: {field (reference, asi union string *, int *, ip_addr4*, ip_addr6*), operator, value (or compiled regex)}
+struct rule: pointer na zacatek condition, pocet conditions, 
+
+content =~ /test/ 0 stop
+content =~ /test/ 1
+content =~ s/test/test2/ STOP
+content =~ d// 0
+port == 8080 (>, <, !=) 1
+str == "..."
+		- napsat to v C++ by taky nebylo tak tezke, s pomoci pcre
+		struct { id, regex_type, regexp, action-if-match }, action bude DROP, SUBST, CLEAR, ACCEPT
 		- umoznovat i zmenu (pamatovat si, co je dirty a nakonec to zapsat (ne v C++, ale v Perlu)
-- url parsing module
-	- dostane URL, udela z nej komponenty (pomoci google-url knihovny)
-	- ty preda dal
 - resolver module v C++
   	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
 	- bude pouzivat libunbound -- standardni operace, ale s pouzitim libev
 	- vezme host, vrati IP adresu (plus do kdy je platna)
+	- multi module
 - resolver module (blokujici, v Perlu)
 	- jen obyc prevede jmeno na IP adresu
-- stahovaci modul (mozna pro zacatek i v Perlu)
-	- jednoduchy
-	- nejaky jednoduchy, pak v C++ pomoci curl (a libevent/libev)
+- stahovaci modul
+	v C++ pomoci curl (a libevent/libev)
 
 - seznam modulu, jejich parametru, vyzadovane knihovny a jejich licence
 
@@ -34,3 +60,7 @@ DONE
 	  kvuli zamcenemu objektu, kdyz dojdou URL, musi se modul uspat
 	  -- a na to musi byt condition variable. Jenze do Perlu muze
 	  jen jedno vlakno naraz.
+- stahovaci modul (v Perlu), parametry se jeste uvidi
+- url parsing module
+	- dostane URL, udela z nej komponenty (pomoci google-url knihovny)
+	- ty preda dal

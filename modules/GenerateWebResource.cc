@@ -75,8 +75,8 @@ Resource *GenerateWebResource::Process(Resource *resource) {
 	wr->setId(getThreadIndex()*10000+items);
 	char s[1024];
 	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items++);
-	wr->setURL(s);
-	LOG_INFO(logger, "Created WebResource (" << wr->getURL() << ")");
+	wr->setUrl(s);
+	LOG_INFO(logger, "Created WebResource (" << wr->getUrl() << ")");
 	return wr;
 }
 

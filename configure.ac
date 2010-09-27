@@ -28,6 +28,7 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.5.0])
 PKG_CHECK_MODULES([LOG4CXX], [liblog4cxx >= 0.10.0])
 PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
 PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
+AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
 AC_SUBST(HECTOR_CORE_PREFIX)

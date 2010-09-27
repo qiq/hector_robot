@@ -25,7 +25,23 @@ public:
         int getSize();
         char *toString();
 
-        void setURL(const char *url);
-        const char *getURL();
+        void setUrl(const char *url);
+        const char *getUrl();
+        void setTime(unsigned int time);
+        unsigned int getTime();
+        void setMimeType(const char *mimeType);
+        const char *getMimeType();
+        void setContent(const char *content);
+        const char *getContent();
+        void setHeaderFields(std::vector<std::string> *header_fields);
+        std::vector<std::string> *getHeaderFields();
+        void setExtractedUrls(std::vector<std::string> *extracted_urls);
+        std::vector<std::string> *getExtractedUrls();
 
+        void setUrlScheme(const char *urlScheme);
+        const char *getUrlScheme();
+        void setUrlHost(const char *urlHost);
+        const char *getUrlHost();
+        void setUrlPath(const char *urlPath);
+        const char *getUrlPath();
 };
