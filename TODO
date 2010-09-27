@@ -11,6 +11,7 @@
 		  ACCEPT url =~ s/xxx/yyy/g ]]>
 
 length(content) > 100 && mimeType != "text/html" => mimeType = "aaa", DROP
+
 length(content) > 100 => content = "", STATUS = 10
 header[Content-Type] == "text/html" => ACCEPT
 mimeType != "text/html" => ACCEPT
@@ -19,7 +20,7 @@ hostname =~ /\.cuni\.cz$/ => ACCEPT
 hostname =~ s/xxx/yyy/g => CONTINUE
 * => DROP
 
-ACCEPT/DROP/STATUS = xxx/CONTINUE/nastaveni promenne (hodnota dle typu)
+ACCEPT/DROP/CONTINUE/nastaveni promenne (hodnota dle typu), vcetne STATUS = xxx
 
 - do webresources pridat zpracovani hlavicky (hash_map) a jeji zapis zpet (asi pri serializaci)
 

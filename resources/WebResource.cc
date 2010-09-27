@@ -59,7 +59,7 @@ vector<string> *WebResource::getExtractedUrls() {
 	return result;
 }
 
-char *WebResource::toString() {
+char *WebResource::toString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl());

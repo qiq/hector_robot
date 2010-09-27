@@ -1,0 +1,131 @@
+# items: number of resources created
+
+package DnsResolver;
+
+use warnings;
+use strict;
+use HectorRobot;
+use Net::DNS;
+
+sub new {
+	my ($proto, $object, $id, $threadIndex) = @_;
+	my $class = ref($proto) || $proto;
+	my $self = {
+		'_object' => $object,
+		'_id' => $id,
+		'_threadIndex' => $threadIndex,
+		'_resolver' => undef,
+		'items' => 0,
+	};
+	bless($self, $class);
+	return $self;
+}
+
+sub DESTROY {
+}
+
+sub createUrlList {
+	my ($self, $s) = @_;
+	return [] if (not defined $s);
+	my @a;
+	foreach my $url (split(/[\n\r]+/, $s)) {
+		$url =~ s/^\s+//;
+		$url =~ s/\s+$//;
+		next if ($url eq '');
+		push(@a, $url);
+	}
+	return \@a;
+}
+
+sub Init {
+	my ($self, $params) = @_;
+	foreach my $p (@{$params}) {
+		if (exists $self->{$p->[0]}) {
+			$self->{$p->[0]} = $p->[1];
+		}
+	}
+	$self->{'_resolver'} = Net::DNS::Resolver->new(),
+
+	return 1;
+}
+
+sub getType {
+	my ($self) = @_;
+	return $Hector::Module::SIMPLE;
+}
+
+sub getValueSync {
+	my ($self, $name) = @_;
+	if (exists $self->{$name}) {
+		return $self->{$name};
+	} else {
+		$self->{'_object'}->log_error("Invalid value name: $name");
+		return undef;
+	}
+}
+
+sub setValueSync {
+	my ($self, $name, $value) = @_;
+	if (exists $self->{$name}) {
+		$self->{$name} = $value;
+	} else {
+		$self->{'_object'}->log_error("Invalid value name: $name");
+		return 0;
+	}
+	return 1;
+}
+
+sub listNamesSync {
+	my ($self) = @_;
+	return [ grep { $_ !~ /^_/ } keys %{$self} ];
+}
+
+sub SaveCheckpoint {
+	my ($self, $path, $id) = @_;
+	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
+}
+
+sub RestoreCheckpoint {
+	my ($self, $path, $id) = @_;
+	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
+}
+
+sub Process() {
+	my ($self, $resource) = @_;
+
+	my $host = $resource->getUrlHost();
+	if (not defined $host) {
+		$self->{'_object'}->log_error("Resource does not contain URL host: ".$resource->getId());
+		return $resource;
+	}
+	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
+		$resource->setIpAddr4($host);
+	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
+		$resource->setIpAddr6();
+	} else {
+		my $request = $self->{'_resolver'}->search($host, 'A');
+		if ($request) {
+			foreach my $rr ($request->answer) {
+				next unless $rr->type eq "A";
+				$self->{'_object'}->log_error("$host: ".$rr->address.' ('.$rr->ttl.')');
+				$resource->setIpAddr4($rr->address);
+				$resource->setIpAddrExpire(time() + $rr->ttl);
+			}
+		} else {
+			$self->{'_object'}->log_debug("Query failed ($host): ".$self->{'_resolver'}->errorstring);
+		}
+	}
+
+	$self->{'items'}++;
+	return $resource;
+}
+
+sub ProcessMulti() {
+	my ($self, $inputResources, $outputResources) = @_;
+
+	$self->{'_object'}->log_error("ProcessMulti() is not implemented");
+
+	return 0;
+}
+
+1;

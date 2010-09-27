@@ -28,6 +28,8 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.5.0])
 PKG_CHECK_MODULES([LOG4CXX], [liblog4cxx >= 0.10.0])
 PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
 PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
+PKG_CHECK_MODULES([LIBPCRE], [libpcre >= 7.0])
+PKG_CHECK_MODULES([LIBPCRECPP], [libpcrecpp >= 7.0])
 AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
@@ -232,6 +234,7 @@ fi
 AM_CONDITIONAL(WITH_PYTHON, [test "x$PYTHON" != x])
 
 AC_CONFIG_FILES([Makefile
+		lib/Makefile
 		resources/Makefile
                 modules/Makefile
 		modules/perl/Makefile
