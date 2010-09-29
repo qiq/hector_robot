@@ -10,7 +10,9 @@
 
 #include <vector>
 #include <string>
+#include <tr1/unordered_map>
 #include <log4cxx/logger.h>
+#include "common.h"
 #include "ProtobufResource.h"
 #include "WebResource.pb.h"
 
@@ -45,17 +47,16 @@ public:
 
 	void setUrl(const char *url);
 	const char *getUrl();
-	void setTime(unsigned int time);
-	unsigned int getTime();
+	void setTime(long time);
+	long getTime();
 	void setMimeType(const char *mimeType);
 	const char *getMimeType();
 	void setContent(const char *content);
 	const char *getContent();
-	void setHeaderFields(std::vector<std::string> *header_fields);
-	std::vector<std::string> *getHeaderFields();
-	std::vector<std::string> *getHeaderFieldNames();
-	bool setHeaderField(const char *name, const char *value);
-	const char *getHeaderField(const char *name);
+	void setHeaderFields(std::vector<std::string> *names, std::vector<std::string> *values);
+	std::vector<std::string> *getHeaderNames();
+	void setHeaderValue(const char *name, const char *value);
+	const char *getHeaderValue(const char *name);
 	void setExtractedUrls(std::vector<std::string> *extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
 
@@ -78,9 +79,39 @@ public:
 
 	static const int typeId = 10;
 
+	typedef struct {
+		Resource::FieldType type;
+		union {
+			const char *(WebResource::*s)();
+			int (WebResource::*i)();
+			long (WebResource::*l)();
+			ip4_addr_t (WebResource::*a4)();
+			ip6_addr_t (WebResource::*a6)();
+			const char *(WebResource::*s2)(const char*);
+		} get;
+		union {
+			void (WebResource::*s)(const char *);
+			void (WebResource::*i)(int);
+			void (WebResource::*l)(long);
+			void (WebResource::*a4)(ip4_addr_t);
+			void (WebResource::*a6)(ip6_addr_t);
+			void (WebResource::*s2)(const char*, const char*);
+		} set;
+	} FieldInfo;
+
+	// get info about an item
+	static FieldInfo getFieldInfo(const char *name);
+
 protected:
 	// saved properties
 	hector::resources::WebResource r;
+	// memory-only
+	bool header_map_ready;
+	bool header_map_dirty;
+	std::tr1::unordered_map<std::string, std::string> headers;
+
+	void LoadHeaders();
+	void SaveHeaders();
 
 	static log4cxx::LoggerPtr logger;
 };
@@ -114,22 +145,32 @@ inline void WebResource::setStatus(int status) {
 }
 
 inline std::string *WebResource::Serialize() {
+	if (header_map_dirty)
+		SaveHeaders();
 	return MessageSerialize(&r);
 }
 
 inline bool WebResource::Deserialize(std::string *s) {
+	header_map_ready = false;
+	header_map_dirty = false;
 	return MessageDeserialize(&r, s);
 }
 
 inline int WebResource::getSerializedSize() {
+	if (header_map_dirty)
+		SaveHeaders();
 	return MessageGetSerializedSize(&r);
 }
 
 inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
+	if (header_map_dirty)
+		SaveHeaders();
 	return MessageSerialize(&r, output);
 }
 
 inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
+	header_map_ready = false;
+	header_map_dirty = false;
 	return MessageDeserialize(&r, input, size);
 }
 
@@ -142,12 +183,12 @@ inline const char *WebResource::getUrl() {
 	return r.url().c_str();
 }
 
-inline void WebResource::setTime(unsigned int time) {
+inline void WebResource::setTime(long time) {
 	r.set_time(time);
 }
 
-inline unsigned int WebResource::getTime() {
-	return r.time();
+inline long WebResource::getTime() {
+	return (long)r.time();
 }
 
 inline void WebResource::setMimeType(const char *mimeType) {

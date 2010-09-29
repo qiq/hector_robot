@@ -33,8 +33,10 @@ public:
         const char *getMimeType();
         void setContent(const char *content);
         const char *getContent();
-        void setHeaderFields(std::vector<std::string> *header_fields);
-        std::vector<std::string> *getHeaderFields();
+        void setHeaderFields(std::vector<std::string> *header_names, std::vector<std::string> *header_values);
+        std::vector<std::string> *getHeaderNames();
+        void setHeaderValue(const char *name, const char *value);
+        const char *getHeaderValue(const char *name);
         void setExtractedUrls(std::vector<std::string> *extracted_urls);
         std::vector<std::string> *getExtractedUrls();
 

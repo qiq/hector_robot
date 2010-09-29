@@ -4,24 +4,55 @@
 #include <config.h>
 
 #include <assert.h>
+#include <stdio.h>
 #include "common.h"
 #include "Resources.h"
 #include "Filter.h"
-#include "WebResource.h"
 
 Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
+	ruleFile = NULL;
+	ruleList = NULL;
+
 	values = new ObjectValues<Filter>(this);
 
 	values->addGetter("items", &Filter::getItems);
+	values->addGetter("ruleList", &Filter::getRuleList);
+	values->addSetter("ruleList", &Filter::setRuleList);
+	values->addGetter("ruleFile", &Filter::getRuleFile);
+	values->addSetter("ruleFile", &Filter::setRuleFile);
 }
 
 Filter::~Filter() {
+	free(ruleFile);
+	free(ruleList);
+
 	delete values;
+
+	for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter)
+		delete (*iter);
 }
 
 char *Filter::getItems(const char *name) {
 	return int2str(items);
+}
+
+char *Filter::getRuleList(const char *name) {
+	return ruleList ? strdup(ruleList) : NULL;
+}
+
+void Filter::setRuleList(const char *name, const char *value) {
+	free(ruleList);
+	ruleList = strdup(value);
+}
+
+char *Filter::getRuleFile(const char *name) {
+	return ruleFile ? strdup(ruleFile) : NULL;
+}
+
+void Filter::setRuleFile(const char *name, const char *value) {
+	free(ruleFile);
+	ruleFile = strdup(value);
 }
 
 bool Filter::Init(vector<pair<string, string> > *params) {
@@ -32,13 +63,88 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 		LOG_ERROR("Cannot load WebResource library");
 		return false;
 	}
+
+	string data;
+	if (ruleFile) {
+		FILE *f = fopen(ruleFile, "r");
+		if (!f) {
+			LOG_ERROR("Cannot open file: " << ruleFile << ": " << strerror(errno));
+			return false;
+		}
+		fseek(f, 0, SEEK_END);
+		long len = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char *buffer = (char*)malloc(len);
+		if (fread(buffer, len, 1, f) < 0) {
+			LOG_ERROR("Cannot read file: " << ruleFile << ": " << strerror(errno));
+			return false;
+		}
+		fclose(f);
+		data.append(buffer, len);
+		free(buffer);
+		if (data.length() > 0)
+			data += '\n';
+	}
+	if (ruleList)
+		data += ruleList;
+
+	// create rules
+	while (data.length() > 0) {
+		// one line: possibly concatenate lines, if there is
+		// a backslash at the end of the line
+		size_t pos = 0;
+		do {
+			pos = data.find_first_of('\n', pos);
+			if (pos == string::npos)
+				break;
+		} while (pos > 0 && data.at(pos-1) == '\\');
+		string line;
+		if (pos != string::npos) {
+			line = data.substr(0, pos);
+			data.erase(0, pos);
+		} else {
+			line = data;
+			data.clear();
+		}
+
+		// skip empty lines
+		skipWs(&line);
+		if (line.length() == 0)
+			continue;
+
+		// skip lines starting with hash
+		if (line.at(0) == '#')
+			continue;
+
+		Rule *r = new Rule();
+		if (!r->Init(&line)) {
+			delete r;
+			return false;
+		}
+		rules.push_back(r);
+	}
+
 	return true;
 }
 
 Resource *Filter::Process(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
-	//if (wr) {
-	//}
+	if (wr) {
+		// process rule-by rule and deal with the resource accordingly
+		for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
+			switch ((*iter)->Apply(wr)) {
+			case Filter::Action::ACCEPT:
+				return resource;
+			case Filter::Action::DROP:
+				delete wr;
+				return NULL;
+			case Filter::Action::CONTINUE:
+			default:
+				// do nothing
+				break;
+			}
+		}
+	}
 	return resource;
 }
 
@@ -46,56 +152,51 @@ log4cxx::LoggerPtr Filter::Condition::logger(log4cxx::Logger::getLogger("module.
 
 bool Filter::Condition::Init(string *data) {
 	// first part, what: label | length(label) | label[name]
-	string label = parseLabel(data);
+	string label;
+	if (!parseLabel(data, &label)) {
+		LOG4CXX_ERROR(logger, "Invalid label: " << data);
+		return false;
+	}
 	if (label == "length") {
-		length = true;
-		label = parseLabel(data);
+		if (data->at(0) == '(') {
+			data->erase(0, 1);
+			label.clear();
+			if (parseLabel(data, &label)) {
+				if (data->at(0) == ')') {
+					data->erase(0, 1);
+					length = true;
+				}
+			}
+		}
+		if (!length) {
+			LOG4CXX_ERROR(logger, "Invalid length: " << data);
+			return false;
+		}
 	}
 	if (label.empty()) {
-		LOG_ERROR("Expected label: " << data);
+		LOG4CXX_ERROR(logger, "No label: " << data);
 		return false;
 	}
-	if (label == "url") {
-		this->fgs = &WebResource::getUrl;
-		this->fss = &WebResource::setUrl;
-	} else if (label == "time") {
-		//this->fgi = &WebResource::getTime;
-		// FIXME
-	} else if (label == "mimeType") {
-		this->fgs = &WebResource::getMimeType;
-		this->fss = &WebResource::setMimeType;
-	} else if (label == "content") {
-		this->fgs = &WebResource::getContent;
-		this->fss = &WebResource::setContent;
-	} else if (label == "header") {
-		// FIXME
-	} else if (label == "urlScheme") {
-		this->fgs = &WebResource::getUrlScheme;
-		this->fss = &WebResource::setUrlScheme;
-	} else if (label == "urlUsername") {
-		this->fgs = &WebResource::getUrlUsername;
-		this->fss = &WebResource::setUrlUsername;
-	} else if (label == "urlPassword") {
-		this->fgs = &WebResource::getUrlPassword;
-		this->fss = &WebResource::setUrlPassword;
-	} else if (label == "urlHost") {
-		this->fgs = &WebResource::getUrlHost;
-		this->fss = &WebResource::setUrlHost;
-	} else if (label == "urlPort") {
-		this->fgi = &WebResource::getUrlPort;
-		this->fsi = &WebResource::setUrlPort;
-	} else if (label == "urlPath") {
-		this->fgs = &WebResource::getUrlPath;
-		this->fss = &WebResource::setUrlPath;
-	} else if (label == "urlQuery") {
-		this->fgs = &WebResource::getUrlQuery;
-		this->fss = &WebResource::setUrlQuery;
-	} else if (label == "urlRef") {
-		this->fgs = &WebResource::getUrlRef;
-		this->fss = &WebResource::setUrlRef;
-	} else {
-		LOG_ERROR("Invalid token, expected label: " << label);
+	info = WebResource::getFieldInfo(label.c_str());
+	if (info.type == Resource::UNKNOWN) {
+		LOG4CXX_ERROR(logger, "Invalid token, expected label: " << label);
 		return false;
+	}
+	if (info.type == Resource::STRING2) {
+		// header: consume [, label2, ]
+		if (data->length() == 0 || data->at(0) != '[') {
+			LOG4CXX_ERROR(logger, "Invalid format: [ expected" << data);
+			return false;
+		}
+		if (!parseLabel(data, &label)) {
+			LOG4CXX_ERROR(logger, "Unvalid label: " << data);
+			return false;
+		}
+		this->name = label;
+		if (data->length() == 0 || data->at(0) != '[') {
+			LOG4CXX_ERROR(logger, "Invalid format: ] expected" << data);
+			return false;
+		}
 	}
 
 	// second part, operator < | > | == | != | =~ | !~
@@ -104,7 +205,7 @@ bool Filter::Condition::Init(string *data) {
 	string op;
 	if (offset != string::npos) {
 		if (offset == 0) {
-			LOG_ERROR("No operator");
+			LOG4CXX_ERROR(logger, "No operator");
 			return false;
 		}
 		op = data->substr(0, offset);
@@ -116,64 +217,108 @@ bool Filter::Condition::Init(string *data) {
 
 	bool error;
 	if (op == "==") {
-		if (this->fgs)
+		switch (this->info.type) {
+		case Resource::STRING:
 			this->op = STRING_EQ;
-		else if (this->fgi)
+			break;
+		case Resource::INT:
 			this->op = INT_EQ;
-		else if (this->fga4)
+			break;
+		case Resource::LONG:
+			this->op = LONG_EQ;
+			break;
+		case Resource::IP4:
 			this->op = IP4_EQ;
-		else if (this->fga6)
+			break;
+		case Resource::IP6:
 			this->op = IP6_EQ;
-		else
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == "!=" || op == "<>") {
-		if (this->fgs)
+		switch (this->info.type) {
+		case Resource::STRING:
 			this->op = STRING_NE;
-		else if (this->fgi)
+			break;
+		case Resource::INT:
 			this->op = INT_NE;
-		else if (this->fga4)
+			break;
+		case Resource::LONG:
+			this->op = LONG_NE;
+			break;
+		case Resource::IP4:
 			this->op = IP4_NE;
-		else if (this->fga6)
+			break;
+		case Resource::IP6:
 			this->op = IP6_NE;
-		else
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == "<") {
-		if (this->fgs)
+		switch (this->info.type) {
+		case Resource::STRING:
 			this->op = STRING_LT;
-		else if (this->fgi)
+			break;
+		case Resource::INT:
 			this->op = INT_LT;
-		else
+			break;
+		case Resource::LONG:
+			this->op = LONG_LT;
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == ">") {
-		if (this->fgs) 
+		switch(this->info.type) {
+		case Resource::STRING:
 			this->op = STRING_GT;
-		else if (this->fgi)
+			break;
+		case Resource::INT:
 			this->op = INT_GT;
-		else
+			break;
+		case Resource::LONG:
+			this->op = LONG_GT;
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == "<=") {
-		if (this->fgi)
+		switch (this->info.type) {
+		case Resource::INT:
 			this->op = INT_LE;
-		else
+			break;
+		case Resource::LONG:
+			this->op = LONG_LE;
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == ">=") {
-		if (this->fgi)
+		switch (this->info.type) {
+		case Resource::INT:
 			this->op = INT_GE;
-		else
+			break;
+		case Resource::LONG:
+			this->op = LONG_GE;
+			break;
+		default:
 			error = true;
+		}
 	} else if (op == "=~") {
-		if (this->fgs)
+		if (this->info.type == Resource::STRING)
 			this->op = STRING_REGEX;
 		else
 			error = true;
 	} else if (op == "!~") {
-		if (this->fgs)
+		if (this->info.type == Resource::STRING)
 			this->op = STRING_NREGEX;
 		else
 			error = true;
 	}
 	if (error) {
-		LOG_ERROR("Invalid operator: " << op);
+		LOG4CXX_ERROR(logger, "Invalid operator: " << op);
 		return false;
 	}
 
@@ -185,13 +330,30 @@ bool Filter::Condition::Init(string *data) {
 	case INT_LE:
 	case INT_GT:
 	case INT_GE:
-		iValue = parseInt(data);
+		if (!parseInt(data, &this->iValue)) {
+			LOG4CXX_ERROR(logger, "Invalid value: " << data);
+			return false;
+		}
+		break;
+	case LONG_EQ:
+	case LONG_NE:
+	case LONG_LT:
+	case LONG_LE:
+	case LONG_GT:
+	case LONG_GE:
+		if (!parseLong(data, &this->lValue)) {
+			LOG4CXX_ERROR(logger, "Invalid value: " << data);
+			return false;
+		}
 		break;
 	case STRING_EQ:
 	case STRING_NE:
 	case STRING_LT:
 	case STRING_GT:
-		sValue = parseString(data, '"');
+		if (!parseString(data, &this->sValue, '"')) {
+			LOG4CXX_ERROR(logger, "Invalid value: " << data);
+			return false;
+		}
 		break;
 	case STRING_REGEX:
 	case STRING_NREGEX:
@@ -203,9 +365,16 @@ bool Filter::Condition::Init(string *data) {
 				data->erase(0, 1);
 				subst = true;
 			}
-			string match = parseString(data, '/');
+			string match;
+			if (!parseString(data, &match, '/')) {
+				LOG4CXX_ERROR(logger, "Invalid regex: " << data);
+				return false;
+			}
 			if (subst) {
-				this->replacement = parseString(data, '/');
+				if (!parseString(data, &this->replacement, '/')) {
+					LOG4CXX_ERROR(logger, "Invalid regex replacement: " << data);
+					return false;
+				}
 				this->op = STRING_REGEX_SUBST;
 				if (data->length() > 0 && data->at(0) == 'g') {
 					this->global = true;
@@ -217,11 +386,17 @@ bool Filter::Condition::Init(string *data) {
 		}
 	case IP4_EQ:
 	case IP4_NE:
-		a4Value = parseIp4(data);
+		if (!parseIp4(data, &this->a4Value)) {
+			LOG4CXX_ERROR(logger, "Invalid IP address: " << data);
+			return false;
+		}
 		break;
 	case IP6_EQ:
 	case IP6_NE:
-		a6Value = parseIp6(data);
+		if (!parseIp6(data, &this->a6Value)) {
+			LOG4CXX_ERROR(logger, "Invalid IPv6 address: " << data);
+			return false;
+		}
 		break;
 	}
 	return true;
@@ -232,30 +407,40 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 	int iValue;
 	ip4_addr_t a4Value;
 	ip6_addr_t a6Value;
-	if (fgs) {
-		sValue = (wr->*fgs)();
+	switch (this->info.type) {
+	case Resource::STRING:
+		sValue = (wr->*info.get.s)();
 		if (!sValue)
 			return false;
-	} else if (fgsn) {
-		sValue = (wr->*fgsn)(name.c_str());
-		if (!sValue)
-			return false;
-	} else if (fgi) {
-		iValue = (wr->*fgi)();
-	} else if (fga4) {
-		a4Value = (wr->*fga4)();
+		break;
+	case Resource::INT:
+		iValue = (wr->*info.get.i)();
+		break;
+	case Resource::LONG:
+		iValue = (wr->*info.get.l)();
+		break;
+	case Resource::IP4:
+		a4Value = (wr->*info.get.a4)();
 		if (prefix)
 			a4Value.addr &= ((uint32_t)0xffffffff) << (32-prefix);
-	} else if (fga6) {
-		a6Value = (wr->*fga6)();
-		if (!prefix)
-			prefix = 128;
-		int a = prefix / 8;
-		int b = prefix % 8;
-		if (a < 16)
-			a6Value.addr[a] &= 0xFF << (8-b);
-		for (int i = a+1; i < 16; i++)
-			a6Value.addr[i] = 0x00;
+		break;
+	case Resource::IP6:
+		{
+			a6Value = (wr->*info.get.a6)();
+			if (!prefix)
+				prefix = 128;
+			int a = prefix / 8;
+			int b = prefix % 8;
+			if (a < 16)
+				a6Value.addr[a] &= 0xFF << (8-b);
+			for (int i = a+1; i < 16; i++)
+				a6Value.addr[i] = 0x00;
+		}
+		break;
+	case Resource::STRING2:
+		sValue = (wr->*info.get.s2)(name.c_str());
+		if (!sValue)
+			return false;
 	}
 
 	if (length)
@@ -294,10 +479,10 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 				result = this->regex->GlobalReplace(replacement, &s);
 			else
 				result = this->regex->Replace(replacement, &s);
-			if (fss)
-				(wr->*fss)(s.c_str());
-			else
-				(wr->*fssn)(name.c_str(), s.c_str());
+			if (info.type == Resource::STRING)
+				(wr->*info.set.s)(s.c_str());
+			else if (info.type == Resource::STRING2)
+				(wr->*info.set.s2)(name.c_str(), s.c_str());
 			return result;
 		}
 	case IP4_EQ:
@@ -309,7 +494,7 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 	case IP6_NE:
 		return !memcmp(&a6Value, &this->a6Value, sizeof(ip6_addr_t));
 	default:
-		LOG_ERROR("Invalid condition operator: " << op);
+		LOG4CXX_ERROR(logger, "Invalid condition operator: " << op);
 	}
 	return false;
 }
@@ -317,7 +502,90 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 log4cxx::LoggerPtr Filter::Action::logger(log4cxx::Logger::getLogger("module.Filter.Action"));
 
 bool Filter::Action::Init(string *data) {
-	//TODO
+	// first part, what: label | label[name] | ACCEPT | DROP | CONTINUE
+	string label;
+	if (!parseLabel(data, &label)) {
+		LOG4CXX_ERROR(logger, "Expected label: " << data);
+		return false;
+	}
+	if (label.empty()) {
+		LOG4CXX_ERROR(logger, "No label: " << data);
+		return false;
+	}
+	if (label == "ACCEPT") {
+		this->type = ACCEPT;
+	} else if (label == "DROP") {
+		this->type = DROP;
+	} else if (label == "CONTINUE") {
+		this->type = CONTINUE;
+	} else if (label == "STATUS") {
+		this->type = SETVAL;
+		this->info.type = Resource::INT;
+		this->info.get.i = &WebResource::getStatus;
+		this->info.set.i = &WebResource::setStatus;
+	} else {
+		this->type = SETVAL;
+		info = WebResource::getFieldInfo(label.c_str());
+		if (info.type == Resource::UNKNOWN) {
+			LOG4CXX_ERROR(logger, "Invalid token, expected label: " << label);
+			return false;
+		}
+		if (info.type == Resource::STRING2) {
+			// header: consume [, label2, ]
+			if (data->length() == 0 || data->at(0) != '[') {
+				LOG4CXX_ERROR(logger, "Invalid format: [ expected" << data);
+				return false;
+			}
+			if (!parseLabel(data, &label)) {
+				LOG4CXX_ERROR(logger, "Unvalid label: " << data);
+				return false;
+			}
+			this->name = label;
+			if (data->length() == 0 || data->at(0) != '[') {
+				LOG4CXX_ERROR(logger, "Invalid format: ] expected" << data);
+				return false;
+			}
+		}
+	}
+
+	// second part, operator =
+	skipWs(data);
+	if (data->length() == 0 || data->at(0) != '=') {
+		LOG4CXX_ERROR(logger, "= expected, got: " << data);
+		return false;
+	}
+	data->erase(0, 1);
+
+	// third part, value
+	bool error = false;
+	switch (this->info.type) {
+	case Resource::STRING:
+	case Resource::STRING2:
+		if (!parseString(data, &this->sValue, '"'))
+			error = true;
+		break;
+	case Resource::INT:
+		if (!parseInt(data, &this->iValue))
+			error = true;
+		break;
+	case Resource::LONG:
+		if (!parseLong(data, &this->lValue))
+			error = true;
+		break;
+	case Resource::IP4:
+		if (!parseIp4(data, &this->a4Value))
+			error = true;
+		break;
+	case Resource::IP6:
+		if (!parseIp6(data, &this->a6Value))
+			error = true;
+		break;
+	}
+	if (error) {
+		LOG4CXX_ERROR(logger, "Invalid value: " << data);
+		return false;
+	}
+	return true;
 }
 
 Filter::Action::ActionType Filter::Action::Apply(WebResource *wr) {
@@ -329,32 +597,122 @@ Filter::Action::ActionType Filter::Action::Apply(WebResource *wr) {
 	case CONTINUE:
 		return CONTINUE;
 	case SETVAL:
-		if (fss)
-			(wr->*fss)(sValue.c_str());
-		else if (this->fssn)
-			(wr->*fssn)(name.c_str(), sValue.c_str());
-		else if (this->fsi)
-			(wr->*fsi)(iValue);
-		else if (this->fsa4)
-			(wr->*fsa4)(a4Value);
-		else if (this->fsa6)
-			(wr->*fsa6)(a6Value);
-		else
-			LOG_ERROR("No value setter to use");
-		return CONTINUE;
+		switch (info.type) {
+		case Resource::STRING:
+			(wr->*info.set.s)(sValue.c_str());
+			break;
+		case Resource::INT:
+			(wr->*info.set.i)(iValue);
+			break;
+		case Resource::LONG:
+			(wr->*info.set.l)(lValue);
+		case Resource::IP4:
+			(wr->*info.set.a4)(a4Value);
+			break;
+		case Resource::IP6:
+			(wr->*info.set.a6)(a6Value);
+			break;
+		case Resource::STRING2:
+			(wr->*info.set.s2)(name.c_str(), sValue.c_str());
+			break;
+		default:
+			LOG4CXX_ERROR(logger, "No value setter to use");
+		}
+		return SETVAL;
 	}
-	LOG_ERROR("Invalid action type: " << type);
+	LOG4CXX_ERROR(logger, "Invalid action type: " << type);
 	return DROP;
 }
 
 log4cxx::LoggerPtr Filter::Rule::logger(log4cxx::Logger::getLogger("module.Filter.Rule"));
 
+Filter::Rule::~Rule() {
+	for (vector<Condition*>::iterator iter = conditions.begin(); iter != conditions.end(); ++iter)
+		delete (*iter);
+	for (vector<Action*>::iterator iter = actions.begin(); iter != actions.end(); ++iter)
+		delete (*iter);
+}
+
 bool Filter::Rule::Init(string *data) {
-// parse && create one condition
-	// find one line (possibly concatenate lines, if there is backslash at
-	// the end of the line
-	while (true) {
+	while (data->length() > 0) {
+		// one line: possibly concatenate lines, if there is
+		// a backslash at the end of the line
+		size_t pos = 0;
+		do {
+			pos = data->find_first_of('\n', pos);
+			if (pos == string::npos)
+				break;
+		} while (pos > 0 && data->at(pos-1) == '\\');
+		string line;
+		if (pos != string::npos) {
+			line = data->substr(0, pos);
+			data->erase(0, pos);
+		} else {
+			line = *data;
+			data->clear();
+		}
+		// skip empty lines
+		skipWs(&line);
+		if (line.length() == 0)
+			continue;
+
+		// create a rule from line: parse [condition|*] => [action]
+		skipWs(&line);
+		if (line.length() > 0 && line.at(0) == '*') {
+			line.erase(0, 1);
+		} else {
+			while (true) {
+				Condition *c = new Condition();
+				if (!c->Init(&line)) {
+					delete c;
+					return false;
+				}
+				conditions.push_back(c);
+				skipWs(&line);
+				if (line.length() <= 1 || line.at(0) != '&' || line.at(1) != '&')
+					break;
+			}
+		}
+		// => 
+		skipWs(&line);
+		if (line.length() <= 1 || line.at(0) != '=' || line.at(1) != '>') {
+			LOG4CXX_ERROR(logger, "Expected => : " << line);
+			return false;
+		}
+		line.erase(0, 1);
+
+		// actions
+		while (true) {
+			Action *a = new Action();
+			if (!a->Init(&line)) {
+				delete a;
+				return false;
+			}
+			actions.push_back(a);
+			skipWs(&line);
+			if (line.length() == 0 || line.at(0) != ',')
+				break;
+		}
+		if (line.length() > 0) {
+			LOG4CXX_ERROR(logger, "Invalid trailer: " << line);
+			return false;
+		}
 	}
+	return true;
+}
+
+Filter::Action::ActionType Filter::Rule::Apply(WebResource *wr) {
+	for (vector<Condition*>::iterator iter = conditions.begin(); iter != conditions.end(); ++iter) {
+		if (!(*iter)->isTrue(wr))
+			return Filter::Action::CONTINUE;
+	}
+	Filter::Action::ActionType result = Filter::Action::ACCEPT;
+	for (vector<Action*>::iterator iter = actions.begin(); iter != actions.end(); ++iter) {
+		Filter::Action::ActionType r = (*iter)->Apply(wr);
+		if (r != Filter::Action::SETVAL)
+			result = r;
+	}
+	return result;
 }
 
 // the class factories

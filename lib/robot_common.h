@@ -13,20 +13,14 @@
 #include <string.h>
 #include <string>
 #include <log4cxx/logger.h>
-
-typedef struct {
-	uint32_t addr;
-} ip4_addr_t;
-
-typedef struct {
-	uint8_t addr[16];
-} ip6_addr_t;
+#include "common.h"
 
 void skipWs(std::string *data);
-std::string parseLabel(std::string *data);
-std::string parseString(std::string *data, bool separator);
-int parseInt(std::string *data);
-ip4_addr_t parseIp4(std::string *data);
-ip6_addr_t parseIp6(std::string *data);
+bool parseLabel(std::string *data, std::string *value);
+bool parseString(std::string *data, std::string *value, bool separator);
+bool parseInt(std::string *data, int *value);
+bool parseLong(std::string *data, long *value);
+bool parseIp4(std::string *data, ip4_addr_t *value);
+bool parseIp6(std::string *data, ip6_addr_t *value);
 
 #endif

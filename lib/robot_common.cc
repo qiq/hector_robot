@@ -11,12 +11,12 @@
 using namespace std;
 
 void skipWs(string *data) {
-	size_t offset = data->find_first_not_of(" \t");
+	size_t offset = data->find_first_not_of(" \t\n\r");
 	if (offset != string::npos)
 		data->erase(0, offset);
 }
 
-string parseLabel(string *data) {
+bool parseLabel(string *data, string *value) {
 	skipWs(data);
 	size_t offset = 0;
 	while (offset < data->length()) {
@@ -24,27 +24,25 @@ string parseLabel(string *data) {
 		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '1') || c == '_'))
 			break;
 	}
-	string s;
 	if (offset != string::npos) {
 		if (offset == 0)
-			return NULL;
-		s = data->substr(0, offset);
+			return false;
+		(*value) = data->substr(0, offset);
 		data->erase(0, offset);
 	} else {
-		s = (*data);
+		(*value) = (*data);
 		data->clear();
 	}
-	return s;
+	return true;
 }
 
-string parseString(string *data, char separator) {
+bool parseString(string *data, string *value, char separator) {
 	skipWs(data);
 	if (data->length() == 0)
-		return "";
+		return false;
 	int i = 0;
 	if (data->at(0) == separator)
 		i++;
-	string result;
 	bool finished = false;
 	bool escape = false;
 	while (!finished && i < data->length()) {
@@ -53,73 +51,83 @@ string parseString(string *data, char separator) {
 			if (!escape) {
 				escape = true;
 			} else {
-				result.append(1, '\\');
+				value->append(1, '\\');
 				escape = false;
 			}
 		} else if (c == separator) {
 			if (!escape)
 				finished = true;
 			else
-				result.append(1, separator);
+				value->append(1, separator);
 		} else {
-			result.append(1, data->at(i));
+			value->append(1, data->at(i));
 		}
 		i++;
 	}
 	data->erase(0, i);
-	return result;
+	return true;
 }
 
-int parseInt(string *data) {
+bool parseInt(string *data, int *value) {
 	skipWs(data);
 	size_t offset = data->find_first_not_of("0123456789");
 	string s;
 	if (offset != string::npos) {
 		if (offset == 0)
-			return -1;
+			return false;
 		s = data->substr(0, offset);
 		data->erase(0, offset);
 	} else {
 		s = (*data);
 		data->clear();
 	}
-	return atoi(s.c_str());
+	*value = atoi(s.c_str());
+	return true;
 }
 
-ip4_addr_t parseIp4(string *data) {
-	ip4_addr_t addr;
-	memset((void*)&addr, 0, sizeof(ip4_addr_t));
+bool parseLong(string *data, int *value) {
+	skipWs(data);
+	size_t offset = data->find_first_not_of("0123456789");
+	string s;
+	if (offset != string::npos) {
+		if (offset == 0)
+			return false;
+		s = data->substr(0, offset);
+		data->erase(0, offset);
+	} else {
+		s = (*data);
+		data->clear();
+	}
+	*value = atol(s.c_str());
+	return true;
+}
+
+bool parseIp4(string *data, ip4_addr_t *value) {
 	size_t offset = data->find_first_not_of("0123456789.");
 	string s;
 	if (offset != string::npos) {
 		if (offset == 0)
-			return addr;
+			return false;
 		s = data->substr(0, offset);
 		data->erase(0, offset);
 	} else {
 		s = (*data);
 		data->clear();
 	}
-	if (inet_pton(AF_INET, s.c_str(), &addr.addr) != 1)
-		memset((void*)&addr, 0, sizeof(ip4_addr_t));
-	return addr;
+	return inet_pton(AF_INET, s.c_str(), &value->addr) == 1;
 }
 
-ip6_addr_t parseIp6(string *data) {
-	ip6_addr_t addr;
-	memset((void*)&addr, 0, sizeof(ip6_addr_t));
+bool parseIp6(string *data, ip6_addr_t *value) {
 	size_t offset = data->find_first_not_of("0123456789.:");
 	string s;
 	if (offset != string::npos) {
 		if (offset == 0)
-			return addr;
+			return false;
 		s = data->substr(0, offset);
 		data->erase(0, offset);
 	} else {
 		s = (*data);
 		data->clear();
 	}
-	if (inet_pton(AF_INET6, s.c_str(), &addr.addr) != 1)
-		memset((void*)&addr, 0, sizeof(ip6_addr_t));
-	return addr;
+	return inet_pton(AF_INET6, s.c_str(), &value->addr) == 1;
 }

@@ -20,11 +20,6 @@
  content =~ s/abc/def/ => CONTINUE
 */
 
-// Rule: (to cele: Conditions, Actions)
-// Condition: variable operator value
-
-// TODO do webresources pridat zpracovani hlavicky (hash_map) a jeji zapis zpet (asi pri serializaci)
-
 class Filter : public Module {
 public:
 	Filter(ObjectRegistry *objects, const char *id, int threadIndex);
@@ -33,14 +28,26 @@ public:
 	Module::Type getType();
 	Resource *Process(Resource *resource);
 
+	class Condition;
+	class Action;
+	class Rule;
+
 private:
 	int typeId;		// to create TestResource
 
 	int items;		// guarded by ObjectLock
+	char *ruleList;		// guarded by ObjectLock
+	char *ruleFile;		// guarded by ObjectLock
+
+	vector<Filter::Rule*> rules;
 
 	ObjectValues<Filter> *values;
 
 	char *getItems(const char *name);
+	char *getRuleList(const char *name);
+	void setRuleList(const char *name, const char *value);
+	char *getRuleFile(const char *name);
+	void setRuleFile(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
@@ -52,6 +59,7 @@ public:
 	public:
 		enum OperatorType {
 			INT_EQ, INT_NE, INT_LT, INT_LE, INT_GT, INT_GE,
+			LONG_EQ, LONG_NE, LONG_LT, LONG_LE, LONG_GT, LONG_GE,
 			STRING_EQ, STRING_NE, STRING_LT, STRING_GT,
 			STRING_REGEX, STRING_NREGEX, STRING_REGEX_SUBST,
 			IP4_EQ, IP4_NE,
@@ -62,26 +70,18 @@ public:
 		~Condition() {};
 		bool Init(string *data);
 		bool isTrue(WebResource *wr);
-		string getId() { return ""; }; // for logging
 
 	private:
-		// variable getters
-		const char *(WebResource::*fgs)();
-		int (WebResource::*fgi)();
-		ip4_addr_t (WebResource::*fga4)();
-		ip6_addr_t (WebResource::*fga6)();
-		const char *(WebResource::*fgsn)(const char*);
-		// variable setters
-		void (WebResource::*fss)(const char*);
-		void (WebResource::*fsi)(int);
-		void (WebResource::*fssn)(const char*, const char*);
+		bool length;		// length(string)
+		std::string name;	// used for header values
+		// variable
+		WebResource::FieldInfo info;
 		// operator
 		OperatorType op;
-		bool length;
-		std::string name;	// used for header values
 		// value
 		std::string sValue;
 		int iValue;
+		long lValue;
 		ip4_addr_t a4Value;
 		ip6_addr_t a6Value;
 		int prefix;
@@ -106,21 +106,17 @@ public:
 		~Action() {};
 		bool Init(string *data);
 		ActionType Apply(WebResource *wr);
-		string getId() { return ""; }; // for logging
 
 	private:
 		// action: ACCEPT | DROP | CONTINUE | STATUS = xxx
 		ActionType type;
 		// variable setters
-		void (WebResource::*fss)(const char*);
-		void (WebResource::*fsi)(int);
-		void (WebResource::*fsa4)(ip4_addr_t);
-		void (WebResource::*fsa6)(ip6_addr_t);
-		void (WebResource::*fssn)(const char*, const char*);
+		WebResource::FieldInfo info;
 		// values
 		std::string name;	// used for header values
 		std::string sValue;
 		int iValue;
+		long lValue;
 		ip4_addr_t a4Value;
 		ip6_addr_t a6Value;
 
@@ -131,10 +127,13 @@ public:
 	class Rule {
 	public:
 		Rule() {};
-		~Rule() {};
+		~Rule();
 		bool Init(string *data);
-		bool Apply(WebResource *wr);
+		Filter::Action::ActionType Apply(WebResource *wr);
 	private:
+		vector<Condition*> conditions;
+		vector<Action*> actions;
+
 		static log4cxx::LoggerPtr logger;
 	};
 };
