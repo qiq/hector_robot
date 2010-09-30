@@ -131,11 +131,13 @@ Resource *Filter::Process(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
 	if (wr) {
 		// process rule-by rule and deal with the resource accordingly
+		int i = 0;
 		for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
 			switch ((*iter)->Apply(wr)) {
 			case Filter::Action::ACCEPT:
 				return resource;
 			case Filter::Action::DROP:
+				LOG_DEBUG("DROP " << wr->getId() << " [" << i << "]");
 				delete wr;
 				return NULL;
 			case Filter::Action::CONTINUE:
@@ -143,6 +145,7 @@ Resource *Filter::Process(Resource *resource) {
 				// do nothing
 				break;
 			}
+			i++;
 		}
 	}
 	return resource;

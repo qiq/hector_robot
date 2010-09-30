@@ -34,6 +34,7 @@ public:
 	// status may be tested in Processor to select target queue
 	int getStatus();
 	void setStatus(int status);
+
 	// save and restore resource
 	std::string *Serialize();
 	bool Deserialize(std::string *s);
@@ -59,6 +60,12 @@ public:
 	const char *getHeaderValue(const char *name);
 	void setExtractedUrls(std::vector<std::string> *extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
+	void setIp4Addr(ip4_addr_t addr);
+	ip4_addr_t getIp4Addr();
+	void setIp6Addr(ip6_addr_t addr);
+	ip6_addr_t getIp6Addr();
+	void setIpAddrExpire(long time);
+	long getIpAddrExpire();
 
         void setUrlScheme(const char *urlScheme);
         const char *getUrlScheme();
@@ -205,6 +212,47 @@ inline void WebResource::setContent(const char *content) {
 
 inline const char *WebResource::getContent() {
 	return r.content().c_str();
+}
+
+inline void WebResource::setIp4Addr(ip4_addr_t addr) {
+	r.set_ip4_addr(addr.addr);
+}
+
+inline ip4_addr_t WebResource::getIp4Addr() {
+	ip4_addr_t a;
+	a.addr = r.ip4_addr();
+	return a;
+}
+
+inline void WebResource::setIp6Addr(ip6_addr_t addr) {
+	uint64_t a = 0, b = 0;
+	for (int i = 0; i < 8; i++) {
+		a = a*8 + addr.addr[i];
+		b = b*8 + addr.addr[i+8];
+	}
+	r.set_ip6_addr_1(a);
+	r.set_ip6_addr_2(b);
+}
+
+inline ip6_addr_t WebResource::getIp6Addr() {
+	ip6_addr_t addr;
+	uint64_t a = r.ip6_addr_1();
+	uint64_t b = r.ip6_addr_2();
+	for (int i = 7; i >= 0; i--) {
+		addr.addr[i] = a & 0x00000000000000FF;
+		a >>= 8;
+		addr.addr[i+8] = b & 0x00000000000000FF;
+		a >>= 8;
+	}
+	return addr;
+}
+
+inline void WebResource::setIpAddrExpire(long time) {
+	r.set_ip_addr_expire(time);
+}
+
+inline long WebResource::getIpAddrExpire() {
+	return (long)r.ip_addr_expire();
 }
 
 inline void WebResource::setUrlScheme(const char *urlScheme) {

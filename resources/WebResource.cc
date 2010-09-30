@@ -103,8 +103,21 @@ char *WebResource::toString(Object::LogLevel logLevel) {
 		snprintf(buf, sizeof(buf), " %s:%d %s %s %s)", this->getUrlHost(), this->getUrlPort(), this->getUrlPath(), this->getUrlQuery(), this->getUrlRef());
 		s += buf;
 	}
-	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d\n", this->getTime(), this->getMimeType(), strlen(this->getContent()));
+	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType(), strlen(this->getContent()));
 	s += buf;
+	char *a = ip4Addr2Str(this->getIp4Addr());
+	snprintf(buf, sizeof(buf), ", ip4: %s", a);
+	free(a);
+	s += buf;
+	a = ip6Addr2Str(this->getIp6Addr());
+	snprintf(buf, sizeof(buf), ", ip6: %s", a);
+	free(a);
+	s += buf;
+	if (this->getIpAddrExpire()) {
+		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
+		s += buf;
+	}
+	s += "\n";
 	vector<string> *v = this->getHeaderNames();
 	if (v) {
 		s += "headers:\n";
@@ -137,11 +150,11 @@ char *WebResource::toString(Object::LogLevel logLevel) {
 WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 	WebResource::FieldInfo result;
 	if (!strcmp(name, "id")) {
-		result.type = INTEGER;
+		result.type = INT;
 		result.get.i = &WebResource::getId;
 		result.set.i = &WebResource::setId;
 	} else if (!strcmp(name, "status")) {
-		result.type = INTEGER;
+		result.type = INT;
 		result.get.i = &WebResource::getStatus;
 		result.set.i = &WebResource::setStatus;
 	} else if (!strcmp(name, "url")) {
@@ -152,7 +165,7 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.type = LONG;
 		result.get.l = &WebResource::getTime;
 		result.set.l = &WebResource::setTime;
-	} else if (!strcmp(name, "mimeType")) {
+	} else if (!strcmp(name, "time")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getMimeType;
 		result.set.s = &WebResource::setMimeType;
@@ -160,18 +173,26 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.type = STRING;
 		result.get.s = &WebResource::getMimeType;
 		result.set.s = &WebResource::setMimeType;
-	} else if (!strcmp(name, "content")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getContent;
-		result.set.s = &WebResource::setContent;
 	} else if (!strcmp(name, "content")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getContent;
 		result.set.s = &WebResource::setContent;
 	} else if (!strcmp(name, "header")) {
-		result.type = STRING;
+		result.type = STRING2;
 		result.get.s2 = &WebResource::getHeaderValue;
 		result.set.s2 = &WebResource::setHeaderValue;
+	} else if (!strcmp(name, "ip4Addr")) {
+		result.type = IP4;
+		result.get.a4 = &WebResource::getIp4Addr;
+		result.set.a4 = &WebResource::setIp4Addr;
+	} else if (!strcmp(name, "ip6Addr")) {
+		result.type = IP6;
+		result.get.a6 = &WebResource::getIp6Addr;
+		result.set.a6 = &WebResource::setIp6Addr;
+	} else if (!strcmp(name, "ipAddrExpire")) {
+		result.type = LONG;
+		result.get.l = &WebResource::getIpAddrExpire;
+		result.set.l = &WebResource::setIpAddrExpire;
 	} else if (!strcmp(name, "urlScheme")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlScheme;
@@ -189,7 +210,7 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.get.s = &WebResource::getUrlHost;
 		result.set.s = &WebResource::setUrlHost;
 	} else if (!strcmp(name, "UrlPort")) {
-		result.type = INTEGER;
+		result.type = INT;
 		result.get.i = &WebResource::getUrlPort;
 		result.set.i = &WebResource::setUrlPort;
 	} else if (!strcmp(name, "UrlPath")) {

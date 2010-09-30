@@ -99,9 +99,9 @@ sub Process() {
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
-		$resource->setIpAddr4($host);
+		$resource->setIp4Addr(str2Ip4Addr($host));
 	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
-		$resource->setIpAddr6();
+		$resource->setIpAddr6(str2Ip4Addr($host));
 	} else {
 		my $request = $self->{'_resolver'}->search($host, 'A');
 		if ($request) {
