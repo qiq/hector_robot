@@ -17,7 +17,7 @@
 
 void skipWs(std::string *data);
 bool parseLabel(std::string *data, std::string *value);
-bool parseString(std::string *data, std::string *value, bool separator);
+bool parseString(std::string *data, std::string *value, char separator);
 bool parseInt(std::string *data, int *value);
 bool parseLong(std::string *data, long *value);
 bool parseIp4(std::string *data, ip4_addr_t *value);

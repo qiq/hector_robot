@@ -44,7 +44,7 @@ sub Init {
 			$self->{$p->[0]} = $p->[1];
 		}
 	}
-	$self->{'_resolver'} = Net::DNS::Resolver->new(),
+	$self->{'_resolver'} = Net::DNS::Resolver->new(search => ''),
 
 	return 1;
 }
@@ -99,16 +99,16 @@ sub Process() {
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
-		$resource->setIp4Addr(str2Ip4Addr($host));
+		$resource->setIp4Addr(Hector::str2Ip4Addr($host));
 	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
-		$resource->setIpAddr6(str2Ip4Addr($host));
+		$resource->setIp6Addr(Hector::str2Ip6Addr($host));
 	} else {
 		my $request = $self->{'_resolver'}->search($host, 'A');
 		if ($request) {
 			foreach my $rr ($request->answer) {
 				next unless $rr->type eq "A";
 				$self->{'_object'}->log_error("$host: ".$rr->address.' ('.$rr->ttl.')');
-				$resource->setIpAddr4($rr->address);
+				$resource->setIp4Addr(Hector::str2Ip4Addr($rr->address));
 				$resource->setIpAddrExpire(time() + $rr->ttl);
 			}
 		} else {

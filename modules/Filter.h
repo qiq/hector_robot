@@ -128,7 +128,7 @@ public:
 	public:
 		Rule() {};
 		~Rule();
-		bool Init(string *data);
+		bool Init(string *line);
 		Filter::Action::ActionType Apply(WebResource *wr);
 	private:
 		vector<Condition*> conditions;

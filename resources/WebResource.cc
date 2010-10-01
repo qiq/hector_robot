@@ -165,10 +165,6 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.type = LONG;
 		result.get.l = &WebResource::getTime;
 		result.set.l = &WebResource::setTime;
-	} else if (!strcmp(name, "time")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getMimeType;
-		result.set.s = &WebResource::setMimeType;
 	} else if (!strcmp(name, "mimeType")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getMimeType;
@@ -197,31 +193,31 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlScheme;
 		result.set.s = &WebResource::setUrlScheme;
-	} else if (!strcmp(name, "UrlUsername")) {
+	} else if (!strcmp(name, "urlUsername")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlUsername;
 		result.set.s = &WebResource::setUrlUsername;
-	} else if (!strcmp(name, "UrlPassword")) {
+	} else if (!strcmp(name, "urlPassword")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlPassword;
 		result.set.s = &WebResource::setUrlPassword;
-	} else if (!strcmp(name, "UrlHost")) {
+	} else if (!strcmp(name, "urlHost")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlHost;
 		result.set.s = &WebResource::setUrlHost;
-	} else if (!strcmp(name, "UrlPort")) {
+	} else if (!strcmp(name, "urlPort")) {
 		result.type = INT;
 		result.get.i = &WebResource::getUrlPort;
 		result.set.i = &WebResource::setUrlPort;
-	} else if (!strcmp(name, "UrlPath")) {
+	} else if (!strcmp(name, "urlPath")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlPath;
 		result.set.s = &WebResource::setUrlPath;
-	} else if (!strcmp(name, "UrlQuery")) {
+	} else if (!strcmp(name, "urlQuery")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlQuery;
 		result.set.s = &WebResource::setUrlQuery;
-	} else if (!strcmp(name, "UrlRef")) {
+	} else if (!strcmp(name, "urlRef")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlRef;
 		result.set.s = &WebResource::setUrlRef;

@@ -14,6 +14,8 @@ void skipWs(string *data) {
 	size_t offset = data->find_first_not_of(" \t\n\r");
 	if (offset != string::npos)
 		data->erase(0, offset);
+	else
+		data->clear();
 }
 
 bool parseLabel(string *data, string *value) {
@@ -23,6 +25,7 @@ bool parseLabel(string *data, string *value) {
 		int c = data->at(offset);
 		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '1') || c == '_'))
 			break;
+		offset++;
 	}
 	if (offset != string::npos) {
 		if (offset == 0)

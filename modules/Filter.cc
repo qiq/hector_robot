@@ -101,7 +101,7 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 		string line;
 		if (pos != string::npos) {
 			line = data.substr(0, pos);
-			data.erase(0, pos);
+			data.erase(0, pos+1);
 		} else {
 			line = data;
 			data.clear();
@@ -135,9 +135,10 @@ Resource *Filter::Process(Resource *resource) {
 		for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
 			switch ((*iter)->Apply(wr)) {
 			case Filter::Action::ACCEPT:
+				LOG_DEBUG("[" << wr->getId() << "]: ACCEPT #" << i);
 				return resource;
 			case Filter::Action::DROP:
-				LOG_DEBUG("DROP " << wr->getId() << " [" << i << "]");
+				LOG_DEBUG("[" << wr->getId() << "]: DROP #" << i);
 				delete wr;
 				return NULL;
 			case Filter::Action::CONTINUE:
@@ -155,6 +156,7 @@ log4cxx::LoggerPtr Filter::Condition::logger(log4cxx::Logger::getLogger("module.
 
 bool Filter::Condition::Init(string *data) {
 	// first part, what: label | length(label) | label[name]
+	length = false;
 	string label;
 	if (!parseLabel(data, &label)) {
 		LOG4CXX_ERROR(logger, "Invalid label: " << data);
@@ -218,7 +220,7 @@ bool Filter::Condition::Init(string *data) {
 		data->clear();
 	}
 
-	bool error;
+	bool error = false;
 	if (op == "==") {
 		switch (this->info.type) {
 		case Resource::STRING:
@@ -517,10 +519,13 @@ bool Filter::Action::Init(string *data) {
 	}
 	if (label == "ACCEPT") {
 		this->type = ACCEPT;
+		return true;
 	} else if (label == "DROP") {
 		this->type = DROP;
+		return true;
 	} else if (label == "CONTINUE") {
 		this->type = CONTINUE;
+		return true;
 	} else if (label == "STATUS") {
 		this->type = SETVAL;
 		this->info.type = Resource::INT;
@@ -636,70 +641,47 @@ Filter::Rule::~Rule() {
 		delete (*iter);
 }
 
-bool Filter::Rule::Init(string *data) {
-	while (data->length() > 0) {
-		// one line: possibly concatenate lines, if there is
-		// a backslash at the end of the line
-		size_t pos = 0;
-		do {
-			pos = data->find_first_of('\n', pos);
-			if (pos == string::npos)
-				break;
-		} while (pos > 0 && data->at(pos-1) == '\\');
-		string line;
-		if (pos != string::npos) {
-			line = data->substr(0, pos);
-			data->erase(0, pos);
-		} else {
-			line = *data;
-			data->clear();
-		}
-		// skip empty lines
-		skipWs(&line);
-		if (line.length() == 0)
-			continue;
-
-		// create a rule from line: parse [condition|*] => [action]
-		skipWs(&line);
-		if (line.length() > 0 && line.at(0) == '*') {
-			line.erase(0, 1);
-		} else {
-			while (true) {
-				Condition *c = new Condition();
-				if (!c->Init(&line)) {
-					delete c;
-					return false;
-				}
-				conditions.push_back(c);
-				skipWs(&line);
-				if (line.length() <= 1 || line.at(0) != '&' || line.at(1) != '&')
-					break;
-			}
-		}
-		// => 
-		skipWs(&line);
-		if (line.length() <= 1 || line.at(0) != '=' || line.at(1) != '>') {
-			LOG4CXX_ERROR(logger, "Expected => : " << line);
-			return false;
-		}
-		line.erase(0, 1);
-
-		// actions
+bool Filter::Rule::Init(string *line) {
+	// create a rule from line: parse [condition|*] => [action]
+	skipWs(line);
+	if (line->length() > 0 && line->at(0) == '*') {
+		line->erase(0, 1);
+	} else {
 		while (true) {
-			Action *a = new Action();
-			if (!a->Init(&line)) {
-				delete a;
+			Condition *c = new Condition();
+			if (!c->Init(line)) {
+				delete c;
 				return false;
 			}
-			actions.push_back(a);
-			skipWs(&line);
-			if (line.length() == 0 || line.at(0) != ',')
+			conditions.push_back(c);
+			skipWs(line);
+			if (line->length() <= 1 || line->at(0) != '&' || line->at(1) != '&')
 				break;
 		}
-		if (line.length() > 0) {
-			LOG4CXX_ERROR(logger, "Invalid trailer: " << line);
+	}
+	// => 
+	skipWs(line);
+	if (line->length() <= 1 || line->at(0) != '=' || line->at(1) != '>') {
+		LOG4CXX_ERROR(logger, "Expected => : " << *line);
+		return false;
+	}
+	line->erase(0, 2);
+
+	// actions
+	while (true) {
+		Action *a = new Action();
+		if (!a->Init(line)) {
+			delete a;
 			return false;
 		}
+		actions.push_back(a);
+		skipWs(line);
+		if (line->length() == 0 || line->at(0) != ',')
+			break;
+	}
+	if (line->length() > 0) {
+		LOG4CXX_ERROR(logger, "Invalid trailer: " << *line);
+		return false;
 	}
 	return true;
 }
