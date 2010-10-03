@@ -68,7 +68,7 @@ public:
 
 		Condition() {};
 		~Condition() {};
-		bool Init(string *data);
+		bool Init(string *data, int lineNo);
 		bool isTrue(WebResource *wr);
 
 	private:
@@ -104,7 +104,7 @@ public:
 
 		Action() {};
 		~Action() {};
-		bool Init(string *data);
+		bool Init(string *data, int lineNo);
 		ActionType Apply(WebResource *wr);
 
 	private:
@@ -128,7 +128,7 @@ public:
 	public:
 		Rule() {};
 		~Rule();
-		bool Init(string *line);
+		bool Init(string *line, int lineNo);
 		Filter::Action::ActionType Apply(WebResource *wr);
 	private:
 		vector<Condition*> conditions;

@@ -15,35 +15,28 @@ test1: CreateWebResource module testing.
 				<modules>
 					<Module id="M_input" type="perl" lib="CreateWebResource.pm">
 						<param name="urlList">
-							http://url1.com/
-							http://url2.com/
 <![CDATA[
-http://url3.com/
-http://url4.com/
+							http://qiq:abc@localhost/path?q=a#2
+							http://qiq:abc@localhost:8080/path?q=a#2
+							http://google.com/path?q=a#2
 ]]>
-							<![CDATA[
-							http://url5.com/
-							http://url6.com/
-							]]>
 						</param>
-						<param name="urlFile" value="test1.data.url"/>
 					</Module>
-				</modules>
-				<output>
-					<nextProcessor ref="P_output"/>
-				</output>
-			</Processor>
-			<Processor id="P_output">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_dump" lib="Dump.la"/>
-					<Module id="M_save" lib="Save.la">
-						<param name="filename" value="test1.data.out"/>
+					<Module id="M_xxx2" lib="ParseUrl.la"/>
+					<Module id="M_dump" type="perl" lib="Dump.pm"/>
+					<Module id="M_filter" lib="Filter.la">
+						<param name="ruleList">
+<![CDATA[
+urlPort == 8080 => ACCEPT
+url =~ /.*localhost.*/ => DROP
+url =~ s/google.com/idnes.cz/g => ACCEPT
+]]>
+						</param>
 					</Module>
+					<Module id="M_xxx" type="perl" lib="DnsResolver.pm"/>
+					<Module id="M_dump2" type="perl" lib="Dump.pm"/>
+					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
-				<input>
-					<queue/>
-				</input>
 			</Processor>
 		</ProcessingEngine>
 	</Server>

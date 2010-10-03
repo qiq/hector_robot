@@ -227,8 +227,8 @@ inline ip4_addr_t WebResource::getIp4Addr() {
 inline void WebResource::setIp6Addr(ip6_addr_t addr) {
 	uint64_t a = 0, b = 0;
 	for (int i = 0; i < 8; i++) {
-		a = a*8 + addr.addr[i];
-		b = b*8 + addr.addr[i+8];
+		a = (a << 8) + addr.addr[15-i];
+		b = (b << 8) + addr.addr[7-i];
 	}
 	r.set_ip6_addr_1(a);
 	r.set_ip6_addr_2(b);
@@ -238,11 +238,11 @@ inline ip6_addr_t WebResource::getIp6Addr() {
 	ip6_addr_t addr;
 	uint64_t a = r.ip6_addr_1();
 	uint64_t b = r.ip6_addr_2();
-	for (int i = 7; i >= 0; i--) {
-		addr.addr[i] = a & 0x00000000000000FF;
+	for (int i = 0; i < 8; i++) {
+		addr.addr[8+i] = a & 0x00000000000000FF;
 		a >>= 8;
-		addr.addr[i+8] = b & 0x00000000000000FF;
-		a >>= 8;
+		addr.addr[i] = b & 0x00000000000000FF;
+		b >>= 8;
 	}
 	return addr;
 }

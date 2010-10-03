@@ -23,7 +23,7 @@ bool parseLabel(string *data, string *value) {
 	size_t offset = 0;
 	while (offset < data->length()) {
 		int c = data->at(offset);
-		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '1') || c == '_'))
+		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'))
 			break;
 		offset++;
 	}
@@ -106,6 +106,7 @@ bool parseLong(string *data, int *value) {
 }
 
 bool parseIp4(string *data, ip4_addr_t *value) {
+	skipWs(data);
 	size_t offset = data->find_first_not_of("0123456789.");
 	string s;
 	if (offset != string::npos) {
@@ -117,11 +118,14 @@ bool parseIp4(string *data, ip4_addr_t *value) {
 		s = (*data);
 		data->clear();
 	}
-	return inet_pton(AF_INET, s.c_str(), &value->addr) == 1;
+	bool result = inet_pton(AF_INET, s.c_str(), &value->addr) == 1;
+	value->addr = ntohl(value->addr);
+	return result;
 }
 
 bool parseIp6(string *data, ip6_addr_t *value) {
-	size_t offset = data->find_first_not_of("0123456789.:");
+	skipWs(data);
+	size_t offset = data->find_first_not_of("0123456789abcdefABCDEF:");
 	string s;
 	if (offset != string::npos) {
 		if (offset == 0)
@@ -132,5 +136,11 @@ bool parseIp6(string *data, ip6_addr_t *value) {
 		s = (*data);
 		data->clear();
 	}
-	return inet_pton(AF_INET6, s.c_str(), &value->addr) == 1;
+	bool result = inet_pton(AF_INET6, s.c_str(), &value->addr) == 1;
+	for (int i = 0; i < 8; i++) {
+		uint8_t tmp = value->addr[i];
+		value->addr[i] = value->addr[15-i];
+		value->addr[15-i] = tmp;
+	}
+	return result;
 }

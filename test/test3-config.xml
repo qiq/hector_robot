@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+test1: CreateWebResource module testing.
+-->
+<Config>
+	<Server id="test" lib="RobotServer.la">
+		<threads>1</threads>
+		<serverHost>*</serverHost>
+		<serverPort>1100</serverPort>
+		<logConfig>test.log.props</logConfig>
+		<ProcessingEngine id="test_processing_engine">
+			<Processor id="P_input">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" type="perl" lib="CreateWebResource.pm">
+						<param name="urlList"><![CDATA[
+							http://qiq:qiq@localhost/path?q=xxx#ref
+							http://qiq:qiq@localhost:8080/path?q=xxx#ref
+						]]></param>
+					</Module>
+					<Module id="M_parse" lib="ParseUrl.la"/>
+					<Module id="M_filter" lib="Filter.la">
+						<param name="ruleList"><![CDATA[
+							* => urlRef = "abc"
+							urlHost == "localhost" => urlScheme = ftp
+							urlHost != "localhostx" => urlHost = "xxxxxx"
+							urlHost !~ /.*x$/ => DROP
+							urlHost =~ /l.*lhost/ => status = 11, urlHost = "nohost"
+							urlHost < "test" => urlPath = "PATH"
+							urlHost > "test" => urlPath = "HATP"
+							urlHost > "test" && urlPath == "HATP" => urlPath = "pAtH"
+							ip4Addr =~ 127.0.0.0/8 => ip4Addr = 147.231.50.50, status = 1
+							ip4Addr !~ 147.231.50.50/8 => urlQuery = "abc", status = 0
+							ip6Addr =~ ::/44 => ip6Addr = 1:2:3:4:5:6:7:8
+							urlPort == 8080 => urlUsername = "", urlPassword = ""
+							urlPort != 8080 => urlPassword = "password", ACCEPT
+							* => DROP
+						]]></param>
+					</Module>
+					<Module id="M_save" lib="Save.la">
+						<param name="filename" value="test3.data.out"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
