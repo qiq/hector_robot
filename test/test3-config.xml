@@ -25,6 +25,7 @@ test1: CreateWebResource module testing.
 							* => urlRef = "abc"
 							urlHost == "localhost" => urlScheme = ftp
 							urlHost != "localhostx" => urlHost = "xxxxxx"
+							urlHost =~ /.*XXX$/i && urlRef =~ /abc/ => urlRef = "rreeff"
 							urlHost !~ /.*x$/ => DROP
 							urlHost =~ /l.*lhost/ => status = 11, urlHost = "nohost"
 							urlHost < "test" => urlPath = "PATH"
@@ -38,6 +39,7 @@ test1: CreateWebResource module testing.
 							* => DROP
 						]]></param>
 					</Module>
+					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_save" lib="Save.la">
 						<param name="filename" value="test3.data.out"/>
 					</Module>

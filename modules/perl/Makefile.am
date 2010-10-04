@@ -2,7 +2,7 @@ if WITH_SWIG
 if WITH_PERL
 
 perldir = $(libdir)/hector/modules/perl
-perl_SCRIPTS = CreateWebResource.pm Download.pm
+perl_SCRIPTS = CreateWebResource.pm Download.pm ResolveDns.pm
 
 EXTRA_DIST = ${perl_SCRIPTS}
 

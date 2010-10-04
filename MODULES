@@ -1,0 +1,102 @@
+Modules overview
+
+Name: Filter.la
+Type: simple, native
+Dependencies: pcrecpp
+
+Parameters:
+items		r/o	Total items processed
+ruleList	r/w	Rules (use CDATA), only read at Init() time
+ruleFile	r/w	File with rules, only read at Init() time
+
+Description:
+Filter WebResources according to rules specified. Every line contains one rule
+(backslash + newline is supported). Rule description:
+
+condition <&& condition >* => action <, action>*
+
+Where condition is:
+* (always apply)
+string OP "value" (OP: ==, != , <, >)
+string OP /regex/[i] (OP: =~, !~)
+string =~ s/regex/replacement/[gi]
+int OP value (OP: ==, !=, <, >, <=, >=)
+ip4 OP addr/prefix (OP: =~, !~)
+ip6 OP addr/prefix (OP: =~, !~)
+
+Regular expressions matches full word by default abcd !~ /ab/, but abcd =~ /.*cd/.
+
+And action is:
+CONTINUE (default): process next rule
+ACCEPT: do not process any more rules, return resource
+DROP: do not process any more rules, drop resource
+string = "value"
+int|ip4|ip6 = value
+
+Lines starting with # and empty lines are ignored.
+
+
+Name: GenerateWebResource.la
+Type: simple, native
+Dependencies:
+
+Parameters:
+items		r/o	Total items processed
+maxItems	r/w	Number of resources to generate
+idPrefix	r/w	Prefix is part of an URL
+
+Description:
+Generate maxItems WebResources, only URL is filled (with some dummy string).
+Prefix may be used to distinguish between different sources.
+
+
+Name: ParseUrl.la
+Type: simple, native
+Dependencies: GoogleURL
+
+Parameters:
+items		r/o	Total items processed
+maxItems	r/w	Number of resources to generate
+idPrefix	r/w	Prefix is part of an URL
+
+Description:
+Parse URL using Google URL library: urlScheme, urlUsername, urlPassword,
+urlHost, urlPath, urlQuery, urlRef.
+
+
+Name: CreateWebResource.pm
+Type: simple, perl
+Dependencies:
+
+Parameters:
+items		r/o	Total items processed
+urlList		r/w	List of URL, one URL per line
+urlFile		r/w	File with URL list
+
+Description:
+Create Web Resources, fill URL according to the list.
+
+
+Name: ResolveDns.pm
+Type: simple, perl
+Dependencies: Net::DNS
+
+Parameters:
+items		r/o	Total items processed
+
+Description:
+Resolve urlHost (pre-processed from the fill URL) DNS name into IP address.
+
+
+Name: Download.pm
+Type: simple, perl
+Dependencies: LWP::UserAgent
+
+Parameters:
+items		r/o	Total items processed
+userAgent	r/w	User Agent header field to use.
+from		r/w	From header to use.
+timeout		r/w	Timeout (in seconds)
+
+Description:
+Download URL from the WebResource using LWP.

@@ -106,11 +106,13 @@ sub Process() {
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
-	my $v = Hector::StringVector->new();
+	my $names = Hector::StringVector->new();
+	my $values = Hector::StringVector->new();
 	foreach my $name ($response->header_field_names()) {
-		$v->push($name.': '.$response->header($name));
+		$names->push($name);
+		$values->push("".$response->header($name)); # N.B.: for conversion to string
 	}
-	$resource->setHeaderFields($v);
+	$resource->setHeaderFields($names, $values);
 	if ($response->is_success) {
 		$resource->setMimeType($response->header('Content-Type'));
 		$resource->setContent($response->decoded_content);

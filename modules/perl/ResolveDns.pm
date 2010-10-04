@@ -1,6 +1,6 @@
 # items: number of resources created
 
-package DnsResolver;
+package ResolveDns;
 
 use warnings;
 use strict;
