@@ -389,12 +389,22 @@ bool Filter::Condition::Init(string *data, int lineNo) {
 					return false;
 				}
 				this->op = STRING_REGEX_SUBST;
-				if (data->length() > 0 && data->at(0) == 'g') {
+			}
+			// process g/i
+			bool caseless = false;
+			while (data->length() > 0) {
+				char c = data->at(0);
+				if (c == 'g') {
 					this->global = true;
 					data->erase(0, 1);
+				} else if (c == 'i') {
+					caseless = true;
+					data->erase(0, 1);
+				} else {
+					break;
 				}
 			}
-			this->regex = new pcrecpp::RE(match, pcrecpp::UTF8());
+			this->regex = new pcrecpp::RE(match, caseless ? pcrecpp::RE_Options().set_caseless(true).set_utf8(true) : pcrecpp::RE_Options().set_utf8(true));
 			break;
 		}
 	case IP4_EQ:
