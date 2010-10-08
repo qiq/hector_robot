@@ -17,7 +17,7 @@ public:
 	~ComposeUrl();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();
-	Resource *Process(Resource *resource);
+	Resource *ProcessSimple(Resource *resource);
 
 private:
 	int typeId;		// to create TestResource

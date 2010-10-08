@@ -40,6 +40,7 @@ bool parseLabel(string *data, string *value) {
 }
 
 bool parseString(string *data, string *value, char separator) {
+	value->clear();
 	skipWs(data);
 	if (data->length() == 0)
 		return false;

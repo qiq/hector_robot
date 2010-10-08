@@ -36,7 +36,7 @@ bool ParseUrl::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *ParseUrl::Process(Resource *resource) {
+Resource *ParseUrl::ProcessSimple(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
 	if (wr) {
 		GURL *gurl = new GURL(wr->getUrl());

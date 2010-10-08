@@ -73,6 +73,12 @@ const char *WebResource::getHeaderValue(const char *name) {
 	return iter->second.c_str();
 }
 
+void WebResource::clearHeaderFields() {
+	r.clear_header_names();
+	r.clear_header_values();
+	headers.clear();
+}
+
 void WebResource::setExtractedUrls(vector<string> *extracted_urls) {
 	r.clear_extracted_urls();
 	for (vector<string>::iterator iter = extracted_urls->begin(); iter != extracted_urls->end(); ++iter) {
@@ -86,6 +92,10 @@ vector<string> *WebResource::getExtractedUrls() {
 		result->push_back(r.extracted_urls(i));
 	}
 	return result;
+}
+
+void WebResource::clearExtractedUrls() {
+	r.clear_extracted_urls();
 }
 
 char *WebResource::toString(Object::LogLevel logLevel) {

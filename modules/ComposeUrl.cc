@@ -12,8 +12,9 @@
 
 ComposeUrl::ComposeUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	values = new ObjectValues<ComposeUrl>(this);
+	clear = 0;
 
+	values = new ObjectValues<ComposeUrl>(this);
 	values->addGetter("items", &ComposeUrl::getItems);
 	values->addGetter("clear", &ComposeUrl::getClear);
 	values->addSetter("clear", &ComposeUrl::setClear);
@@ -46,7 +47,7 @@ bool ComposeUrl::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *ComposeUrl::Process(Resource *resource) {
+Resource *ComposeUrl::ProcessSimple(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
 	if (wr && wr->getUrlScheme() != "") {
 		string s = wr->getUrlScheme();
@@ -67,6 +68,7 @@ Resource *ComposeUrl::Process(Resource *resource) {
 			s += "?";
 			s += wr->getUrlQuery();
 		}
+		wr->setUrl(s.c_str());
 
 		bool clear;
 		ObjectLockWrite();

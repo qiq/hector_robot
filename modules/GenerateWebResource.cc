@@ -62,14 +62,13 @@ bool GenerateWebResource::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *GenerateWebResource::Process(Resource *resource) {
+Resource *GenerateWebResource::ProcessInput(bool sleep) {
 	ObjectLockRead();
 	if (maxItems && items >= maxItems) {
 		ObjectUnlock();
 		return NULL;
 	}
 	ObjectUnlock();
-	assert(resource == NULL);
 	// we can use just new WebResource(), we use Resources::CreateResource() for demo purpose
 	WebResource *wr = dynamic_cast<WebResource*>(Resources::CreateResource(typeId));
 	wr->setId(getThreadIndex()*10000+items);

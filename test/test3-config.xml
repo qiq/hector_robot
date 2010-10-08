@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test1: CreateWebResource module testing.
+test3: Filter module test
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -22,22 +22,25 @@ test1: CreateWebResource module testing.
 					<Module id="M_parse" lib="ParseUrl.la"/>
 					<Module id="M_filter" lib="Filter.la">
 						<param name="ruleList"><![CDATA[
-							* => urlRef = "abc"
+							* => urlQuery = "abc"
 							urlHost == "localhost" => urlScheme = ftp
 							urlHost != "localhostx" => urlHost = "xxxxxx"
-							urlHost =~ /.*XXX$/i && urlRef =~ /abc/ => urlRef = "rreeff"
+							urlHost =~ /.*XXX$/i && urlQuery =~ /abc/ => urlQuery = "qqeerryy"
 							urlHost !~ /.*x$/ => DROP
 							urlHost =~ /l.*lhost/ => status = 11, urlHost = "nohost"
-							urlHost < "test" => urlPath = "PATH"
-							urlHost > "test" => urlPath = "HATP"
-							urlHost > "test" && urlPath == "HATP" => urlPath = "pAtH"
+							urlHost < "test" => urlPath = "/PATH"
+							urlHost > "test" => urlPath = "/HATP"
+							urlHost > "test" && urlPath == "/HATP" => urlPath = "/pAtH"
 							ip4Addr =~ 127.0.0.0/8 => ip4Addr = 147.231.50.50, status = 1
-							ip4Addr !~ 147.231.50.50/8 => urlQuery = "abc", status = 0
+							ip4Addr !~ 147.231.50.50/8 => urlQuery = "abcd", status = 0
 							ip6Addr =~ ::/44 => ip6Addr = 1:2:3:4:5:6:7:8
-							urlPort == 8080 => urlUsername = "", urlPassword = ""
-							urlPort != 8080 => urlPassword = "password", ACCEPT
+							urlPort == 8080 => clear(urlUsername), clear(urlPassword)
+							urlPort != 8080 => urlUsername = "nobody", clear(urlPassword), ACCEPT
 							* => DROP
 						]]></param>
+					</Module>
+					<Module id="M_compose" lib="ComposeUrl.la">
+						<param name="clear" value="1"/>
 					</Module>
 					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_save" lib="Save.la">

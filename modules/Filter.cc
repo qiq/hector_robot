@@ -129,7 +129,7 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *Filter::Process(Resource *resource) {
+Resource *Filter::ProcessSimple(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
 	if (wr) {
 		// process rule-by rule and deal with the resource accordingly
@@ -562,11 +562,6 @@ bool Filter::Action::Init(string *data, int lineNo) {
 	} else if (label == "CONTINUE") {
 		this->type = CONTINUE;
 		return true;
-	} else if (label == "STATUS") {
-		this->type = SETVAL;
-		this->info.type = Resource::INT;
-		this->info.get.i = &WebResource::getStatus;
-		this->info.set.i = &WebResource::setStatus;
 	} else if (label == "clear") {
 		this->type = CLEAR;
 		if (data->length() == 0 || data->at(0) != '(') {
@@ -583,6 +578,13 @@ bool Filter::Action::Init(string *data, int lineNo) {
 			LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 			return false;
 		}
+		return true;
+	} else if (label == "STATUS") {
+		this->type = SETVAL;
+		this->info.type = Resource::INT;
+		this->info.get.i = &WebResource::getStatus;
+		this->info.set.i = &WebResource::setStatus;
+		// to be continued :)
 	} else {
 		this->type = SETVAL;
 		info = WebResource::getFieldInfo(label.c_str());
@@ -611,7 +613,7 @@ bool Filter::Action::Init(string *data, int lineNo) {
 	// second part, operator =
 	skipWs(data);
 	if (data->length() == 0 || data->at(0) != '=') {
-		LOG4CXX_ERROR(logger, "= expected, got: " << data << " (line " << lineNo << ")");
+		LOG4CXX_ERROR(logger, "= expected, got: " << *data << " (line " << lineNo << ")");
 		return false;
 	}
 	data->erase(0, 1);
@@ -656,6 +658,9 @@ Filter::Action::ActionType Filter::Action::Apply(WebResource *wr) {
 		return DROP;
 	case CONTINUE:
 		return CONTINUE;
+	case CLEAR:
+		(wr->*info.clear)();
+		return CLEAR;
 	case SETVAL:
 		switch (info.type) {
 		case Resource::STRING:
@@ -748,7 +753,7 @@ Filter::Action::ActionType Filter::Rule::Apply(WebResource *wr) {
 	Filter::Action::ActionType result = Filter::Action::CONTINUE;
 	for (vector<Action*>::iterator iter = actions.begin(); iter != actions.end(); ++iter) {
 		Filter::Action::ActionType r = (*iter)->Apply(wr);
-		if (r != Filter::Action::SETVAL)
+		if (r == Filter::Action::ACCEPT || r == Filter::Action::DROP || r == Filter::Action::CONTINUE)
 			result = r;
 	}
 	return result;

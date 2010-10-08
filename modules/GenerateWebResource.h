@@ -16,7 +16,7 @@ public:
 	~GenerateWebResource();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();
-	Resource *Process(Resource *resource);
+	Resource *ProcessInput(bool sleep);
 
 private:
 	int typeId;		// to create TestResource

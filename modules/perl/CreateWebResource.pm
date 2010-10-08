@@ -106,7 +106,7 @@ sub RestoreCheckpoint {
 	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
-sub Process() {
+sub ProcessInput() {
 	my ($self, $resource) = @_;
 
 	if (defined $resource) {
@@ -122,14 +122,6 @@ sub Process() {
 	$resource->setUrl(shift(@{$self->{'_url'}}));
 	$self->{'items'}++;
 	return $resource;
-}
-
-sub ProcessMulti() {
-	my ($self, $inputResources, $outputResources) = @_;
-
-	$self->{'_object'}->log_error("ProcessMulti() is not implemented");
-
-	return 0;
 }
 
 1;

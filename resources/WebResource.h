@@ -65,7 +65,7 @@ public:
 	void clearHeaderFields();
 	void setExtractedUrls(std::vector<std::string> *extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
-	void clearExtracedUrls();
+	void clearExtractedUrls();
 	void setIp4Addr(ip4_addr_t addr);
 	ip4_addr_t getIp4Addr();
 	void clearIp4Addr();
