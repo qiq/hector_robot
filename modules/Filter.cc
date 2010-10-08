@@ -567,6 +567,22 @@ bool Filter::Action::Init(string *data, int lineNo) {
 		this->info.type = Resource::INT;
 		this->info.get.i = &WebResource::getStatus;
 		this->info.set.i = &WebResource::setStatus;
+	} else if (label == "clear") {
+		this->type = CLEAR;
+		if (data->length() == 0 || data->at(0) != '(') {
+			LOG4CXX_ERROR(logger, "Invalid format: ( expected" << *data << " (line " << lineNo << ")");
+			return false;
+		}
+		data->erase(0, 1);
+		if (!parseString(data, &label, ')')) {
+			LOG4CXX_ERROR(logger, "Invalid label encountered: " << *data << " (line " << lineNo << ")");
+			return false;
+		}
+		info = WebResource::getFieldInfo(label.c_str());
+		if (info.type == Resource::UNKNOWN) {
+			LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
+			return false;
+		}
 	} else {
 		this->type = SETVAL;
 		info = WebResource::getFieldInfo(label.c_str());
@@ -577,16 +593,16 @@ bool Filter::Action::Init(string *data, int lineNo) {
 		if (info.type == Resource::STRING2) {
 			// header: consume [, label2, ]
 			if (data->length() == 0 || data->at(0) != '[') {
-				LOG4CXX_ERROR(logger, "Invalid format: [ expected" << data << " (line " << lineNo << ")");
+				LOG4CXX_ERROR(logger, "Invalid format: [ expected" << *data << " (line " << lineNo << ")");
 				return false;
 			}
 			if (!parseLabel(data, &label)) {
-				LOG4CXX_ERROR(logger, "Unvalid label: " << data << " (line " << lineNo << ")");
+				LOG4CXX_ERROR(logger, "Unvalid label: " << *data << " (line " << lineNo << ")");
 				return false;
 			}
 			this->name = label;
 			if (data->length() == 0 || data->at(0) != '[') {
-				LOG4CXX_ERROR(logger, "Invalid format: ] expected" << data << " (line " << lineNo << ")");
+				LOG4CXX_ERROR(logger, "Invalid format: ] expected" << *data << " (line " << lineNo << ")");
 				return false;
 			}
 		}

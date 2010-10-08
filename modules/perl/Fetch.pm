@@ -1,6 +1,6 @@
 # items: number of resources created
 
-package Download;
+package Fetch;
 
 use warnings;
 use strict;

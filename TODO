@@ -1,37 +1,7 @@
+- test pro clear(label) ve filter modulu
+- ze by predelat processor, aby povolil multi moduly stejne jako single?
 - testy pro ruzne moduly
 	- (Perl i C++)
-	- velky test pro Filter module
-		+ popsat FIlter modul
-
-- testovaci moduly v Perlu
-	- FilterWebResource: filtrovaci modul:
-- rozmyslet, co by vsechno mel delat
-	- menit status (OK/not OK)
-	- mazat resource (vracet NULL)
-	- pracovat s cisly i stringy
-		- URL
-		- IP adresa (prefix)
-		- mime type
-		- content <![CDATA[ content =~ /test/ DROP content =~ /test/
-		  ACCEPT url =~ s/xxx/yyy/g ]]>
-length(content) > 100 && mimeType != "text/html" => mimeType = "aaa", DROP
-length(content) > 100 => content = "", STATUS = 10
-header[Content-Type] == "text/html" => ACCEPT
-mimeType != "text/html" => ACCEPT
-ipAddr4 =~ 124.123.123.0/24 => DROP
-hostname =~ /\.cuni\.cz$/ => ACCEPT
-hostname =~ s/xxx/yyy/g => CONTINUE
-* => DROP
-ACCEPT/DROP/CONTINUE/nastaveni promenne (hodnota dle typu), vcetne STATUS = xxx
-content =~ /test/ 0 stop
-content =~ /test/ 1
-content =~ s/test/test2/ STOP
-content =~ d// 0
-port == 8080 (>, <, !=) 1
-str == "..."
-		- napsat to v C++ by taky nebylo tak tezke, s pomoci pcre
-		struct { id, regex_type, regexp, action-if-match }, action bude DROP, SUBST, CLEAR, ACCEPT
-		- umoznovat i zmenu (pamatovat si, co je dirty a nakonec to zapsat (ne v C++, ale v Perlu)
 
 - resolver module v C++
   	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
@@ -41,15 +11,10 @@ str == "..."
 - stahovaci modul
 	v C++ pomoci curl (a libevent/libev)
 
-- seznam modulu, jejich parametru, vyzadovane knihovny a jejich licence
-
 - vyzkouset stahnout stranku
-
-- ostatni moduly asi zatim v Perlu, napsat testy
 
 - reorder modul
 - cistici modul
-- `
 
 DONE
 - resolver module (blokujici, v Perlu)

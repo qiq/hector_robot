@@ -48,41 +48,55 @@ public:
 
 	void setUrl(const char *url);
 	const char *getUrl();
+	void clearUrl();
 	void setTime(long time);
 	long getTime();
+	void clearTime();
 	void setMimeType(const char *mimeType);
 	const char *getMimeType();
+	void clearMimeType();
 	void setContent(const char *content);
 	const char *getContent();
+	void clearContent();
 	void setHeaderFields(std::vector<std::string> *names, std::vector<std::string> *values);
 	std::vector<std::string> *getHeaderNames();
 	void setHeaderValue(const char *name, const char *value);
 	const char *getHeaderValue(const char *name);
+	void clearHeaderFields();
 	void setExtractedUrls(std::vector<std::string> *extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
+	void clearExtracedUrls();
 	void setIp4Addr(ip4_addr_t addr);
 	ip4_addr_t getIp4Addr();
+	void clearIp4Addr();
 	void setIp6Addr(ip6_addr_t addr);
 	ip6_addr_t getIp6Addr();
+	void clearIp6Addr();
 	void setIpAddrExpire(long time);
 	long getIpAddrExpire();
+	void clearIpAddrExpire();
 
         void setUrlScheme(const char *urlScheme);
         const char *getUrlScheme();
+	void clearUrlScheme();
         void setUrlUsername(const char *urlUsername);
         const char *getUrlUsername();
+	void clearUrlUsername();
         void setUrlPassword(const char *urlPassword);
         const char *getUrlPassword();
+	void clearUrlPassword();
         void setUrlHost(const char *urlHost);
         const char *getUrlHost();
+	void clearUrlHost();
         void setUrlPort(int port);
         int getUrlPort();
+	void clearUrlPort();
         void setUrlPath(const char *urlPath);
         const char *getUrlPath();
+	void clearUrlPath();
         void setUrlQuery(const char *urlQuery);
         const char *getUrlQuery();
-        void setUrlRef(const char *urlRef);
-        const char *getUrlRef();
+        void clearUrlQuery();
 
 	static const int typeId = 10;
 
@@ -104,6 +118,7 @@ public:
 			void (WebResource::*a6)(ip6_addr_t);
 			void (WebResource::*s2)(const char*, const char*);
 		} set;
+		void (WebResource::*clear)();
 	} FieldInfo;
 
 	// get info about an item
@@ -190,12 +205,20 @@ inline const char *WebResource::getUrl() {
 	return r.url().c_str();
 }
 
+inline void WebResource::clearUrl() {
+	r.clear_url();
+}
+
 inline void WebResource::setTime(long time) {
 	r.set_time(time);
 }
 
 inline long WebResource::getTime() {
 	return (long)r.time();
+}
+
+inline void WebResource::clearTime() {
+	r.clear_time();
 }
 
 inline void WebResource::setMimeType(const char *mimeType) {
@@ -206,12 +229,20 @@ inline const char *WebResource::getMimeType() {
 	return r.mime_type().c_str();
 }
 
+inline void WebResource::clearMimeType() {
+	r.clear_mime_type();
+}
+
 inline void WebResource::setContent(const char *content) {
 	r.set_content(content);
 }
 
 inline const char *WebResource::getContent() {
 	return r.content().c_str();
+}
+
+inline void WebResource::clearContent() {
+	r.clear_content();
 }
 
 inline void WebResource::setIp4Addr(ip4_addr_t addr) {
@@ -222,6 +253,10 @@ inline ip4_addr_t WebResource::getIp4Addr() {
 	ip4_addr_t a;
 	a.addr = r.ip4_addr();
 	return a;
+}
+
+inline void WebResource::clearIp4Addr() {
+	r.clear_ip4_addr();
 }
 
 inline void WebResource::setIp6Addr(ip6_addr_t addr) {
@@ -247,12 +282,21 @@ inline ip6_addr_t WebResource::getIp6Addr() {
 	return addr;
 }
 
+inline void WebResource::clearIp6Addr() {
+	r.clear_ip6_addr_1();
+	r.clear_ip6_addr_2();
+}
+
 inline void WebResource::setIpAddrExpire(long time) {
 	r.set_ip_addr_expire(time);
 }
 
 inline long WebResource::getIpAddrExpire() {
 	return (long)r.ip_addr_expire();
+}
+
+inline void WebResource::clearIpAddrExpire() {
+	r.clear_ip_addr_expire();
 }
 
 inline void WebResource::setUrlScheme(const char *urlScheme) {
@@ -263,12 +307,20 @@ inline const char *WebResource::getUrlScheme() {
 	return r.url_scheme().c_str();
 }
 
+inline void WebResource::clearUrlScheme() {
+	r.clear_url_scheme();
+}
+
 inline void WebResource::setUrlUsername(const char *urlUsername) {
 	r.set_url_username(urlUsername);
 }
 
 inline const char *WebResource::getUrlUsername() {
 	return r.url_username().c_str();
+}
+
+inline void WebResource::clearUrlUsername() {
+	r.clear_url_username();
 }
 
 inline void WebResource::setUrlPassword(const char *urlPassword) {
@@ -279,12 +331,20 @@ inline const char *WebResource::getUrlPassword() {
 	return r.url_password().c_str();
 }
 
+inline void WebResource::clearUrlPassword() {
+	r.clear_url_password();
+}
+
 inline void WebResource::setUrlHost(const char *urlHost) {
 	r.set_url_host(urlHost);
 }
 
 inline const char *WebResource::getUrlHost() {
 	return r.url_host().c_str();
+}
+
+inline void WebResource::clearUrlHost() {
+	r.clear_url_host();
 }
 
 inline void WebResource::setUrlPort(int urlPort) {
@@ -295,12 +355,20 @@ inline int WebResource::getUrlPort() {
 	return r.url_port();
 }
 
+inline void WebResource::clearUrlPort() {
+	r.clear_url_port();
+}
+
 inline void WebResource::setUrlPath(const char *urlPath) {
 	r.set_url_path(urlPath);
 }
 
 inline const char *WebResource::getUrlPath() {
 	return r.url_path().c_str();
+}
+
+inline void WebResource::clearUrlPath() {
+	r.clear_url_path();
 }
 
 inline void WebResource::setUrlQuery(const char *urlQuery) {
@@ -311,12 +379,8 @@ inline const char *WebResource::getUrlQuery() {
 	return r.url_query().c_str();
 }
 
-inline void WebResource::setUrlRef(const char *urlRef) {
-	r.set_url_ref(urlRef);
-}
-
-inline const char *WebResource::getUrlRef() {
-	return r.url_ref().c_str();
+inline void WebResource::clearUrlQuery() {
+	r.clear_url_query();
 }
 
 #endif

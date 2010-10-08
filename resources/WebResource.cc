@@ -100,7 +100,7 @@ char *WebResource::toString(Object::LogLevel logLevel) {
 			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername(), this->getUrlPassword());
 			s += buf;
 		}
-		snprintf(buf, sizeof(buf), " %s:%d %s %s %s)", this->getUrlHost(), this->getUrlPort(), this->getUrlPath(), this->getUrlQuery(), this->getUrlRef());
+		snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost(), this->getUrlPort(), this->getUrlPath(), this->getUrlQuery());
 		s += buf;
 	}
 	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType(), strlen(this->getContent()));
@@ -153,74 +153,87 @@ WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
 		result.type = INT;
 		result.get.i = &WebResource::getId;
 		result.set.i = &WebResource::setId;
+		result.clear = NULL;
 	} else if (!strcmp(name, "status")) {
 		result.type = INT;
 		result.get.i = &WebResource::getStatus;
 		result.set.i = &WebResource::setStatus;
+		result.clear = NULL;
 	} else if (!strcmp(name, "url")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrl;
 		result.set.s = &WebResource::setUrl;
+		result.clear = &WebResource::clearUrl;
 	} else if (!strcmp(name, "time")) {
 		result.type = LONG;
 		result.get.l = &WebResource::getTime;
 		result.set.l = &WebResource::setTime;
+		result.clear = &WebResource::clearTime;
 	} else if (!strcmp(name, "mimeType")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getMimeType;
 		result.set.s = &WebResource::setMimeType;
+		result.clear = &WebResource::clearMimeType;
 	} else if (!strcmp(name, "content")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getContent;
 		result.set.s = &WebResource::setContent;
+		result.clear = &WebResource::clearContent;
 	} else if (!strcmp(name, "header")) {
 		result.type = STRING2;
 		result.get.s2 = &WebResource::getHeaderValue;
 		result.set.s2 = &WebResource::setHeaderValue;
+		result.clear = &WebResource::clearHeaderFields;
 	} else if (!strcmp(name, "ip4Addr")) {
 		result.type = IP4;
 		result.get.a4 = &WebResource::getIp4Addr;
 		result.set.a4 = &WebResource::setIp4Addr;
+		result.clear = &WebResource::clearIp4Addr;
 	} else if (!strcmp(name, "ip6Addr")) {
 		result.type = IP6;
 		result.get.a6 = &WebResource::getIp6Addr;
 		result.set.a6 = &WebResource::setIp6Addr;
+		result.clear = &WebResource::clearIp6Addr;
 	} else if (!strcmp(name, "ipAddrExpire")) {
 		result.type = LONG;
 		result.get.l = &WebResource::getIpAddrExpire;
 		result.set.l = &WebResource::setIpAddrExpire;
+		result.clear = &WebResource::clearIpAddrExpire;
 	} else if (!strcmp(name, "urlScheme")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlScheme;
 		result.set.s = &WebResource::setUrlScheme;
+		result.clear = &WebResource::clearUrlScheme;
 	} else if (!strcmp(name, "urlUsername")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlUsername;
 		result.set.s = &WebResource::setUrlUsername;
+		result.clear = &WebResource::clearUrlUsername;
 	} else if (!strcmp(name, "urlPassword")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlPassword;
 		result.set.s = &WebResource::setUrlPassword;
+		result.clear = &WebResource::clearUrlPassword;
 	} else if (!strcmp(name, "urlHost")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlHost;
 		result.set.s = &WebResource::setUrlHost;
+		result.clear = &WebResource::clearUrlHost;
 	} else if (!strcmp(name, "urlPort")) {
 		result.type = INT;
 		result.get.i = &WebResource::getUrlPort;
 		result.set.i = &WebResource::setUrlPort;
+		result.clear = &WebResource::clearUrlPort;
 	} else if (!strcmp(name, "urlPath")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlPath;
 		result.set.s = &WebResource::setUrlPath;
+		result.clear = &WebResource::clearUrlPath;
 	} else if (!strcmp(name, "urlQuery")) {
 		result.type = STRING;
 		result.get.s = &WebResource::getUrlQuery;
 		result.set.s = &WebResource::setUrlQuery;
-	} else if (!strcmp(name, "urlRef")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlRef;
-		result.set.s = &WebResource::setUrlRef;
+		result.clear = &WebResource::clearUrlQuery;
 	} else {
 		result.type = UNKNOWN;
 	}

@@ -14,12 +14,6 @@
 #include "robot_common.h"
 #include "WebResource.h"
 
-/*
- length(content) > 100 && mimeType != "text/html" => mimeType = "aaa", DROP
- header[xxx] == 'abc' => ...
- content =~ s/abc/def/ => CONTINUE
-*/
-
 class Filter : public Module {
 public:
 	Filter(ObjectRegistry *objects, const char *id, int threadIndex);
@@ -100,6 +94,7 @@ public:
 			DROP,
 			CONTINUE,
 			SETVAL,
+			CLEAR,
 		};
 
 		Action() {};

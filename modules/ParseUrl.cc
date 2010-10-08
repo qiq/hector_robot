@@ -47,8 +47,10 @@ Resource *ParseUrl::Process(Resource *resource) {
 		wr->setUrlPort(gurl->EffectiveIntPort());
 		wr->setUrlPath(gurl->path().c_str());
 		wr->setUrlQuery(gurl->query().c_str());
-		wr->setUrlRef(gurl->ref().c_str());
 		delete gurl;
+		ObjectLockWrite();
+		items++;
+		ObjectUnlock();
 	}
 	return resource;
 }

@@ -32,6 +32,7 @@ ACCEPT: do not process any more rules, return resource
 DROP: do not process any more rules, drop resource
 string = "value"
 int|ip4|ip6 = value
+clear(name)
 
 Lines starting with # and empty lines are ignored.
 
