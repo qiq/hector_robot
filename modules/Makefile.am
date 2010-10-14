@@ -24,6 +24,6 @@ Filter_la_LDFLAGS = $(AM_LDFLAGS) @LIBPCRECPP_LIBS@
 Filter_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
 
 Fetch_la_SOURCES = Fetch.h Fetch.cc
-Fetch_la_CXXFLAGS = $(AM_CXXFLAGS)
-Fetch_la_LDFLAGS = $(AM_LDFLAGS)
-Fetch_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
+Fetch_la_CXXFLAGS = $(AM_CXXFLAGS) -I ../lib/curl/include
+Fetch_la_LDFLAGS = $(AM_LDFLAGS) -lev
+Fetch_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la

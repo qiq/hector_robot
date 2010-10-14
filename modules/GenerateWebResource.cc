@@ -13,11 +13,11 @@ GenerateWebResource::GenerateWebResource(ObjectRegistry *objects, const char *id
 	items = 0;
 	maxItems = 0;
 	idPrefix = NULL;
-	values = new ObjectValues<GenerateWebResource>(this);
 
+	values = new ObjectValues<GenerateWebResource>(this);
 	values->addGetter("items", &GenerateWebResource::getItems);
 	values->addGetter("maxItems", &GenerateWebResource::getMaxItems);
-	values->addSetter("maxItems", &GenerateWebResource::setMaxItems);
+	values->addSetter("maxItems", &GenerateWebResource::setMaxItems, true);
 	values->addGetter("idPrefix", &GenerateWebResource::getIdPrefix);
 	values->addSetter("idPrefix", &GenerateWebResource::setIdPrefix);
 }
@@ -64,17 +64,19 @@ bool GenerateWebResource::Init(vector<pair<string, string> > *params) {
 
 Resource *GenerateWebResource::ProcessInput(bool sleep) {
 	ObjectLockRead();
-	if (maxItems && items >= maxItems) {
-		ObjectUnlock();
-		return NULL;
-	}
+	int it = items;
 	ObjectUnlock();
+	if (maxItems && it >= maxItems)
+		return NULL;
 	// we can use just new WebResource(), we use Resources::CreateResource() for demo purpose
 	WebResource *wr = dynamic_cast<WebResource*>(Resources::CreateResource(typeId));
 	wr->setId(getThreadIndex()*10000+items);
 	char s[1024];
-	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items++);
+	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items);
 	wr->setUrl(s);
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
 	LOG_INFO("Created WebResource (" << wr->getUrl() << ")");
 	return wr;
 }

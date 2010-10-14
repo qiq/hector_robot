@@ -20,10 +20,10 @@ public:
 	Resource *ProcessSimple(Resource *resource);
 
 private:
-	int typeId;		// to create TestResource
+	int typeId;		// not accessible outside module
 
-	int items;		// guarded by ObjectLock
-	bool clear;		// guarded by ObjectLock
+	int items;		// ObjectLock
+	bool clear;		// ObjectLock
 
 	ObjectValues<ComposeUrl> *values;
 
@@ -33,6 +33,7 @@ private:
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
+	bool isInitOnly(const char *name);
 	vector<string> *listNamesSync();
 };
 
@@ -46,6 +47,10 @@ inline char *ComposeUrl::getValueSync(const char *name) {
 
 inline bool ComposeUrl::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
+}
+
+inline bool ComposeUrl::isInitOnly(const char *name) {
+	return values->isInitOnly(name);
 }
 
 inline vector<string> *ComposeUrl::listNamesSync() {

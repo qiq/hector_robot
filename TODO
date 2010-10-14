@@ -1,5 +1,5 @@
-- test pro clear(label) ve filter modulu
-- ze by predelat processor, aby povolil multi moduly stejne jako single?
+- fetch.cc -- debug, dopsat
+- fetch -- poradny test, napr. pres localhost a apache na chroustalku.
 - testy pro ruzne moduly
 	- (Perl i C++)
 

@@ -12,8 +12,8 @@
 
 ParseUrl::ParseUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	values = new ObjectValues<ParseUrl>(this);
 
+	values = new ObjectValues<ParseUrl>(this);
 	values->addGetter("items", &ParseUrl::getItems);
 }
 

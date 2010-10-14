@@ -15,8 +15,8 @@ sub new {
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'_ua' => undef,
-		'userAgent' => 'Mozilla/5.0 (compatible; hector_robot/Download.pm 1.0; +http://hector.ms.mff.cuni.cz/bot.html)',
-		'from' => 'spousta@ufal.mff.cuni.cz',
+		'userAgent' => 'Mozilla/5.0 (compatible; hector_robot/Fetch.pm 1.0; +http://host/)',
+		'from' => undef,
 		'timeout' => 10,
 		'items' => 0,
 	};

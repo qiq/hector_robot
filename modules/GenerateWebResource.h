@@ -19,11 +19,11 @@ public:
 	Resource *ProcessInput(bool sleep);
 
 private:
-	int typeId;		// to create TestResource
+	int typeId;		// not accessible outside module
 
-	int items;		// guarded by ObjectLock
-	int maxItems;		// guarded by ObjectLock
-	char *idPrefix;		// guarded by ObjectLock
+	int items;		// ObjectLock
+	int maxItems;		// initOnly
+	char *idPrefix;		// ObjectLock
 
 	ObjectValues<GenerateWebResource> *values;
 
@@ -35,6 +35,7 @@ private:
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
+	bool isInitOnly(const char *name);
 	vector<string> *listNamesSync();
 };
 
@@ -48,6 +49,10 @@ inline char *GenerateWebResource::getValueSync(const char *name) {
 
 inline bool GenerateWebResource::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
+}
+
+inline bool GenerateWebResource::isInitOnly(const char *name) {
+	return values->isInitOnly(name);
 }
 
 inline vector<string> *GenerateWebResource::listNamesSync() {

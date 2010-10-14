@@ -27,11 +27,11 @@ public:
 	class Rule;
 
 private:
-	int typeId;		// to create TestResource
+	int typeId;		// not reachable outside module
 
-	int items;		// guarded by ObjectLock
-	char *ruleList;		// guarded by ObjectLock
-	char *ruleFile;		// guarded by ObjectLock
+	int items;		// ObjectLock
+	char *ruleList;		// initOnly
+	char *ruleFile;		// initOnly
 
 	vector<Filter::Rule*> rules;
 
@@ -45,6 +45,7 @@ private:
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
+	bool isInitOnly(const char *name);
 	vector<string> *listNamesSync();
 
 public:
@@ -143,6 +144,10 @@ inline char *Filter::getValueSync(const char *name) {
 
 inline bool Filter::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
+}
+
+inline bool Filter::isInitOnly(const char *name) {
+	return values->isInitOnly(name);
 }
 
 inline vector<string> *Filter::listNamesSync() {

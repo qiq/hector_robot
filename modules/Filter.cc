@@ -15,12 +15,11 @@ Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module
 	ruleList = NULL;
 
 	values = new ObjectValues<Filter>(this);
-
 	values->addGetter("items", &Filter::getItems);
 	values->addGetter("ruleList", &Filter::getRuleList);
-	values->addSetter("ruleList", &Filter::setRuleList);
+	values->addSetter("ruleList", &Filter::setRuleList, true);
 	values->addGetter("ruleFile", &Filter::getRuleFile);
-	values->addSetter("ruleFile", &Filter::setRuleFile);
+	values->addSetter("ruleFile", &Filter::setRuleFile, true);
 }
 
 Filter::~Filter() {
@@ -132,6 +131,9 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 Resource *Filter::ProcessSimple(Resource *resource) {
 	WebResource *wr = dynamic_cast<WebResource*>(resource);
 	if (wr) {
+		ObjectLockWrite();
+		items++;
+		ObjectUnlock();
 		// process rule-by rule and deal with the resource accordingly
 		int i = 1;
 		for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {

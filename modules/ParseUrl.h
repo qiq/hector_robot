@@ -20,9 +20,9 @@ public:
 	Resource *ProcessSimple(Resource *resource);
 
 private:
-	int typeId;		// to create TestResource
+	int typeId;		// not accessible outside module
 
-	int items;		// guarded by ObjectLock
+	int items;		// ObjectLock, items processed
 
 	ObjectValues<ParseUrl> *values;
 
@@ -30,6 +30,7 @@ private:
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
+	bool isInitOnly(const char *name);
 	vector<string> *listNamesSync();
 };
 
@@ -43,6 +44,10 @@ inline char *ParseUrl::getValueSync(const char *name) {
 
 inline bool ParseUrl::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
+}
+
+inline bool ParseUrl::isInitOnly(const char *name) {
+	return values->isInitOnly(name);
 }
 
 inline vector<string> *ParseUrl::listNamesSync() {

@@ -99,16 +99,22 @@ sub ProcessSimple() {
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
-		$resource->setIp4Addr(Hector::str2Ip4Addr($host));
+		my $addr = Hector::str2Ip4Addr_w($host);
+		$resource->setIp4Addr($addr);
+		Hector::ip4AddrDelete_w($addr);
 	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
-		$resource->setIp6Addr(Hector::str2Ip6Addr($host));
+		my $addr = Hector::str2Ip6Addr($host);
+		$resource->setIp6Addr($addr);
+		Hector::ip6AddrDelete_w($addr);
 	} else {
 		my $request = $self->{'_resolver'}->search($host, 'A');
 		if ($request) {
 			foreach my $rr ($request->answer) {
 				next unless $rr->type eq "A";
 				$self->{'_object'}->log_error("$host: ".$rr->address.' ('.$rr->ttl.')');
-				$resource->setIp4Addr(Hector::str2Ip4Addr($rr->address));
+				my $addr = Hector::str2Ip4Addr($rr->address);
+				$resource->setIp4Addr($addr);
+				Hector::ip4AddrDelete_w($addr);
 				$resource->setIpAddrExpire(time() + $rr->ttl);
 			}
 		} else {
