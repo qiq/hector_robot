@@ -6,10 +6,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include "common.h"
-#include "Resources.h"
 #include "Filter.h"
+#include "ProcessingEngine.h"
 
-Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+Filter::Filter(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
 	items = 0;
 	ruleFile = NULL;
 	ruleList = NULL;
@@ -57,7 +57,7 @@ void Filter::setRuleFile(const char *name, const char *value) {
 bool Filter::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
-	typeId = Resources::Name2Id("WebResource");
+	typeId = engine->ResourceNameToId("WebResource");
 	if (typeId < 0) {
 		LOG_ERROR("Cannot load WebResource library");
 		return false;
@@ -143,7 +143,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				return resource;
 			case Filter::Action::DROP:
 				LOG_DEBUG("[" << wr->getId() << "]: DROP #" << i);
-				delete wr;
+				engine->DeleteResource(wr);
 				return NULL;
 			case Filter::Action::CONTINUE:
 			default:
@@ -763,6 +763,6 @@ Filter::Action::ActionType Filter::Rule::Apply(WebResource *wr) {
 
 // the class factories
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new Filter(objects, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
+	return (Module*)new Filter(objects, engine, id, threadIndex);
 }

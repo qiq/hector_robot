@@ -8,10 +8,11 @@ use HectorRobot;
 use LWP::UserAgent;
 
 sub new {
-	my ($proto, $object, $id, $threadIndex) = @_;
+	my ($proto, $object, $engine, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
 	my $self = {
 		'_object' => $object,
+		'_engine' => $engine,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'_ua' => undef,

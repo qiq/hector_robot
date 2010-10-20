@@ -6,11 +6,11 @@
 #include <assert.h>
 #include "googleurl/src/gurl.h"
 #include "common.h"
-#include "Resources.h"
 #include "ParseUrl.h"
+#include "ProcessingEngine.h"
 #include "WebResource.h"
 
-ParseUrl::ParseUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+ParseUrl::ParseUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
 	items = 0;
 
 	values = new ObjectValues<ParseUrl>(this);
@@ -28,7 +28,7 @@ char *ParseUrl::getItems(const char *name) {
 bool ParseUrl::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
-	typeId = Resources::Name2Id("WebResource");
+	typeId = engine->ResourceNameToId("WebResource");
 	if (typeId < 0) {
 		LOG_ERROR("Cannot load WebResource library");
 		return false;
@@ -57,6 +57,6 @@ Resource *ParseUrl::ProcessSimple(Resource *resource) {
 
 // the class factories
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new ParseUrl(objects, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
+	return (Module*)new ParseUrl(objects, engine, id, threadIndex);
 }

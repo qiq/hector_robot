@@ -12,7 +12,7 @@
 
 class GenerateWebResource : public Module {
 public:
-	GenerateWebResource(ObjectRegistry *objects, const char *id, int threadIndex);
+	GenerateWebResource(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
 	~GenerateWebResource();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();

@@ -13,7 +13,7 @@
 
 class ParseUrl : public Module {
 public:
-	ParseUrl(ObjectRegistry *objects, const char *id, int threadIndex);
+	ParseUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
 	~ParseUrl();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();

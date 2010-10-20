@@ -1,0 +1,466 @@
+/**
+ * Download module.
+ * We allow only maxRequests to be processed at a time: every IP address is
+ * hashed into a bucket [0, maxRequests-1], only one active resource is
+ * allowed for a bucket.
+ *
+ * So far we do not implement auth, cookies, ssl, or robots.txt checking in any way.
+ */
+#include <config.h>
+
+#include <string.h>
+#include <sys/socket.h>
+#include <curl/curl.h>
+#include <ev.h>
+#include <limits>
+#include "Fetch.h"
+#include "ProcessingEngine.h"
+#include "TestResource.h"
+
+using namespace std;
+
+// sleep TIME_TICK seconds waiting for socket changes
+#define TIME_TICK 1./10
+
+// FIXME: zpracovani dat, zpracovani hlavicek, zpracovani chyb, pouziti timeoutu
+
+Fetch::Fetch(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
+	items = 0;
+	minServerRelax = 60;
+	timeout = 10;
+	from = NULL;
+	userAgent = strdup("Mozilla/5.0 (compatible; hector_robot/Fetch 1.0; +http://host/)");
+	maxRequests = 5;
+
+	values = new ObjectValues<Fetch>(this);
+	values->addGetter("items", &Fetch::getItems);
+	values->addGetter("minServerRelax", &Fetch::getMinServerRelax);
+	values->addSetter("minServerRelax", &Fetch::setMinServerRelax);
+	values->addGetter("timeout", &Fetch::getTimeout);
+	values->addSetter("timeout", &Fetch::setTimeout);
+	values->addGetter("from", &Fetch::getFrom);
+	values->addSetter("from", &Fetch::setFrom, true);
+	values->addGetter("userAgent", &Fetch::getUserAgent);
+	values->addSetter("userAgent", &Fetch::setUserAgent, true);
+	values->addGetter("maxRequests", &Fetch::getMaxRequests);
+	values->addSetter("maxRequests", &Fetch::setMaxRequests, true);
+
+	curlInfo.logger = this->logger;
+}
+
+Fetch::~Fetch() {
+	for (int i = 0; i < maxRequests; i++) {
+		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
+		delete ri->current;
+		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
+			delete *iter;
+		curl_easy_cleanup(ri->easy);
+		if (ri->headers)
+			curl_slist_free_all(ri->headers);
+	}
+	curl_multi_cleanup(curlInfo.multi);
+
+	delete values;
+}
+
+char *Fetch::getItems(const char *name) {
+	return int2str(items);
+}
+
+char *Fetch::getMinServerRelax(const char *name) {
+	return int2str(minServerRelax);
+}
+
+void Fetch::setMinServerRelax(const char *name, const char *value) {
+	minServerRelax = str2int(value);
+}
+
+char *Fetch::getTimeout(const char *name) {
+	return int2str(timeout);
+}
+
+void Fetch::setTimeout(const char *name, const char *value) {
+	timeout = str2int(value);
+}
+
+char *Fetch::getFrom(const char *name) {
+	return from ? strdup(from) : NULL;
+}
+
+void Fetch::setFrom(const char *name, const char *value) {
+	free(from);
+	from = strdup(value);
+}
+
+char *Fetch::getUserAgent(const char *name) {
+	return userAgent ? strdup(userAgent) : NULL;
+}
+
+void Fetch::setUserAgent(const char *name, const char *value) {
+	free(userAgent);
+	userAgent = strdup(value);
+}
+
+char *Fetch::getMaxRequests(const char *name) {
+	return int2str(maxRequests);
+}
+
+void Fetch::setMaxRequests(const char *name, const char *value) {
+	maxRequests = str2int(value);
+}
+
+void CheckCompleted(CurlInfo *ci);
+
+// called by libev when the timeTick timeout expires
+void TimeTickCallback(EV_P_ struct ev_timer *t, int revents) {
+	CurlInfo *ci = (CurlInfo*)t->data;
+
+fprintf(stderr, "TimeTickCallback\n");
+	ev_unloop(ci->loop, EVUNLOOP_ONE);
+}
+
+// called by libev when something happens with some Curl socket
+void SocketCallback(EV_P_ struct ev_io *w, int revents) {
+	CurlInfo *ci = (CurlInfo*) w->data;
+
+	int what = (revents & EV_READ ? CURL_POLL_IN : 0) | (revents & EV_WRITE ? CURL_POLL_OUT : 0);
+	CURLMcode rc = curl_multi_socket_action(ci->multi, w->fd, what, &ci->stillRunning);
+	if (rc != CURLM_OK) {
+		LOG4CXX_ERROR(ci->logger, "SocketCallback: Curl error: " << rc);
+		return;
+	}
+	CheckCompleted(ci);
+	if (ci->stillRunning <= 0) {
+		ev_timer_stop(ci->loop, &ci->curlTimer);
+fprintf(stderr, "removing timer\n");
+}
+}
+
+// called by libev when the Curl timeout expires
+void TimerCallback(EV_P_ struct ev_timer *t, int revents) {
+	CurlInfo *ci = (CurlInfo *)t->data;
+
+	CURLMcode rc = curl_multi_socket_action(ci->multi, CURL_SOCKET_TIMEOUT, 0, &ci->stillRunning);
+	if (rc != CURLM_OK) {
+		LOG4CXX_ERROR(ci->logger, "TimerCallback: Curl error: " << rc);
+		return;
+	}
+	CheckCompleted(ci);
+}
+
+// check for completed transfers, and remove their easy handles */
+void CheckCompleted(CurlInfo *ci) {
+	int msgs_left;
+	CURLMsg *msg;
+	while ((msg = curl_multi_info_read(ci->multi, &msgs_left))) {
+		if (msg->msg == CURLMSG_DONE) {
+			CURL *easy = msg->easy_handle;
+			CURLcode result = msg->data.result;
+			CurlResourceInfo *ri;
+			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ri);
+			ci->parent->FinishResourceFetch(ri);
+			curl_multi_remove_handle(ci->multi, easy);
+		}
+	}
+}
+
+// change event processing of the socket
+void WatchSocket(CurlResourceInfo *ri, curl_socket_t s, CURL *easy, int what, CurlInfo *ci) {
+	what = (what & CURL_POLL_IN ? EV_READ : 0) | (what & CURL_POLL_OUT ? EV_WRITE : 0);
+	if (ri->evSet)
+		ev_io_stop(ci->loop, &ri->event);
+	ev_io_init(&ri->event, SocketCallback, s, what);
+	ri->evSet = true;
+	ri->event.data = ci;
+	ev_io_start(ci->loop, &ri->event);
+}
+
+// called when socket state changes (CURLMOPT_SOCKETFUNCTION)
+int MultiSocketCallback(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp) {
+	CurlInfo *ci = (CurlInfo*)userp;
+	CurlResourceInfo *ri = (CurlResourceInfo*)socketp;
+
+	if (what == CURL_POLL_REMOVE) {
+    		if (ri->evSet)
+			ev_io_stop(ci->loop, &ri->event);
+	} else {
+		if (!ri) {
+			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ri);
+			WatchSocket(ri, s, easy, what, ci);
+			curl_multi_assign(ci->multi, s, ri);
+    		} else {
+			WatchSocket(ri, s, easy, what, ci);
+		}
+	}
+	return 0;
+}
+
+// update the event timer after curl_multi library calls (CURLMOPT_TIMERFUNCTION)
+int MultiTimerCallback(CURLM *multi, long timeout_ms, CurlInfo *ci) {
+fprintf(stderr, "ev_timer_stop()\n");
+	ev_timer_stop(ci->loop, &ci->curlTimer);
+fprintf(stderr, "ev_timer_start(%ld)\n", timeout_ms);
+	if (timeout_ms > 0) {
+		double t = timeout_ms / 1000;
+		ev_timer_init(&ci->curlTimer, TimerCallback, t, 0.);
+		ev_timer_start(ci->loop, &ci->curlTimer);
+	} else {
+		TimerCallback(ci->loop, &ci->curlTimer, 0);
+	}
+	return 0;
+}
+
+// called when Curl has data for us (CURLOPT_WRITEFUNCTION)
+size_t WriteCallback(void *ptr, size_t size, size_t nmemb, void *data) {
+	size_t realsize = size * nmemb;
+	CurlResourceInfo *ri = (CurlResourceInfo*)data;
+	(void)ptr;
+	(void)ri;
+	fprintf(stderr, "data arrived:\n");
+	fwrite(ptr, size, nmemb, stderr);
+	return realsize;
+}
+
+// called web Curl has some headers (CURLOPT_HEADERFUNCTION)
+size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
+	size_t realsize = size * nmemb;
+	CurlResourceInfo *ri = (CurlResourceInfo*)data;
+
+	// end of headers
+	if (realsize == 0)
+		return realsize;
+
+	string s((char *)ptr, realsize);
+//FIXME: predelat na praci se stringama
+	char *col = (char*)memchr(ptr, ':', realsize);
+	if (!col) {
+		// result: FIXME: process somehow
+		if (realsize >= 4 && !strncmp((char*)ptr, "HTTP", 4))
+			return realsize;
+		char *tmp = strndup((char*)ptr, realsize);
+		LOG4CXX_DEBUG(ri->info->logger, "Invalid header field: " << tmp);
+		free(tmp);
+	} else {
+		// we modify ptr data, hopefully this is OK
+		*col = '\0';
+		col++;
+		while (col-(char*)ptr < realsize && *col == ' ')
+			col++;
+		char *tmp = strndup(col, realsize-(col-(char*)ptr));
+		ri->current->setHeaderValue((char*)ptr, tmp);
+		free(tmp);
+	}
+	return realsize;
+}
+
+void Fetch::QueueResource(WebResource *wr) {
+	// count hash of the IP address
+	uint32_t ip = wr->getIp4Addr().addr;
+	if (ip == 0) {
+		ip6_addr_t ip6 = wr->getIp6Addr();
+		for (int i = 0; i < 16; i++)
+			ip += ip6.addr[i];
+	}
+	ObjectLockRead();
+	int hash = ip % maxRequests;
+	int wait = minServerRelax;
+	ObjectUnlock();
+	CurlResourceInfo *ri = &curlInfo.resourceInfo[hash];
+
+	// busy: just append to the bucket
+	curlInfo.resources++;
+	if (ri->current || curlInfo.currentTime <= ri->time + wait) {
+		ri->waiting.push_back(wr);
+		if (ri->waiting.size() == 1) {
+			curlInfo.resourceInfoHeap.push_back(ri);
+			push_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
+		}
+		return;
+	}
+	Fetch::StartResourceFetch(wr, hash);
+}
+
+// check resources in the heap and start fetch of resources that waited long enough
+void Fetch::StartQueuedResourcesFetch() {
+	ObjectLockRead();
+	int wait = minServerRelax;
+	ObjectUnlock();
+	while (curlInfo.resourceInfoHeap.size() > 0 && curlInfo.currentTime >= curlInfo.resourceInfoHeap[0]->time+wait) {
+		CurlResourceInfo *ri = curlInfo.resourceInfoHeap[0];
+		pop_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
+		curlInfo.resourceInfoHeap.pop_back();
+		WebResource *wr = ri->waiting.front();
+		int index = ri->index;
+		ri->waiting.pop_front();
+		StartResourceFetch(wr, index);
+	}
+}
+
+// really start download
+void Fetch::StartResourceFetch(WebResource *wr, int index) {
+	// set URL
+	const char *url = wr->getUrl();
+	if (!url) {
+		LOG_ERROR("No url found (" << wr->getId() << ")");
+		outputResources->push(wr);
+		return;
+	}
+	CurlResourceInfo *ri = &curlInfo.resourceInfo[index];
+	ri->current = wr;
+	curl_easy_setopt(ri->easy, CURLOPT_URL, url);
+
+	// set IP4/6 address
+	ip4_addr_t ip4addr = wr->getIp4Addr();
+	struct sockaddr_storage addr;
+	if (ip4addr.addr != 0) {
+		addr.ss_family = AF_INET;
+		struct sockaddr_in *addr4 = (struct sockaddr_in*)&addr;
+		addr4->sin_addr.s_addr = htonl(ip4addr.addr);
+	} else {
+		ip6_addr_t ip6addr = wr->getIp6Addr();
+		addr.ss_family = AF_INET6;
+		struct sockaddr_in6 *addr6 = (struct sockaddr_in6*)&addr;
+		if (htons(0xabcd) != 0xabcd) {
+			for (int i = 0; i < 16; i++)
+				addr6->sin6_addr.s6_addr[i] = ip6addr.addr[15-i];
+		} else {
+			for (int i = 0; i < 16; i++)
+				addr6->sin6_addr.s6_addr[i] = ip6addr.addr[i];
+		}
+	}
+	curl_easy_setopt(ri->easy, CURLOPT_DNS_IP_ADDR, &addr);
+
+	// start!
+fprintf(stderr, "Adding handle %s\n", url);
+	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
+	if (rc != CURLM_OK)
+		LOG_ERROR("Error adding easy handle to multi: " << rc);
+}
+
+// save resource to the outputQueue, process errors, etc.
+void Fetch::FinishResourceFetch(CurlResourceInfo *ri) {
+	outputResources->push(ri->current);
+
+	// update heap info
+	ri->current = NULL;
+	ri->time = curlInfo.currentTime;
+	curlInfo.resources--;
+
+	// add resource to the heap again
+	if (ri->waiting.size() > 0) {
+		curlInfo.resourceInfoHeap.push_back(ri);
+		push_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
+	}
+}
+
+bool Fetch::Init(vector<pair<string, string> > *params) {
+	if (!values->InitValues(params))
+		return false;
+
+	if (maxRequests <= 0) {
+		LOG_ERROR("Invalid maxRequests value: " << maxRequests);
+		return false;
+	}
+
+	curlInfo.parent = this;
+	curlInfo.loop = ev_default_loop(0);
+	ev_timer_init(&curlInfo.curlTimer, TimerCallback, 0., 0.);
+	curlInfo.curlTimer.data = &curlInfo;
+	curlInfo.multi = curl_multi_init();
+	curl_multi_setopt(curlInfo.multi, CURLMOPT_SOCKETFUNCTION, MultiSocketCallback);
+	curl_multi_setopt(curlInfo.multi, CURLMOPT_SOCKETDATA, &curlInfo);
+	curl_multi_setopt(curlInfo.multi, CURLMOPT_TIMERFUNCTION, MultiTimerCallback);
+	curl_multi_setopt(curlInfo.multi, CURLMOPT_TIMERDATA, &curlInfo);
+	curlInfo.resources = 0;
+	curlInfo.stillRunning = 0;
+
+	curlInfo.resourceInfoHeap.reserve(maxRequests);
+	curlInfo.resourceInfo = new CurlResourceInfo[maxRequests];
+	for (int i = 0; i < maxRequests; i++) {
+		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
+		ri->index = i;
+		ri->current = NULL;
+		ri->easy = curl_easy_init();
+		if (!ri->easy) {
+			LOG_ERROR("Cannot initialize easy Curl handle");
+			return false;
+		}
+		curl_easy_setopt(ri->easy, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(ri->easy, CURLOPT_WRITEDATA, ri);
+		curl_easy_setopt(ri->easy, CURLOPT_HEADERFUNCTION, HeaderCallback);
+		curl_easy_setopt(ri->easy, CURLOPT_HEADERDATA, ri);
+		// FIXME
+		// CURLOPT_PROTOCOLS 
+		// CURLPROTO_HTTP, CURLPROTO_HTTPS
+		curl_easy_setopt(ri->easy, CURLOPT_FOLLOWLOCATION, 0);
+		ri->headers = NULL;
+		ObjectLockRead();
+		if (from && strcmp(from, "")) {
+			char buffer[1024];
+			snprintf(buffer, sizeof(buffer), "From: %s", from);
+			ri->headers = curl_slist_append(ri->headers, "From:");
+			curl_easy_setopt(ri->easy, CURLOPT_HTTPHEADER, ri->headers);
+		}
+		if (userAgent && strcmp(userAgent, ""))
+			curl_easy_setopt(ri->easy, CURLOPT_USERAGENT, userAgent);
+		long t = timeout;
+		ObjectUnlock();
+		curl_easy_setopt(ri->easy, CURLOPT_PRIVATE, ri);
+		curl_easy_setopt(ri->easy, CURLOPT_NOPROGRESS, 1L);
+		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_TIME, t);
+		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_LIMIT, 100L);
+
+		ri->socketfd = -1;
+		ri->evSet = false;
+		ri->time = std::numeric_limits<unsigned int>::max();
+		ri->info = &curlInfo;
+	}
+	return true;
+}
+
+int Fetch::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+	curlInfo.currentTime = time(NULL);
+	this->outputResources = outputResources;
+
+	// start queued resources
+	StartQueuedResourcesFetch();
+
+	// queue/start input resources
+	while (inputResources->size() > 0 && curlInfo.resources <= maxRequests) {
+		WebResource *wr = dynamic_cast<WebResource*>(inputResources->front());
+		if (wr)
+			QueueResource(wr);
+		else
+			outputResources->push(inputResources->front());
+		inputResources->pop();
+		ObjectLockWrite();
+		++items;
+		ObjectUnlock();
+	}
+
+	if (curlInfo.resources == 0)
+		return maxRequests;
+
+	// set timer for the timerTick
+	ev_timer_init(&curlInfo.tickTimer, TimeTickCallback, TIME_TICK, 0.);
+	ev_timer_start(curlInfo.loop, &curlInfo.tickTimer);
+	curlInfo.tickTimer.data = &curlInfo;
+
+	// run loop: wait for socket actions or timeout
+fprintf(stderr, "Waiting for timeout...\n");
+	ev_loop(curlInfo.loop, 0);
+fprintf(stderr, "timeout...\n");
+
+	// finished resources are already appended to the outputResources queue
+	return maxRequests-curlInfo.resources;
+}
+
+int Fetch::ProcessingResources() {
+	return curlInfo.resources;
+}
+
+// factory functions
+
+extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
+	return new Fetch(objects, engine, id, threadIndex);
+}

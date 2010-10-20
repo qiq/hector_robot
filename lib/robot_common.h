@@ -15,7 +15,6 @@
 #include <log4cxx/logger.h>
 #include "common.h"
 
-void skipWs(std::string *data);
 bool parseLabel(std::string *data, std::string *value);
 bool parseString(std::string *data, std::string *value, char separator);
 bool parseInt(std::string *data, int *value);

@@ -5,11 +5,11 @@
 
 #include <assert.h>
 #include "common.h"
-#include "Resources.h"
+#include "ProcessingEngine.h"
 #include "GenerateWebResource.h"
 #include "WebResource.h"
 
-GenerateWebResource::GenerateWebResource(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+GenerateWebResource::GenerateWebResource(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
 	items = 0;
 	maxItems = 0;
 	idPrefix = NULL;
@@ -54,7 +54,7 @@ bool GenerateWebResource::Init(vector<pair<string, string> > *params) {
 		return false;
 	if (maxItems)
 		LOG_INFO("Going to produce " << maxItems << " WebResources.");
-	typeId = Resources::Name2Id("WebResource");
+	typeId = engine->ResourceNameToId("WebResource");
 	if (typeId < 0) {
 		LOG_ERROR("Cannot load WebResource library");
 		return false;
@@ -69,7 +69,7 @@ Resource *GenerateWebResource::ProcessInput(bool sleep) {
 	if (maxItems && it >= maxItems)
 		return NULL;
 	// we can use just new WebResource(), we use Resources::CreateResource() for demo purpose
-	WebResource *wr = dynamic_cast<WebResource*>(Resources::CreateResource(typeId));
+	WebResource *wr = dynamic_cast<WebResource*>(engine->CreateResource(typeId));
 	wr->setId(getThreadIndex()*10000+items);
 	char s[1024];
 	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items);
@@ -83,6 +83,6 @@ Resource *GenerateWebResource::ProcessInput(bool sleep) {
 
 // the class factories
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new GenerateWebResource(objects, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
+	return (Module*)new GenerateWebResource(objects, engine, id, threadIndex);
 }

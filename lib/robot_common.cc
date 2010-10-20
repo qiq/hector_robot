@@ -10,14 +10,6 @@
 
 using namespace std;
 
-void skipWs(string *data) {
-	size_t offset = data->find_first_not_of(" \t\n\r");
-	if (offset != string::npos)
-		data->erase(0, offset);
-	else
-		data->clear();
-}
-
 bool parseLabel(string *data, string *value) {
 	skipWs(data);
 	size_t offset = 0;

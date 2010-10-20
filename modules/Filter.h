@@ -11,12 +11,13 @@
 #include <pcrecpp.h>
 #include "Module.h"
 #include "ObjectValues.h"
+#include "ProcessingEngine.h"
 #include "robot_common.h"
 #include "WebResource.h"
 
 class Filter : public Module {
 public:
-	Filter(ObjectRegistry *objects, const char *id, int threadIndex);
+	Filter(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
 	~Filter();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();

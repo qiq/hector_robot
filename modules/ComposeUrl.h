@@ -13,7 +13,7 @@
 
 class ComposeUrl : public Module {
 public:
-	ComposeUrl(ObjectRegistry *objects, const char *id, int threadIndex);
+	ComposeUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
 	~ComposeUrl();
 	bool Init(vector<pair<string, string> > *params);
 	Module::Type getType();

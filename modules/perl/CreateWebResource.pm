@@ -9,10 +9,11 @@ use strict;
 use HectorRobot;
 
 sub new {
-	my ($proto, $object, $id, $threadIndex) = @_;
+	my ($proto, $object, $engine, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
 	my $self = {
 		'_object' => $object,
+		'_engine' => $engine,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'items' => 0,

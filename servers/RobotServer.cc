@@ -7,8 +7,13 @@
 
 log4cxx::LoggerPtr RobotServer::logger(log4cxx::Logger::getLogger("servers.robot.RobotServer"));
 
-RobotServer::RobotServer(ObjectRegistry *objects) {
+RobotServer::RobotServer(ObjectRegistry *objects, vector<ProcessingEngine*> *engines) {
 	this->objects = objects;
+	this->engines = engines;
+}
+
+bool RobotServer::Init(std::vector<std::pair<std::string, std::string> > *params) {
+	return true;
 }
 
 bool RobotServer::HandleRequest(SimpleHTTPConn *conn) {
@@ -95,10 +100,6 @@ bool RobotServer::HandleRequest(SimpleHTTPConn *conn) {
 
 // factory functions
 
-extern "C" SimpleHTTPServer* create(ObjectRegistry *objects) {
-	return new RobotServer(objects);
-}
-
-extern "C" void destroy(SimpleHTTPServer* p) {
-	delete p;
+extern "C" SimpleHTTPServer* create(ObjectRegistry *objects, std::vector<ProcessingEngine*> *engines) {
+	return new RobotServer(objects, engines);
 }
