@@ -4,6 +4,7 @@
 
 #include "RobotServer.h"
 #include "Object.h"
+#include "ProcessingEngine.h"
 
 log4cxx::LoggerPtr RobotServer::logger(log4cxx::Logger::getLogger("servers.robot.RobotServer"));
 
@@ -13,6 +14,13 @@ RobotServer::RobotServer(ObjectRegistry *objects, vector<ProcessingEngine*> *eng
 }
 
 bool RobotServer::Init(std::vector<std::pair<std::string, std::string> > *params) {
+	if (engines->size() == 0) {
+		LOG4CXX_ERROR(logger, "No processing engine in a server");
+		return false;
+	}
+	for (vector<ProcessingEngine*>::iterator iter = engines->begin(); iter != engines->end(); ++iter) {
+		name2engine[(*iter)->getId()] = *iter;
+	}
 	return true;
 }
 
@@ -83,6 +91,70 @@ bool RobotServer::HandleRequest(SimpleHTTPConn *conn) {
 			// error: no object.property given
 			conn->ErrorResponse(400, "No object.property argument given", "");
 		}
+		return true;
+	} else if (method == "PROCESS") {
+		LOG4CXX_INFO(logger, "PROCESS " << args);
+		skipWs(&args);
+		chomp(&args);
+		tr1::unordered_map<string, ProcessingEngine*>::iterator iter = name2engine.find(args);
+		if (iter == name2engine.end()) {
+			LOG4CXX_ERROR(logger, "ProcessingEngine " << args << " not found");
+			conn->setResponseCode(500, "ProcessorEngine not found");
+			return true;
+		}
+		
+		ProcessingEngine *engine = iter->second;
+		// create all resources
+		vector<int> resourceIds;
+		string body = conn->getRequestBody();
+		const char *data = body.data();
+		struct timeval timeout = { 0, 0 };
+		int i = 0;
+		while (body.length() > 5 && i < body.length()) {
+			uint32_t size = *(uint32_t*)(data+i);
+			i += 4;
+			uint8_t typeId = *(uint8_t*)(data+i);
+			i++;
+			Resource *r = engine->CreateResource(typeId);
+			if (!r) {
+				char buf[1024];
+				snprintf(buf, sizeof(buf), "Cannot create resource of type %d", typeId);
+				conn->setResponseCode(500, buf);
+				return true;
+			}
+			if (!r->Deserialize(data+i, size))
+				return true;
+			i+= size;
+			int id = r->getId();
+			if (!engine->ProcessResource(r, &timeout))
+				break;
+			resourceIds.push_back(id);
+		}
+
+		if (i < body.length()) {
+			conn->setResponseCode(500, "Error passing data to ProcessingEngine");
+			return true;
+		}
+			
+		// wait for result
+		i = 0;
+		while (i < resourceIds.size()) {
+			Resource *r;
+			if (!engine->GetProcessedResource(resourceIds[i], &r, &timeout))
+				break;
+			string *s = r->Serialize();
+			uint32_t size = s->length();
+			conn->appendResponseBody((char*)&size, 4);
+			uint8_t type = r->getTypeId();
+			conn->appendResponseBody((char*)&type, 1);
+			conn->appendResponseBody(*s);
+			delete s;
+			i++;
+		}
+		if (i == resourceIds.size())
+			conn->setResponseCode(200, "OK");
+		else
+			conn->setResponseCode(500, "Error getting data from ProcessingEngine");
 		return true;
 	} else if (method == "SHUTDOWN") {
 		LOG4CXX_INFO(logger, "SHUTDOWN");

@@ -1,3 +1,6 @@
+
+Pro Resource pouzivat misto dynamic_cast radeji pomoci getId() + kontrolu na typ a static_cast<>
+
 http://docs.bor.org.ua/eBooks/Perl/Manning.Extending_and_Embedding_Perl.2002.pdf
 
 Obecne

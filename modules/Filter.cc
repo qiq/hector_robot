@@ -28,8 +28,11 @@ Filter::~Filter() {
 
 	delete values;
 
-	for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter)
-		delete (*iter);
+	for (tr1::unordered_map<int, vector<Rule*>*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
+		for (vector<Rule*>::iterator iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2) {
+			delete (*iter2);
+		}
+	}
 }
 
 char *Filter::getItems(const char *name) {
@@ -57,18 +60,16 @@ void Filter::setRuleFile(const char *name, const char *value) {
 bool Filter::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
-	typeId = engine->ResourceNameToId("WebResource");
-	if (typeId < 0) {
-		LOG_ERROR("Cannot load WebResource library");
-		return false;
-	}
+	return true;
+}
 
+vector<Filter::Rule*> *Filter::InitResource(Resource *resource) {
 	string data;
 	if (ruleFile) {
 		FILE *f = fopen(ruleFile, "r");
 		if (!f) {
 			LOG_ERROR("Cannot open file: " << ruleFile << ": " << strerror(errno));
-			return false;
+			return NULL;
 		}
 		fseek(f, 0, SEEK_END);
 		long len = ftell(f);
@@ -76,7 +77,7 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 		char *buffer = (char*)malloc(len);
 		if (fread(buffer, len, 1, f) < 0) {
 			LOG_ERROR("Cannot read file: " << ruleFile << ": " << strerror(errno));
-			return false;
+			return NULL;
 		}
 		fclose(f);
 		data.append(buffer, len);
@@ -88,6 +89,7 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 		data += ruleList;
 
 	// create rules
+	vector<Filter::Rule*> *rules = new vector<Filter::Rule*>();
 	int lineNo = 0;
 	while (data.length() > 0) {
 		lineNo++;
@@ -118,47 +120,62 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 			continue;
 
 		Rule *r = new Rule();
-		if (!r->Init(&line, lineNo)) {
+		if (!r->Init(&line, lineNo, resource)) {
 			delete r;
-			return false;
+			for (vector<Filter::Rule*>::iterator iter = rules->begin(); iter != rules->end(); ++iter)
+				delete *iter;
+			return NULL;
 		}
-		rules.push_back(r);
+		rules->push_back(r);
 	}
-
-	return true;
+	return rules;
 }
 
 Resource *Filter::ProcessSimple(Resource *resource) {
-	WebResource *wr = dynamic_cast<WebResource*>(resource);
-	if (wr) {
-		ObjectLockWrite();
-		items++;
-		ObjectUnlock();
-		// process rule-by rule and deal with the resource accordingly
-		int i = 1;
-		for (vector<Rule*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
-			switch ((*iter)->Apply(wr)) {
-			case Filter::Action::ACCEPT:
-				LOG_DEBUG("[" << wr->getId() << "]: ACCEPT #" << i);
-				return resource;
-			case Filter::Action::DROP:
-				LOG_DEBUG("[" << wr->getId() << "]: DROP #" << i);
-				engine->DeleteResource(wr);
-				return NULL;
-			case Filter::Action::CONTINUE:
-			default:
-				// do nothing
-				break;
-			}
-			i++;
+	// FIXME: az po zpracovani
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
+	std::tr1::unordered_map<int, vector<Filter::Rule*>*>::iterator iter = rules.find(resource->getTypeId());
+	vector<Filter::Rule*> *rs;
+	if (iter != rules.end()) {
+		rs = iter->second;
+	} else {
+		rs = InitResource(resource);
+		rules[resource->getTypeId()] = rs;
+		if (!rs)
+			LOG_ERROR("Cannot initialize Resource filter: " << resource->getTypeStr());
+		iter = rules.find(resource->getTypeId());
+	}
+	if (!rs) {
+		LOG_ERROR("Cannot process Resource: " << resource->getId());
+		return resource;
+	}
+	
+	// process rule-by rule and deal with the resource accordingly
+	int i = 1;
+	for (vector<Rule*>::iterator iter = rs->begin(); iter != rs->end(); ++iter) {
+		switch ((*iter)->Apply(resource)) {
+		case Filter::Action::ACCEPT:
+			LOG_DEBUG("[" << resource->getId() << "]: ACCEPT #" << i);
+			return resource;
+		case Filter::Action::DROP:
+			LOG_DEBUG("[" << resource->getId() << "]: DROP #" << i);
+			engine->DeleteResource(resource);
+			return NULL;
+		case Filter::Action::CONTINUE:
+		default:
+			// do nothing
+			break;
 		}
+		i++;
 	}
 	return resource;
 }
 
 log4cxx::LoggerPtr Filter::Condition::logger(log4cxx::Logger::getLogger("module.Filter.Condition"));
 
-bool Filter::Condition::Init(string *data, int lineNo) {
+bool Filter::Condition::Init(string *data, int lineNo, Resource *resource) {
 	// first part, what: label | length(label) | label[name]
 	length = false;
 	string label;
@@ -186,12 +203,12 @@ bool Filter::Condition::Init(string *data, int lineNo) {
 		LOG4CXX_ERROR(logger, "No label: " << data);
 		return false;
 	}
-	info = WebResource::getFieldInfo(label.c_str());
-	if (info.type == Resource::UNKNOWN) {
+	info = resource->getFieldInfo(label.c_str());
+	if (info->getType() == ResourceFieldInfo::UNKNOWN) {
 		LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 		return false;
 	}
-	if (info.type == Resource::STRING2) {
+	if (info->getType() == ResourceFieldInfo::STRING2) {
 		// header: consume [, label2, ]
 		if (data->length() == 0 || data->at(0) != '[') {
 			LOG4CXX_ERROR(logger, "Invalid format: [ expected" << *data << " (line " << lineNo << ")");
@@ -226,106 +243,106 @@ bool Filter::Condition::Init(string *data, int lineNo) {
 
 	bool error = false;
 	if (op == "==") {
-		switch (this->info.type) {
-		case Resource::STRING:
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_EQ;
 			break;
-		case Resource::INT:
+		case ResourceFieldInfo::INT:
 			this->op = INT_EQ;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_EQ;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == "!=" || op == "<>") {
-		switch (this->info.type) {
-		case Resource::STRING:
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_NE;
 			break;
-		case Resource::INT:
+		case ResourceFieldInfo::INT:
 			this->op = INT_NE;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_NE;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == "<") {
-		switch (this->info.type) {
-		case Resource::STRING:
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_LT;
 			break;
-		case Resource::INT:
+		case ResourceFieldInfo::INT:
 			this->op = INT_LT;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_LT;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == ">") {
-		switch(this->info.type) {
-		case Resource::STRING:
+		switch(info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_GT;
 			break;
-		case Resource::INT:
+		case ResourceFieldInfo::INT:
 			this->op = INT_GT;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_GT;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == "<=") {
-		switch (this->info.type) {
-		case Resource::INT:
+		switch (info->getType()) {
+		case ResourceFieldInfo::INT:
 			this->op = INT_LE;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_LE;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == ">=") {
-		switch (this->info.type) {
-		case Resource::INT:
+		switch (info->getType()) {
+		case ResourceFieldInfo::INT:
 			this->op = INT_GE;
 			break;
-		case Resource::LONG:
+		case ResourceFieldInfo::LONG:
 			this->op = LONG_GE;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == "=~") {
-		switch (this->info.type) {
-		case Resource::STRING:
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_REGEX;
 			break;
-		case Resource::IP4:
+		case ResourceFieldInfo::IP4:
 			this->op = IP4_EQ;
 			break;
-		case Resource::IP6:
+		case ResourceFieldInfo::IP6:
 			this->op = IP6_EQ;
 			break;
 		default:
 			error = true;
 		}
 	} else if (op == "!~") {
-		switch (this->info.type) {
-		case Resource::STRING:
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
 			this->op = STRING_NREGEX;
 			break;
-		case Resource::IP4:
+		case ResourceFieldInfo::IP4:
 			this->op = IP4_NE;
 			break;
-		case Resource::IP6:
+		case ResourceFieldInfo::IP6:
 			this->op = IP6_NE;
 			break;
 		default:
@@ -445,31 +462,31 @@ bool Filter::Condition::Init(string *data, int lineNo) {
 	return true;
 }
 
-bool Filter::Condition::isTrue(WebResource *wr) {
+bool Filter::Condition::isTrue(Resource *resource) {
 	const char *sValue;
 	int iValue;
 	ip4_addr_t a4Value;
 	ip6_addr_t a6Value;
-	switch (this->info.type) {
-	case Resource::STRING:
-		sValue = (wr->*info.get.s)();
+	switch (info->getType()) {
+	case ResourceFieldInfo::STRING:
+		sValue = info->getString(resource);
 		if (!sValue)
 			return false;
 		break;
-	case Resource::INT:
-		iValue = (wr->*info.get.i)();
+	case ResourceFieldInfo::INT:
+		iValue = info->getInt(resource);
 		break;
-	case Resource::LONG:
-		iValue = (wr->*info.get.l)();
+	case ResourceFieldInfo::LONG:
+		lValue = info->getLong(resource);
 		break;
-	case Resource::IP4:
-		a4Value = (wr->*info.get.a4)();
+	case ResourceFieldInfo::IP4:
+		a4Value = info->getIp4Addr(resource);
 		if (prefix)
 			a4Value.addr &= ((uint32_t)0xffffffff) << (32-prefix);
 		break;
-	case Resource::IP6:
+	case ResourceFieldInfo::IP6:
 		{
-			a6Value = (wr->*info.get.a6)();
+			a6Value = info->getIp6Addr(resource);
 			if (!prefix)
 				prefix = 128;
 			int a = prefix / 8;
@@ -480,8 +497,8 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 				a6Value.addr[i] = 0x00;
 		}
 		break;
-	case Resource::STRING2:
-		sValue = (wr->*info.get.s2)(name.c_str());
+	case ResourceFieldInfo::STRING2:
+		sValue = info->getString2(resource, name.c_str());
 		if (!sValue)
 			return false;
 	}
@@ -522,10 +539,10 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 				result = this->regex->GlobalReplace(replacement, &s);
 			else
 				result = this->regex->Replace(replacement, &s);
-			if (info.type == Resource::STRING)
-				(wr->*info.set.s)(s.c_str());
-			else if (info.type == Resource::STRING2)
-				(wr->*info.set.s2)(name.c_str(), s.c_str());
+			if (info->getType() == ResourceFieldInfo::STRING)
+				info->setString(resource, s.c_str());
+			else if (info->getType() == ResourceFieldInfo::STRING2)
+				info->setString2(resource, name.c_str(), s.c_str());
 			return result;
 		}
 	case IP4_EQ:
@@ -544,7 +561,7 @@ bool Filter::Condition::isTrue(WebResource *wr) {
 
 log4cxx::LoggerPtr Filter::Action::logger(log4cxx::Logger::getLogger("module.Filter.Action"));
 
-bool Filter::Action::Init(string *data, int lineNo) {
+bool Filter::Action::Init(string *data, int lineNo, Resource *resource) {
 	// first part, what: label | label[name] | ACCEPT | DROP | CONTINUE
 	string label;
 	if (!parseLabel(data, &label)) {
@@ -575,26 +592,24 @@ bool Filter::Action::Init(string *data, int lineNo) {
 			LOG4CXX_ERROR(logger, "Invalid label encountered: " << *data << " (line " << lineNo << ")");
 			return false;
 		}
-		info = WebResource::getFieldInfo(label.c_str());
-		if (info.type == Resource::UNKNOWN) {
+		info = resource->getFieldInfo(label.c_str());
+		if (info->getType() == ResourceFieldInfo::UNKNOWN) {
 			LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 			return false;
 		}
 		return true;
 	} else if (label == "STATUS") {
 		this->type = SETVAL;
-		this->info.type = Resource::INT;
-		this->info.get.i = &WebResource::getStatus;
-		this->info.set.i = &WebResource::setStatus;
+		info = resource->getFieldInfo("status");
 		// to be continued :)
 	} else {
 		this->type = SETVAL;
-		info = WebResource::getFieldInfo(label.c_str());
-		if (info.type == Resource::UNKNOWN) {
+		info = resource->getFieldInfo(label.c_str());
+		if (info->getType() == ResourceFieldInfo::UNKNOWN) {
 			LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 			return false;
 		}
-		if (info.type == Resource::STRING2) {
+		if (info->getType() == ResourceFieldInfo::STRING2) {
 			// header: consume [, label2, ]
 			if (data->length() == 0 || data->at(0) != '[') {
 				LOG4CXX_ERROR(logger, "Invalid format: [ expected" << *data << " (line " << lineNo << ")");
@@ -622,25 +637,25 @@ bool Filter::Action::Init(string *data, int lineNo) {
 
 	// third part, value
 	bool error = false;
-	switch (this->info.type) {
-	case Resource::STRING:
-	case Resource::STRING2:
+	switch (info->getType()) {
+	case ResourceFieldInfo::STRING:
+	case ResourceFieldInfo::STRING2:
 		if (!parseString(data, &this->sValue, '"'))
 			error = true;
 		break;
-	case Resource::INT:
+	case ResourceFieldInfo::INT:
 		if (!parseInt(data, &this->iValue))
 			error = true;
 		break;
-	case Resource::LONG:
+	case ResourceFieldInfo::LONG:
 		if (!parseLong(data, &this->lValue))
 			error = true;
 		break;
-	case Resource::IP4:
+	case ResourceFieldInfo::IP4:
 		if (!parseIp4(data, &this->a4Value))
 			error = true;
 		break;
-	case Resource::IP6:
+	case ResourceFieldInfo::IP6:
 		if (!parseIp6(data, &this->a6Value))
 			error = true;
 		break;
@@ -652,7 +667,7 @@ bool Filter::Action::Init(string *data, int lineNo) {
 	return true;
 }
 
-Filter::Action::ActionType Filter::Action::Apply(WebResource *wr) {
+Filter::Action::ActionType Filter::Action::Apply(Resource *resource) {
 	switch (type) {
 	case ACCEPT:
 		return ACCEPT;
@@ -661,26 +676,27 @@ Filter::Action::ActionType Filter::Action::Apply(WebResource *wr) {
 	case CONTINUE:
 		return CONTINUE;
 	case CLEAR:
-		(wr->*info.clear)();
+		info->clear(resource);
 		return CLEAR;
 	case SETVAL:
-		switch (info.type) {
-		case Resource::STRING:
-			(wr->*info.set.s)(sValue.c_str());
+		switch (info->getType()) {
+		case ResourceFieldInfo::STRING:
+			info->setString(resource, sValue.c_str());
 			break;
-		case Resource::INT:
-			(wr->*info.set.i)(iValue);
+		case ResourceFieldInfo::INT:
+			info->setInt(resource, iValue);
 			break;
-		case Resource::LONG:
-			(wr->*info.set.l)(lValue);
-		case Resource::IP4:
-			(wr->*info.set.a4)(a4Value);
+		case ResourceFieldInfo::LONG:
+			info->setLong(resource, lValue);
 			break;
-		case Resource::IP6:
-			(wr->*info.set.a6)(a6Value);
+		case ResourceFieldInfo::IP4:
+			info->setIp4Addr(resource, a4Value);
 			break;
-		case Resource::STRING2:
-			(wr->*info.set.s2)(name.c_str(), sValue.c_str());
+		case ResourceFieldInfo::IP6:
+			info->setIp6Addr(resource, a6Value);
+			break;
+		case ResourceFieldInfo::STRING2:
+			info->setString2(resource, name.c_str(), sValue.c_str());
 			break;
 		default:
 			LOG4CXX_ERROR(logger, "No value setter to use");
@@ -700,7 +716,7 @@ Filter::Rule::~Rule() {
 		delete (*iter);
 }
 
-bool Filter::Rule::Init(string *line, int lineNo) {
+bool Filter::Rule::Init(string *line, int lineNo, Resource *resource) {
 	// create a rule from line: parse [condition|*] => [action]
 	skipWs(line);
 	if (line->length() > 0 && line->at(0) == '*') {
@@ -708,7 +724,7 @@ bool Filter::Rule::Init(string *line, int lineNo) {
 	} else {
 		while (true) {
 			Condition *c = new Condition();
-			if (!c->Init(line, lineNo)) {
+			if (!c->Init(line, lineNo, resource)) {
 				delete c;
 				return false;
 			}
@@ -730,7 +746,7 @@ bool Filter::Rule::Init(string *line, int lineNo) {
 	// actions
 	while (true) {
 		Action *a = new Action();
-		if (!a->Init(line, lineNo)) {
+		if (!a->Init(line, lineNo, resource)) {
 			delete a;
 			return false;
 		}
@@ -747,14 +763,14 @@ bool Filter::Rule::Init(string *line, int lineNo) {
 	return true;
 }
 
-Filter::Action::ActionType Filter::Rule::Apply(WebResource *wr) {
+Filter::Action::ActionType Filter::Rule::Apply(Resource *resource) {
 	for (vector<Condition*>::iterator iter = conditions.begin(); iter != conditions.end(); ++iter) {
-		if (!(*iter)->isTrue(wr))
+		if (!(*iter)->isTrue(resource))
 			return Filter::Action::CONTINUE;
 	}
 	Filter::Action::ActionType result = Filter::Action::CONTINUE;
 	for (vector<Action*>::iterator iter = actions.begin(); iter != actions.end(); ++iter) {
-		Filter::Action::ActionType r = (*iter)->Apply(wr);
+		Filter::Action::ActionType r = (*iter)->Apply(resource);
 		if (r == Filter::Action::ACCEPT || r == Filter::Action::DROP || r == Filter::Action::CONTINUE)
 			result = r;
 	}

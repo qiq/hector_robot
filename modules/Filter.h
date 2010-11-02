@@ -1,6 +1,5 @@
 /**
- * Filter WebResource according to various field values.
- * Requires WebResource to work on.
+ * Filter Resource according to various field values.
  */
 
 #ifndef _MODULES_FILTER_H_
@@ -9,32 +8,32 @@
 #include <config.h>
 
 #include <pcrecpp.h>
+#include <tr1/unordered_map>
 #include "Module.h"
 #include "ObjectValues.h"
 #include "ProcessingEngine.h"
 #include "robot_common.h"
-#include "WebResource.h"
+#include "Resource.h"
 
 class Filter : public Module {
 public:
-	Filter(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
-	~Filter();
-	bool Init(vector<pair<string, string> > *params);
-	Module::Type getType();
-	Resource *ProcessSimple(Resource *resource);
-
 	class Condition;
 	class Action;
 	class Rule;
 
-private:
-	int typeId;		// not reachable outside module
+	Filter(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	~Filter();
+	bool Init(vector<pair<string, string> > *params);
+	vector<Filter::Rule*> *InitResource(Resource *resource);
+	Module::Type getType();
+	Resource *ProcessSimple(Resource *resource);
 
+private:
 	int items;		// ObjectLock
 	char *ruleList;		// initOnly
 	char *ruleFile;		// initOnly
 
-	vector<Filter::Rule*> rules;
+	std::tr1::unordered_map<int, vector<Filter::Rule*>*> rules;
 
 	ObjectValues<Filter> *values;
 
@@ -62,16 +61,16 @@ public:
 			IP6_EQ, IP6_NE,
 		};
 
-		Condition() {};
-		~Condition() {};
-		bool Init(string *data, int lineNo);
-		bool isTrue(WebResource *wr);
+		Condition();
+		~Condition();
+		bool Init(string *data, int lineNo, Resource *resource);
+		bool isTrue(Resource *wr);
 
 	private:
 		bool length;		// length(string)
 		std::string name;	// used for header values
 		// variable
-		WebResource::FieldInfo info;
+		ResourceFieldInfo *info;
 		// operator
 		OperatorType op;
 		// value
@@ -99,16 +98,16 @@ public:
 			CLEAR,
 		};
 
-		Action() {};
-		~Action() {};
-		bool Init(string *data, int lineNo);
-		ActionType Apply(WebResource *wr);
+		Action();
+		~Action();
+		bool Init(string *data, int lineNo, Resource *resource);
+		ActionType Apply(Resource *wr);
 
 	private:
 		// action: ACCEPT | DROP | CONTINUE | STATUS = xxx
 		ActionType type;
 		// variable setters
-		WebResource::FieldInfo info;
+		ResourceFieldInfo *info;
 		// values
 		std::string name;	// used for header values
 		std::string sValue;
@@ -125,8 +124,8 @@ public:
 	public:
 		Rule() {};
 		~Rule();
-		bool Init(string *line, int lineNo);
-		Filter::Action::ActionType Apply(WebResource *wr);
+		bool Init(string *line, int lineNo, Resource *resource);
+		Filter::Action::ActionType Apply(Resource *resource);
 	private:
 		vector<Condition*> conditions;
 		vector<Action*> actions;
@@ -153,6 +152,22 @@ inline bool Filter::isInitOnly(const char *name) {
 
 inline vector<string> *Filter::listNamesSync() {
 	return values->listNamesSync();
+}
+
+inline Filter::Condition::Condition() {
+	info = NULL;
+}
+
+inline Filter::Condition::~Condition() {
+	delete(info);
+}
+
+inline Filter::Action::Action() {
+	info = NULL;
+}
+
+inline Filter::Action::~Action() {
+	delete(info);
 }
 
 #endif

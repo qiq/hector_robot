@@ -21,6 +21,10 @@
 typedef struct CurlResourceInfo_ {
 	int index;		// index in the resourceInfo table
 	WebResource *current;	// currently processed Resource
+	std::string *content;	// content to be filled (pointer to current WebResource)
+	long contentLength;	// content size of current object (copy of Content-Length, if known)
+	long maxContentLength;	// copy from Fetch object
+	bool contentIsText;	// content is text (text/html or text/plain)?
 	deque<WebResource*> waiting;	// waiting resource in the current hash bucket
 	CURL *easy;		// CURL easy handle (to be reused)
 	curl_socket_t socketfd;	// socket used by CURL
@@ -67,7 +71,7 @@ public:
 	void QueueResource(WebResource *wr);
 	void StartQueuedResourcesFetch();
 	void StartResourceFetch(WebResource *wr, int index);
-	void FinishResourceFetch(CurlResourceInfo *ri);
+	void FinishResourceFetch(CurlResourceInfo *ri, int result);
 
 private:
 	int items;		// ObjectLock, items processed
@@ -76,6 +80,8 @@ private:
 	char *from;		// initOnly, From: header field
 	char *userAgent;	// initOnly, User-Agent: header field
 	int maxRequests;	// initOnly, number of concurrent requests
+	long maxContentLength;	// ObjectLock, maximum length of the content to download
+	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 
 	ObjectValues<Fetch> *values;
 
@@ -92,6 +98,10 @@ private:
 	void setUserAgent(const char *name, const char *value);
 	char *getMaxRequests(const char *name);
 	void setMaxRequests(const char *name, const char *value);
+	char *getMaxContentLength(const char *name);
+	void setMaxContentLength(const char *name, const char *value);
+	char *getTimeTick(const char *name);
+	void setTimeTick(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);

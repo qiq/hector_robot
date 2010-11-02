@@ -37,21 +37,21 @@ bool ParseUrl::Init(vector<pair<string, string> > *params) {
 }
 
 Resource *ParseUrl::ProcessSimple(Resource *resource) {
-	WebResource *wr = dynamic_cast<WebResource*>(resource);
-	if (wr) {
-		GURL *gurl = new GURL(wr->getUrl());
-		wr->setUrlScheme(gurl->scheme().c_str());
-		wr->setUrlUsername(gurl->username().c_str());
-		wr->setUrlPassword(gurl->password().c_str());
-		wr->setUrlHost(gurl->host().c_str());
-		wr->setUrlPort(gurl->EffectiveIntPort());
-		wr->setUrlPath(gurl->path().c_str());
-		wr->setUrlQuery(gurl->query().c_str());
-		delete gurl;
-		ObjectLockWrite();
-		items++;
-		ObjectUnlock();
-	}
+	if (resource->getTypeId() != WebResource::typeId)
+		return resource;
+	WebResource *wr = static_cast<WebResource*>(resource);
+	GURL *gurl = new GURL(wr->getUrl());
+	wr->setUrlScheme(gurl->scheme().c_str());
+	wr->setUrlUsername(gurl->username().c_str());
+	wr->setUrlPassword(gurl->password().c_str());
+	wr->setUrlHost(gurl->host().c_str());
+	wr->setUrlPort(gurl->EffectiveIntPort());
+	wr->setUrlPath(gurl->path().c_str());
+	wr->setUrlQuery(gurl->query().c_str());
+	delete gurl;
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
 	return resource;
 }
 

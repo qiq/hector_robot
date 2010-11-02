@@ -48,43 +48,46 @@ bool ComposeUrl::Init(vector<pair<string, string> > *params) {
 }
 
 Resource *ComposeUrl::ProcessSimple(Resource *resource) {
-	WebResource *wr = dynamic_cast<WebResource*>(resource);
-	if (wr && wr->getUrlScheme() != "") {
-		string s = wr->getUrlScheme();
-		s += "://";
-		if (wr->getUrlUsername() != "") {
-			s += wr->getUrlUsername();
-			s += ":";
-			s += wr->getUrlPassword();
-			s += "@";
-		}
-		s += wr->getUrlHost();
-		if (wr->getUrlPort() != 80) {
-			s += ":";
-			s += wr->getUrlPort();
-		}
-		s += wr->getUrlPath();
-		if (wr->getUrlQuery() != "") {
-			s += "?";
-			s += wr->getUrlQuery();
-		}
-		wr->setUrl(s.c_str());
-
-		bool clear;
-		ObjectLockWrite();
-		clear = this->clear;
-		items++;
-		ObjectUnlock();
-		if (clear) {
-			wr->clearUrlScheme();
-			wr->clearUrlUsername();
-			wr->clearUrlPassword();
-			wr->clearUrlHost();
-			wr->clearUrlPort();
-			wr->clearUrlPath();
-			wr->clearUrlQuery();
-		}
+	if (resource->getTypeId() != WebResource::typeId)
+		return resource;
+	WebResource *wr = static_cast<WebResource*>(resource);
+	if (wr->getUrlScheme() == "")
+		return resource;
+	string s = wr->getUrlScheme();
+	s += "://";
+	if (wr->getUrlUsername() != "") {
+		s += wr->getUrlUsername();
+		s += ":";
+		s += wr->getUrlPassword();
+		s += "@";
 	}
+	s += wr->getUrlHost();
+	if (wr->getUrlPort() != 80) {
+		s += ":";
+		s += wr->getUrlPort();
+	}
+	s += wr->getUrlPath();
+	if (wr->getUrlQuery() != "") {
+		s += "?";
+		s += wr->getUrlQuery();
+	}
+	wr->setUrl(s.c_str());
+
+	ObjectLockRead();
+	bool clear = this->clear;
+	ObjectUnlock();
+	if (clear) {
+		wr->clearUrlScheme();
+		wr->clearUrlUsername();
+		wr->clearUrlPassword();
+		wr->clearUrlHost();
+		wr->clearUrlPort();
+		wr->clearUrlPath();
+		wr->clearUrlQuery();
+	}
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
 	return resource;
 }
 

@@ -57,20 +57,20 @@ void WebResource::SaveHeaders() {
 	header_map_dirty = false;
 }
 
-void WebResource::setHeaderValue(const char *name, const char *value) {
+void WebResource::setHeaderValue(const std::string &name, const std::string &value) {
 	if (!header_map_ready)
 		LoadHeaders();
 	headers[name] = value;
 	header_map_dirty = true;
 }
 
-const char *WebResource::getHeaderValue(const char *name) {
+const std::string &WebResource::getHeaderValue(const std::string &name) {
 	if (!header_map_ready)
 		LoadHeaders();
 	tr1::unordered_map<string, string>::iterator iter = headers.find(name);
 	if (iter == headers.end())
-		return NULL;
-	return iter->second.c_str();
+		return empty_string;
+	return iter->second;
 }
 
 void WebResource::clearHeaderFields() {
@@ -98,154 +98,232 @@ void WebResource::clearExtractedUrls() {
 	r.clear_extracted_urls();
 }
 
-char *WebResource::toString(Object::LogLevel logLevel) {
-	string s;
+string *WebResource::toString(Object::LogLevel logLevel) {
+	string *s = new string();
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl());
-	s = buf;
-	if (strlen(this->getUrlScheme()) > 0) {
-		snprintf(buf, sizeof(buf), " (%s", this->getUrlScheme());
-		s += buf;
-		if (strlen(this->getUrlUsername()) > 0) {
-			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername(), this->getUrlPassword());
-			s += buf;
+	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
+	*s = buf;
+	if (this->getUrlScheme().length() > 0) {
+		snprintf(buf, sizeof(buf), " (%s", this->getUrlScheme().c_str());
+		*s += buf;
+		if (this->getUrlUsername().length() > 0) {
+			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
+			*s += buf;
 		}
-		snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost(), this->getUrlPort(), this->getUrlPath(), this->getUrlQuery());
-		s += buf;
+		snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str(), this->getUrlQuery().c_str());
+		*s += buf;
 	}
-	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType(), strlen(this->getContent()));
-	s += buf;
+	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType().c_str(), this->getContent().length());
+	*s += buf;
 	char *a = ip4Addr2Str(this->getIp4Addr());
 	snprintf(buf, sizeof(buf), ", ip4: %s", a);
 	free(a);
-	s += buf;
+	*s += buf;
 	a = ip6Addr2Str(this->getIp6Addr());
 	snprintf(buf, sizeof(buf), ", ip6: %s", a);
 	free(a);
-	s += buf;
+	*s += buf;
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
-		s += buf;
+		*s += buf;
 	}
-	s += "\n";
+	*s += "\n";
+	if (header_map_dirty)
+		SaveHeaders();
 	vector<string> *v = this->getHeaderNames();
 	if (v) {
-		s += "headers:\n";
+		*s += "headers:\n";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			const char *value = this->getHeaderValue(iter->c_str());
-			s += *iter;
-			s += ": ";
-			s += value;
-			s += "\n";
+			const std::string &value = this->getHeaderValue(iter->c_str());
+			*s += *iter;
+			*s += ": ";
+			*s += value;
+			*s += "\n";
 		}
 		delete v;
 	}
 	v = this->getExtractedUrls();
 	if (v) {
-		s += "urls:\n";
+		*s += "urls:\n";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			s += *iter;
-			s += "\n";
+			*s += *iter;
+			*s += "\n";
 		}
 		delete v;
 	}
-	if (strlen(this->getContent()) > 0) {
-		s += "content:\n";
-		s += this->getContent();
-		s += "\n";
+	if (this->getContent().length() > 0) {
+		*s += "content:\n";
+		*s += this->getContent();
+		*s += "\n";
 	}
-	return strdup(s.c_str());
+	return s;
 }
 
-WebResource::FieldInfo WebResource::getFieldInfo(const char *name) {
-	WebResource::FieldInfo result;
-	if (!strcmp(name, "id")) {
-		result.type = INT;
-		result.get.i = &WebResource::getId;
-		result.set.i = &WebResource::setId;
-		result.clear = NULL;
-	} else if (!strcmp(name, "status")) {
-		result.type = INT;
-		result.get.i = &WebResource::getStatus;
-		result.set.i = &WebResource::setStatus;
-		result.clear = NULL;
-	} else if (!strcmp(name, "url")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrl;
-		result.set.s = &WebResource::setUrl;
-		result.clear = &WebResource::clearUrl;
-	} else if (!strcmp(name, "time")) {
-		result.type = LONG;
-		result.get.l = &WebResource::getTime;
-		result.set.l = &WebResource::setTime;
-		result.clear = &WebResource::clearTime;
-	} else if (!strcmp(name, "mimeType")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getMimeType;
-		result.set.s = &WebResource::setMimeType;
-		result.clear = &WebResource::clearMimeType;
-	} else if (!strcmp(name, "content")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getContent;
-		result.set.s = &WebResource::setContent;
-		result.clear = &WebResource::clearContent;
-	} else if (!strcmp(name, "header")) {
-		result.type = STRING2;
-		result.get.s2 = &WebResource::getHeaderValue;
-		result.set.s2 = &WebResource::setHeaderValue;
-		result.clear = &WebResource::clearHeaderFields;
-	} else if (!strcmp(name, "ip4Addr")) {
-		result.type = IP4;
-		result.get.a4 = &WebResource::getIp4Addr;
-		result.set.a4 = &WebResource::setIp4Addr;
-		result.clear = &WebResource::clearIp4Addr;
-	} else if (!strcmp(name, "ip6Addr")) {
-		result.type = IP6;
-		result.get.a6 = &WebResource::getIp6Addr;
-		result.set.a6 = &WebResource::setIp6Addr;
-		result.clear = &WebResource::clearIp6Addr;
-	} else if (!strcmp(name, "ipAddrExpire")) {
-		result.type = LONG;
-		result.get.l = &WebResource::getIpAddrExpire;
-		result.set.l = &WebResource::setIpAddrExpire;
-		result.clear = &WebResource::clearIpAddrExpire;
-	} else if (!strcmp(name, "urlScheme")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlScheme;
-		result.set.s = &WebResource::setUrlScheme;
-		result.clear = &WebResource::clearUrlScheme;
-	} else if (!strcmp(name, "urlUsername")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlUsername;
-		result.set.s = &WebResource::setUrlUsername;
-		result.clear = &WebResource::clearUrlUsername;
-	} else if (!strcmp(name, "urlPassword")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlPassword;
-		result.set.s = &WebResource::setUrlPassword;
-		result.clear = &WebResource::clearUrlPassword;
-	} else if (!strcmp(name, "urlHost")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlHost;
-		result.set.s = &WebResource::setUrlHost;
-		result.clear = &WebResource::clearUrlHost;
-	} else if (!strcmp(name, "urlPort")) {
-		result.type = INT;
-		result.get.i = &WebResource::getUrlPort;
-		result.set.i = &WebResource::setUrlPort;
-		result.clear = &WebResource::clearUrlPort;
-	} else if (!strcmp(name, "urlPath")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlPath;
-		result.set.s = &WebResource::setUrlPath;
-		result.clear = &WebResource::clearUrlPath;
-	} else if (!strcmp(name, "urlQuery")) {
-		result.type = STRING;
-		result.get.s = &WebResource::getUrlQuery;
-		result.set.s = &WebResource::setUrlQuery;
-		result.clear = &WebResource::clearUrlQuery;
+WebResourceFieldInfo::WebResourceFieldInfo(const std::string &name) {
+	if (name == "id") {
+		type = INT;
+		get_u.i = &WebResource::getId;
+		set_u.i = &WebResource::setId;
+		clear_u.c = NULL;
+	} else if (name == "status") {
+		type = INT;
+		get_u.i = &WebResource::getStatus;
+		set_u.i = &WebResource::setStatus;
+		clear_u.c = NULL;
+	} else if (name == "url") {
+		type = STRING;
+		get_u.s = &WebResource::getUrl;
+		set_u.s = &WebResource::setUrl;
+		clear_u.c = &WebResource::clearUrl;
+	} else if (name == "time") {
+		type = LONG;
+		get_u.l = &WebResource::getTime;
+		set_u.l = &WebResource::setTime;
+		clear_u.c = &WebResource::clearTime;
+	} else if (name == "mimeType") {
+		type = STRING;
+		get_u.s = &WebResource::getMimeType;
+		set_u.s = &WebResource::setMimeType;
+		clear_u.c = &WebResource::clearMimeType;
+	} else if (name == "content") {
+		type = STRING;
+		get_u.s = &WebResource::getContent;
+		set_u.s = &WebResource::setContent;
+		clear_u.c = &WebResource::clearContent;
+	} else if (name == "header") {
+		type = STRING2;
+		get_u.s2 = &WebResource::getHeaderValue;
+		set_u.s2 = &WebResource::setHeaderValue;
+		clear_u.c = &WebResource::clearHeaderFields;
+	} else if (name == "ip4Addr") {
+		type = IP4;
+		get_u.a4 = &WebResource::getIp4Addr;
+		set_u.a4 = &WebResource::setIp4Addr;
+		clear_u.c = &WebResource::clearIp4Addr;
+	} else if (name == "ip6Addr") {
+		type = IP6;
+		get_u.a6 = &WebResource::getIp6Addr;
+		set_u.a6 = &WebResource::setIp6Addr;
+		clear_u.c = &WebResource::clearIp6Addr;
+	} else if (name == "ipAddrExpire") {
+		type = LONG;
+		get_u.l = &WebResource::getIpAddrExpire;
+		set_u.l = &WebResource::setIpAddrExpire;
+		clear_u.c = &WebResource::clearIpAddrExpire;
+	} else if (name == "urlScheme") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlScheme;
+		set_u.s = &WebResource::setUrlScheme;
+		clear_u.c = &WebResource::clearUrlScheme;
+	} else if (name == "urlUsername") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlUsername;
+		set_u.s = &WebResource::setUrlUsername;
+		clear_u.c = &WebResource::clearUrlUsername;
+	} else if (name == "urlPassword") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlPassword;
+		set_u.s = &WebResource::setUrlPassword;
+		clear_u.c = &WebResource::clearUrlPassword;
+	} else if (name == "urlHost") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlHost;
+		set_u.s = &WebResource::setUrlHost;
+		clear_u.c = &WebResource::clearUrlHost;
+	} else if (name == "urlPort") {
+		type = INT;
+		get_u.i = &WebResource::getUrlPort;
+		set_u.i = &WebResource::setUrlPort;
+		clear_u.c = &WebResource::clearUrlPort;
+	} else if (name == "urlPath") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlPath;
+		set_u.s = &WebResource::setUrlPath;
+		clear_u.c = &WebResource::clearUrlPath;
+	} else if (name == "urlQuery") {
+		type = STRING;
+		get_u.s = &WebResource::getUrlQuery;
+		set_u.s = &WebResource::setUrlQuery;
+		clear_u.c = &WebResource::clearUrlQuery;
 	} else {
-		result.type = UNKNOWN;
+		type = UNKNOWN;
 	}
-	return result;
+}
+
+const string &WebResourceFieldInfo::getString(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.s ? (static_cast<WebResource*>(resource)->*get_u.s)() : empty_string;
+}
+
+int WebResourceFieldInfo::getInt(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.i ? (static_cast<WebResource*>(resource)->*get_u.i)() : -1;
+}
+
+long WebResourceFieldInfo::getLong(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.l ? (static_cast<WebResource*>(resource)->*get_u.l)() : -1;
+}
+
+ip4_addr_t WebResourceFieldInfo::getIp4Addr(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.a4 ? (static_cast<WebResource*>(resource)->*get_u.a4)() : ip4_addr_empty;
+}
+
+ip6_addr_t WebResourceFieldInfo::getIp6Addr(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.a6 ? (static_cast<WebResource*>(resource)->*get_u.a6)() : ip6_addr_empty;
+}
+
+const std::string &WebResourceFieldInfo::getString2(Resource *resource, const std::string &name) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	return get_u.s2 ? (static_cast<WebResource*>(resource)->*get_u.s2)(name) : empty_string;
+}
+
+void WebResourceFieldInfo::setString(Resource *resource, const std::string &value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.s)
+		(static_cast<WebResource*>(resource)->*set_u.s)(value);
+}
+
+void WebResourceFieldInfo::setInt(Resource *resource, int value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.i)
+		(static_cast<WebResource*>(resource)->*set_u.i)(value);
+}
+
+void WebResourceFieldInfo::setLong(Resource *resource, long value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.l)
+		(static_cast<WebResource*>(resource)->*set_u.l)(value);
+}
+
+void WebResourceFieldInfo::setIp4Addr(Resource *resource, ip4_addr_t value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.a4)
+		(static_cast<WebResource*>(resource)->*set_u.a4)(value);
+}
+
+void WebResourceFieldInfo::setIp6Addr(Resource *resource, ip6_addr_t value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.a6)
+		(static_cast<WebResource*>(resource)->*set_u.a6)(value);
+}
+
+void WebResourceFieldInfo::setString2(Resource *resource, const std::string &name, const std::string &value) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (set_u.s2)
+		(static_cast<WebResource*>(resource)->*set_u.s2)(name, value);
+}
+
+void WebResourceFieldInfo::clear(Resource *resource) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (clear_u.c)
+		(static_cast<WebResource*>(resource)->*clear_u.c)();
+}
+
+void WebResourceFieldInfo::clearString2(Resource *resource, const std::string &name) {
+	assert(resource->getTypeId() == WebResource::typeId);
+	if (clear_u.s2)
+		(static_cast<WebResource*>(resource)->*clear_u.s2)(name);
 }

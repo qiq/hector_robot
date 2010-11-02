@@ -1,14 +1,45 @@
-- fetch.cc -- debug, dopsat
+- website module
+	- nacitat a ukladat websiteresources
+	- zodpovidat queries
+	- poustet dns resolution + robots.txt download
+	- bude si ukladat websites v hash tabulce, adresy v judy array/hash
+
+- website resource
+	- hostname: domenove jmeno 20 + 4 + 16 + 4 + hash + 4 + hash?
+	- ip4addr: adresa
+	- ip6addr: adresa
+	- dnsExpire: kdy vyprsi preklad
+	- paths: seznam path
+		- name: cele jmeno (je v hash/judy array)
+		- lastUpdate: kdy se obnovila stranka naposledy (4)
+		- lastStatus: jestli byla stranka nalezena ci nikoliv (4)
+	 - robotsLastUpdate: posledni obnova robots.txt
+	 - deniedPaths: seznam zakazanych path (z robots.txt)
+- ve zpracovani robots.txt je potreba nastaveni jmena
+
+- query/response resource
+	- getPathInfo: I: hostname, path; O: ip adresa, cksum, error
+	- addPath: I: hostname, path; O: OK, already presend
+	- list all sites: I: 0; out: [string]
+	- list paths: I: hostname; out: [string]
+
+Filter: rozdelit, presunout do hector_core, prepsat modify
+filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku (jakoze podle jmena, nechat jen specificke)
+	* => keep()
+- presunout filter do hector_core
+
+- upravit filter: zmenit na filter + modify
+
 - fetch -- poradny test, napr. pres localhost a apache na chroustalku.
 - testy pro ruzne moduly
 	- (Perl i C++)
 
-- resolver module v C++
+- OTESTOVAT: resolver module v C++
   	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
 	- bude pouzivat libunbound -- standardni operace, ale s pouzitim libev
 	- vezme host, vrati IP adresu (plus do kdy je platna)
 	- multi module
-- stahovaci modul
+- OTESTOVAT: stahovaci modul
 	v C++ pomoci curl (a libevent/libev)
 
 - vyzkouset stahnout stranku
@@ -17,6 +48,7 @@
 - cistici modul
 
 DONE
+- filter: upravit, aby nevyzadoval WebResource
 - resolver module (blokujici, v Perlu)
 	- jen obyc prevede jmeno na IP adresu
 - CreateWebResource: precist seznam URL a vygenerovat WebResources

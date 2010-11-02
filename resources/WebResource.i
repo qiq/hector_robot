@@ -1,3 +1,5 @@
+%include "std_string.i"
+
 %newobject WebResource::Serialize();
 %newobject WebResource::toString();
 
@@ -18,29 +20,29 @@ public:
         int getStatus();
         void setStatus(int status);
         std::string *Serialize();
-        bool Deserialize(std::string *s);
+        bool Deserialize(const char *data, int size);
         int getSerializedSize();
         bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
         bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getSize();
         char *toString(Object::LogLevel = Object::INFO);
 
-        void setUrl(const char *url);
-        const char *getUrl();
+        void setUrl(const std::string &url);
+        const std::string &getUrl();
         void clearUrl();
         void setTime(long time);
         long getTime();
         void clearTime();
-        void setMimeType(const char *mimeType);
-        const char *getMimeType();
+        void setMimeType(const std::string &mimeType);
+        const std::string &getMimeType();
         void clearMimeType();
-        void setContent(const char *content);
-        const char *getContent();
+        void setContent(const std::string &content);
+        const std::string &getContent();
         void clearContent();
         void setHeaderFields(std::vector<std::string> *header_names, std::vector<std::string> *header_values);
         std::vector<std::string> *getHeaderNames();
-        void setHeaderValue(const char *name, const char *value);
-        const char *getHeaderValue(const char *name);
+        void setHeaderValue(const std::string &name, const std::string &value);
+        const std::string &getHeaderValue(const std::string &name);
         void clearHeaderFields();
         void setExtractedUrls(std::vector<std::string> *extracted_urls);
         std::vector<std::string> *getExtractedUrls();
@@ -55,25 +57,25 @@ public:
         long getIpAddrExpire();
         void clearIpAddrExpire();
 
-        void setUrlScheme(const char *urlScheme);
-        const char *getUrlScheme();
+        void setUrlScheme(const std::string &urlScheme);
+        const std::string &getUrlScheme();
         void clearUrlScheme();
-        void setUrlUsername(const char *urlUsername);
-        const char *getUrlUsername();
+        void setUrlUsername(const std::string &urlUsername);
+        const std::string &getUrlUsername();
         void clearUrlUsername();
-        void setUrlPassword(const char *urlPassword);
-        const char *getUrlPassword();
+        void setUrlPassword(const std::string &urlPassword);
+        const std::string &getUrlPassword();
         void clearUrlPassword();
-        void setUrlHost(const char *urlHost);
-        const char *getUrlHost();
+        void setUrlHost(const std::string &urlHost);
+        const std::string &getUrlHost();
         void clearUrlHost();
         void setUrlPort(int port);
         int getUrlPort();
         void clearUrlPort();
-        void setUrlPath(const char *urlPath);
-        const char *getUrlPath();
+        void setUrlPath(const std::string &urlPath);
+        const std::string &getUrlPath();
         void clearUrlPath();
-        void setUrlQuery(const char *urlQuery);
-        const char *getUrlQuery();
+        void setUrlQuery(const std::string &urlQuery);
+        const std::string &getUrlQuery();
         void clearUrlQuery();
 };

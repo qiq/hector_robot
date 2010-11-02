@@ -1,5 +1,5 @@
 /**
- * Class representing queue of resources (mainly HTML pages) while processing.
+ * Class representing resource (mainly HTML pages) while processing.
  * It uses Google Protocol Buffers to de/serialize.
  */
 
@@ -22,6 +22,8 @@ public:
 	~WebResource();
 	// create copy of a resource
 	ProtobufResource *Clone();
+	// get info about a resource field
+	ResourceFieldInfo *getFieldInfo(const char *name);
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
 	int getTypeId();
 	// type string of a resource
@@ -37,31 +39,33 @@ public:
 
 	// save and restore resource
 	std::string *Serialize();
-	bool Deserialize(std::string *s);
+	bool Deserialize(const char *data, int size);
 	int getSerializedSize();
 	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
 	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
-	char *toString(Object::LogLevel = Object::INFO);
+	std::string *toString(Object::LogLevel = Object::INFO);
 
-	void setUrl(const char *url);
-	const char *getUrl();
+	// WebResource-specific
+	void setUrl(const std::string &url);
+	const std::string &getUrl();
 	void clearUrl();
 	void setTime(long time);
 	long getTime();
 	void clearTime();
-	void setMimeType(const char *mimeType);
-	const char *getMimeType();
+	void setMimeType(const std::string &mimeType);
+	const std::string &getMimeType();
 	void clearMimeType();
-	void setContent(const char *content);
-	const char *getContent();
+	void setContent(const std::string &content);
+	const std::string &getContent();
+	std::string *getContentMutable();
 	void clearContent();
 	void setHeaderFields(std::vector<std::string> *names, std::vector<std::string> *values);
 	std::vector<std::string> *getHeaderNames();
-	void setHeaderValue(const char *name, const char *value);
-	const char *getHeaderValue(const char *name);
+	void setHeaderValue(const std::string &name, const std::string &value);
+	const std::string &getHeaderValue(const std::string &name);
 	void clearHeaderFields();
 	void setExtractedUrls(std::vector<std::string> *extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
@@ -76,53 +80,30 @@ public:
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
 
-        void setUrlScheme(const char *urlScheme);
-        const char *getUrlScheme();
+	// Url parts
+        void setUrlScheme(const std::string &urlScheme);
+        const std::string &getUrlScheme();
 	void clearUrlScheme();
-        void setUrlUsername(const char *urlUsername);
-        const char *getUrlUsername();
+        void setUrlUsername(const std::string &urlUsername);
+        const std::string &getUrlUsername();
 	void clearUrlUsername();
-        void setUrlPassword(const char *urlPassword);
-        const char *getUrlPassword();
+        void setUrlPassword(const std::string &urlPassword);
+        const std::string &getUrlPassword();
 	void clearUrlPassword();
-        void setUrlHost(const char *urlHost);
-        const char *getUrlHost();
+        void setUrlHost(const std::string &urlHost);
+        const std::string &getUrlHost();
 	void clearUrlHost();
         void setUrlPort(int port);
         int getUrlPort();
 	void clearUrlPort();
-        void setUrlPath(const char *urlPath);
-        const char *getUrlPath();
+        void setUrlPath(const std::string &urlPath);
+        const std::string &getUrlPath();
 	void clearUrlPath();
-        void setUrlQuery(const char *urlQuery);
-        const char *getUrlQuery();
-        void clearUrlQuery();
+        void setUrlQuery(const std::string &urlQuery);
+	const std::string &getUrlQuery();
+	void clearUrlQuery();
 
 	static const int typeId = 10;
-
-	typedef struct {
-		Resource::FieldType type;
-		union {
-			const char *(WebResource::*s)();
-			int (WebResource::*i)();
-			long (WebResource::*l)();
-			ip4_addr_t (WebResource::*a4)();
-			ip6_addr_t (WebResource::*a6)();
-			const char *(WebResource::*s2)(const char*);
-		} get;
-		union {
-			void (WebResource::*s)(const char *);
-			void (WebResource::*i)(int);
-			void (WebResource::*l)(long);
-			void (WebResource::*a4)(ip4_addr_t);
-			void (WebResource::*a6)(ip6_addr_t);
-			void (WebResource::*s2)(const char*, const char*);
-		} set;
-		void (WebResource::*clear)();
-	} FieldInfo;
-
-	// get info about an item
-	static FieldInfo getFieldInfo(const char *name);
 
 protected:
 	// saved properties
@@ -137,6 +118,55 @@ protected:
 
 	static log4cxx::LoggerPtr logger;
 };
+
+class WebResourceFieldInfo : public ResourceFieldInfo {
+public:
+	WebResourceFieldInfo(const std::string &name);
+	~WebResourceFieldInfo();
+
+	const std::string &getString(Resource*);
+	int getInt(Resource*);
+	long getLong(Resource*);
+	ip4_addr_t getIp4Addr(Resource*);
+	ip6_addr_t getIp6Addr(Resource*);
+	const std::string &getString2(Resource*, const std::string&);
+
+	void setString(Resource*, const std::string&);
+	void setInt(Resource*, int);
+	void setLong(Resource*, long);
+	void setIp4Addr(Resource*, ip4_addr_t);
+	void setIp6Addr(Resource*, ip6_addr_t);
+	void setString2(Resource*, const std::string&, const std::string&);
+
+	void clear(Resource*);
+	void clearString2(Resource*, const std::string&);
+
+private:
+	union {
+		const std::string &(WebResource::*s)();
+		int (WebResource::*i)();
+		long (WebResource::*l)();
+		ip4_addr_t (WebResource::*a4)();
+		ip6_addr_t (WebResource::*a6)();
+		const std::string &(WebResource::*s2)(const std::string&);
+	} get_u;
+	union {
+		void (WebResource::*s)(const std::string&);
+		void (WebResource::*i)(int);
+		void (WebResource::*l)(long);
+		void (WebResource::*a4)(ip4_addr_t);
+		void (WebResource::*a6)(ip6_addr_t);
+		void (WebResource::*s2)(const std::string&, const std::string&);
+	} set_u;
+	union {
+		void (WebResource::*c)();
+		void (WebResource::*s2)(const std::string&);
+	} clear_u;
+};
+
+inline ResourceFieldInfo *WebResource::getFieldInfo(const char *name) {
+	return new WebResourceFieldInfo(name);
+}
 
 inline int WebResource::getTypeId() {
 	return typeId;
@@ -172,10 +202,10 @@ inline std::string *WebResource::Serialize() {
 	return MessageSerialize(&r);
 }
 
-inline bool WebResource::Deserialize(std::string *s) {
+inline bool WebResource::Deserialize(const char *data, int size) {
 	header_map_ready = false;
 	header_map_dirty = false;
-	return MessageDeserialize(&r, s);
+	return MessageDeserialize(&r, data, size);
 }
 
 inline int WebResource::getSerializedSize() {
@@ -197,12 +227,12 @@ inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *
 }
 
 
-inline void WebResource::setUrl(const char *url) {
+inline void WebResource::setUrl(const std::string &url) {
 	r.set_url(url);
 }
 
-inline const char *WebResource::getUrl() {
-	return r.url().c_str();
+inline const std::string &WebResource::getUrl() {
+	return r.url();
 }
 
 inline void WebResource::clearUrl() {
@@ -221,24 +251,28 @@ inline void WebResource::clearTime() {
 	r.clear_time();
 }
 
-inline void WebResource::setMimeType(const char *mimeType) {
+inline void WebResource::setMimeType(const std::string &mimeType) {
 	r.set_mime_type(mimeType);
 }
 
-inline const char *WebResource::getMimeType() {
-	return r.mime_type().c_str();
+inline const std::string &WebResource::getMimeType() {
+	return r.mime_type();
 }
 
 inline void WebResource::clearMimeType() {
 	r.clear_mime_type();
 }
 
-inline void WebResource::setContent(const char *content) {
+inline void WebResource::setContent(const std::string &content) {
 	r.set_content(content);
 }
 
-inline const char *WebResource::getContent() {
-	return r.content().c_str();
+inline const std::string &WebResource::getContent() {
+	return r.content();
+}
+
+inline std::string *WebResource::getContentMutable() {
+	return r.mutable_content();
 }
 
 inline void WebResource::clearContent() {
@@ -299,48 +333,48 @@ inline void WebResource::clearIpAddrExpire() {
 	r.clear_ip_addr_expire();
 }
 
-inline void WebResource::setUrlScheme(const char *urlScheme) {
+inline void WebResource::setUrlScheme(const std::string &urlScheme) {
 	r.set_url_scheme(urlScheme);
 }
 
-inline const char *WebResource::getUrlScheme() {
-	return r.url_scheme().c_str();
+inline const std::string &WebResource::getUrlScheme() {
+	return r.url_scheme();
 }
 
 inline void WebResource::clearUrlScheme() {
 	r.clear_url_scheme();
 }
 
-inline void WebResource::setUrlUsername(const char *urlUsername) {
+inline void WebResource::setUrlUsername(const std::string &urlUsername) {
 	r.set_url_username(urlUsername);
 }
 
-inline const char *WebResource::getUrlUsername() {
-	return r.url_username().c_str();
+inline const std::string &WebResource::getUrlUsername() {
+	return r.url_username();
 }
 
 inline void WebResource::clearUrlUsername() {
 	r.clear_url_username();
 }
 
-inline void WebResource::setUrlPassword(const char *urlPassword) {
+inline void WebResource::setUrlPassword(const std::string &urlPassword) {
 	r.set_url_password(urlPassword);
 }
 
-inline const char *WebResource::getUrlPassword() {
-	return r.url_password().c_str();
+inline const std::string &WebResource::getUrlPassword() {
+	return r.url_password();
 }
 
 inline void WebResource::clearUrlPassword() {
 	r.clear_url_password();
 }
 
-inline void WebResource::setUrlHost(const char *urlHost) {
+inline void WebResource::setUrlHost(const std::string &urlHost) {
 	r.set_url_host(urlHost);
 }
 
-inline const char *WebResource::getUrlHost() {
-	return r.url_host().c_str();
+inline const std::string &WebResource::getUrlHost() {
+	return r.url_host();
 }
 
 inline void WebResource::clearUrlHost() {
@@ -359,24 +393,24 @@ inline void WebResource::clearUrlPort() {
 	r.clear_url_port();
 }
 
-inline void WebResource::setUrlPath(const char *urlPath) {
+inline void WebResource::setUrlPath(const std::string &urlPath) {
 	r.set_url_path(urlPath);
 }
 
-inline const char *WebResource::getUrlPath() {
-	return r.url_path().c_str();
+inline const std::string &WebResource::getUrlPath() {
+	return r.url_path();
 }
 
 inline void WebResource::clearUrlPath() {
 	r.clear_url_path();
 }
 
-inline void WebResource::setUrlQuery(const char *urlQuery) {
+inline void WebResource::setUrlQuery(const std::string &urlQuery) {
 	r.set_url_query(urlQuery);
 }
 
-inline const char *WebResource::getUrlQuery() {
-	return r.url_query().c_str();
+inline const std::string &WebResource::getUrlQuery() {
+	return r.url_query();
 }
 
 inline void WebResource::clearUrlQuery() {
