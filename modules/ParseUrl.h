@@ -13,9 +13,9 @@
 
 class ParseUrl : public Module {
 public:
-	ParseUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	ParseUrl(ObjectRegistry *objects, const char *id, int threadIndex);
 	~ParseUrl();
-	bool Init(vector<pair<string, string> > *params);
+	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	Resource *ProcessSimple(Resource *resource);
 
@@ -31,7 +31,7 @@ private:
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
-	vector<string> *listNamesSync();
+	std::vector<std::string> *listNamesSync();
 };
 
 inline Module::Type ParseUrl::getType() {
@@ -50,7 +50,7 @@ inline bool ParseUrl::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline vector<string> *ParseUrl::listNamesSync() {
+inline std::vector<std::string> *ParseUrl::listNamesSync() {
 	return values->listNamesSync();
 }
 

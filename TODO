@@ -1,25 +1,48 @@
-- website module
+- dodelat websiteresource, aby pouzival jarray
+	- pridat interface na path
+	- upravit resourceinfo, aby fungoval pro websiteresource
+- pridat detekci jarray do configure.ac
+
+- upravit fetch a resolvedns, aby fungovaly s libovolnym resource
+	- mozna jen resolvedns(?), fetch potrebuje primo modifikovatelny string
+
+- items: jen korektne zpracovane resources, ne vsechny -- predelat
+
+- jmena metod na velka pismena (krome getteru/setteru)
+
+- webresource: pridat
+	- pocet presmerovani (male cislo)
+	- cil presmerovani
+
+- website manager
 	- nacitat a ukladat websiteresources
-	- zodpovidat queries
 	- poustet dns resolution + robots.txt download
-	- bude si ukladat websites v hash tabulce, adresy v judy array/hash
+	- zpracovavat newlink
+	- bude si ukladat websites v hash tabulce, paths v judy array/hash
 
 - website resource
-	- hostname: domenove jmeno 20 + 4 + 16 + 4 + hash + 4 + hash?
+	- hostname: domenove jmeno 20 + 4 + 16 + 4 + hash + 4 + hash? + 32 lock
 	- ip4addr: adresa
 	- ip6addr: adresa
 	- dnsExpire: kdy vyprsi preklad
 	- paths: seznam path
 		- name: cele jmeno (je v hash/judy array)
+		- updatePeriod: jak casto obnovovat (kvantizovana hodnota, asi 4-255, bude to nejak v minutach 2^n)
+			- upravuje se po kazdem stahnuti -- kdyz se zmena udala, tak se snizi, kdyz neudala, tak se o 1 zvysi
 		- lastUpdate: kdy se obnovila stranka naposledy (4)
 		- lastStatus: jestli byla stranka nalezena ci nikoliv (4)
+		- cil presmerovani (optional)
 	 - robotsLastUpdate: posledni obnova robots.txt
 	 - deniedPaths: seznam zakazanych path (z robots.txt)
-- ve zpracovani robots.txt je potreba nastaveni jmena
+
+- ve zpracovani robots.txt je potreba nastaveni jmena, to bude parametr
+- detekce opakujicich se retezcu v URL (staci jeden asi, neco jako /iso/test/iso)
+	- to bude specialni filtr, zatim asi v perlu, co bude kontrolovat adresy
 
 - query/response resource
 	- getPathInfo: I: hostname, path; O: ip adresa, cksum, error
 	- addPath: I: hostname, path; O: OK, already presend
+	- pathChange: I: hostname, path, cksum; O: OK
 	- list all sites: I: 0; out: [string]
 	- list paths: I: hostname; out: [string]
 

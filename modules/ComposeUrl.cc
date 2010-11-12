@@ -7,10 +7,11 @@
 #include "googleurl/src/gurl.h"
 #include "common.h"
 #include "ComposeUrl.h"
-#include "ProcessingEngine.h"
 #include "WebResource.h"
 
-ComposeUrl::ComposeUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
+using namespace std;
+
+ComposeUrl::ComposeUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	clear = 0;
 
@@ -39,7 +40,7 @@ void ComposeUrl::setClear(const char *name, const char *value) {
 bool ComposeUrl::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
-	typeId = engine->ResourceNameToId("WebResource");
+	typeId = Resource::NameToId("WebResource");
 	if (typeId < 0) {
 		LOG_ERROR("Cannot load WebResource library");
 		return false;
@@ -93,6 +94,6 @@ Resource *ComposeUrl::ProcessSimple(Resource *resource) {
 
 // the class factories
 
-extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
-	return (Module*)new ComposeUrl(objects, engine, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+	return (Module*)new ComposeUrl(objects, id, threadIndex);
 }

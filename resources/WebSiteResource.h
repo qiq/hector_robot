@@ -1,0 +1,327 @@
+/**
+ * Class representing one web site (DNS name): IP address, pages, etc.
+ * It uses Google Protocol Buffers to de/serialize.
+ * This resource may be shared across more than one module, so locking of
+ * mutable variables is necessary.
+ */
+
+#ifndef _WEB_SITE_RESOURCE_H_
+#define _WEB_SITE_RESOURCE_H_
+
+#include <config.h>
+
+#include <vector>
+#include <string>
+#include <tr1/unordered_map>
+#include <Judy.h>
+#include <log4cxx/logger.h>
+#include "common.h"
+#include "MemoryPool.h"
+#include "ProtobufResource.h"
+#include "ResourceFieldInfo.h"
+#include "RWLock.h"
+#include "WebSiteResource.pb.h"
+
+#define MAX_PATH_SIZE 2048
+
+typedef struct WebSitePath_ {
+	uint32_t cksum;
+	uint32_t status;
+	uint32_t lastUpdate;
+} WebSitePath;
+
+class WebSiteResource : public ProtobufResource {
+public:
+	WebSiteResource();
+	~WebSiteResource();
+	// create copy of a resource
+	ProtobufResource *Clone();
+	// get info about a resource field
+	ResourceFieldInfo *getFieldInfo(const char *name);
+	// type id of a resource (to be used by Resources::CreateResource(typeid))
+	int getTypeId();
+	// type string of a resource
+	const char *getTypeStr();
+	// module prefix (e.g. Hector for Hector::TestResource)
+	const char *getModuleStr();
+	// id should be unique across all resources
+	int getId();
+	void setId(int id);
+	// status may be tested in Processor to select target queue
+	int getStatus();
+	void setStatus(int status);
+
+	// save and restore resource
+	std::string *Serialize();
+	bool Deserialize(const char *data, int size);
+	int getSerializedSize();
+	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
+	// used by queues in case there is limit on queue size
+	int getSize();
+	// return string representation of the resource (e.g. for debugging purposes)
+	std::string *toString(Object::LogLevel = Object::INFO);
+
+	// WebSiteResource-specific
+	void setHostname(const std::string &hostname);
+	const std::string &getHostname();
+	void clearHostname();
+	void setIp4Addr(ip4_addr_t addr);
+	ip4_addr_t getIp4Addr();
+	void clearIp4Addr();
+	void setIp6Addr(ip6_addr_t addr);
+	ip6_addr_t getIp6Addr();
+	void clearIp6Addr();
+	void setIpAddrExpire(long time);
+	long getIpAddrExpire();
+	void clearIpAddrExpire();
+
+	void setAllowUrls(std::vector<std::string> *allow_urls);
+	std::vector<std::string> *getAllowUrls();
+	void clearAllowUrls();
+	void setDisallowUrls(std::vector<std::string> *disallow_urls);
+	std::vector<std::string> *getDisallowUrls();
+	void clearDisallowUrls();
+	void setRobotsExpire(long time);
+	long getRobotsExpire();
+	void clearRobotsExpire();
+
+	// path info get/set
+	// TODO:
+	//setPathInfo(conat char *path, WebSitePath *info);
+	//WebSitePath *getPathInfo(const char *path);
+
+	static const int typeId = 11;
+
+protected:
+	// this is a shared resource: all methods need to take the lock
+	RWLock lock;
+	// saved properties
+	hector::resources::WebSiteResource r;
+	// memory-only
+	// paths Judy array
+	Pvoid_t paths;
+
+	static MemoryPool<WebSitePath> pool;
+
+	//bool header_map_ready;
+	//bool header_map_dirty;
+	//std::tr1::unordered_map<std::string, std::string> headers;
+
+	//void LoadHeaders();
+	//void SaveHeaders();
+
+	// helper methods to convert from Judy array to protobuf representation and vice-versa
+	bool ProtobufToJarray();
+	void JarrayToProtobuf();
+
+	static log4cxx::LoggerPtr logger;
+};
+
+inline ResourceFieldInfo *WebSiteResource::getFieldInfo(const char *name) {
+	return new ResourceFieldInfoT<WebSiteResource>(name);
+}
+
+inline int WebSiteResource::getTypeId() {
+	return typeId;
+}
+
+inline const char *WebSiteResource::getTypeStr() {
+	return "WebSiteResource";
+}
+
+inline const char *WebSiteResource::getModuleStr() {
+	return "HectorRobot";
+}
+
+inline int WebSiteResource::getId() {
+	lock.LockRead();
+	int id = r.id();
+	lock.Unlock();
+	return id;
+}
+
+inline void WebSiteResource::setId(int id) {
+	lock.LockWrite();
+	r.set_id(id);
+	lock.Unlock();
+}
+
+inline int WebSiteResource::getStatus() {
+	lock.LockRead();
+	int status = r.status();
+	lock.Unlock();
+	return status;
+}
+
+inline void WebSiteResource::setStatus(int status) {
+	lock.LockWrite();
+	r.set_status(status);
+	lock.Unlock();
+}
+
+inline std::string *WebSiteResource::Serialize() {
+	lock.LockRead();
+	// fill protocol-buffers space using JArray
+	JarrayToProtobuf();
+	std::string *result = MessageSerialize(&r);
+	r.clear_paths();
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::Deserialize(const char *data, int size) {
+	//header_map_ready = false;
+	//header_map_dirty = false;
+	bool result = MessageDeserialize(&r, data, size);
+	ProtobufToJarray();
+	r.clear_paths();
+	return result;
+}
+
+inline int WebSiteResource::getSerializedSize() {
+	//if (header_map_dirty)
+	//	SaveHeaders();
+	lock.LockRead();
+	// fill protocol-buffers space using JArray
+	JarrayToProtobuf();
+	int result = MessageGetSerializedSize(&r);
+	r.clear_paths();
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
+	//if (header_map_dirty)
+	//	SaveHeaders();
+	lock.LockRead();
+	// fill protocol-buffers space using JArray
+	JarrayToProtobuf();
+	bool result = MessageSerialize(&r, output);
+	r.clear_paths();
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
+	//header_map_ready = false;
+	//header_map_dirty = false;
+	bool result = MessageDeserialize(&r, input, size);
+	ProtobufToJarray();
+	r.clear_paths();
+	return result;
+}
+
+
+inline void WebSiteResource::setHostname(const std::string &hostname) {
+	lock.LockWrite();
+	r.set_hostname(hostname);
+	lock.Unlock();
+}
+
+inline const std::string &WebSiteResource::getHostname() {
+	lock.LockRead();
+	const std::string &hostname = r.hostname();
+	lock.Unlock();
+	return hostname;
+}
+
+inline void WebSiteResource::clearHostname() {
+	lock.LockWrite();
+	r.clear_hostname();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setIp4Addr(ip4_addr_t addr) {
+	lock.LockWrite();
+	r.set_ip4_addr(addr.addr);
+	lock.Unlock();
+}
+
+inline ip4_addr_t WebSiteResource::getIp4Addr() {
+	ip4_addr_t a;
+	lock.LockRead();
+	a.addr = r.ip4_addr();
+	lock.Unlock();
+	return a;
+}
+
+inline void WebSiteResource::clearIp4Addr() {
+	lock.LockWrite();
+	r.clear_ip4_addr();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setIp6Addr(ip6_addr_t addr) {
+	uint64_t a = 0, b = 0;
+	for (int i = 0; i < 8; i++) {
+		a = (a << 8) + addr.addr[15-i];
+		b = (b << 8) + addr.addr[7-i];
+	}
+	lock.LockWrite();
+	r.set_ip6_addr_1(a);
+	r.set_ip6_addr_2(b);
+	lock.Unlock();
+}
+
+inline ip6_addr_t WebSiteResource::getIp6Addr() {
+	ip6_addr_t addr;
+	lock.LockRead();
+	uint64_t a = r.ip6_addr_1();
+	uint64_t b = r.ip6_addr_2();
+	lock.Unlock();
+	for (int i = 0; i < 8; i++) {
+		addr.addr[8+i] = a & 0x00000000000000FF;
+		a >>= 8;
+		addr.addr[i] = b & 0x00000000000000FF;
+		b >>= 8;
+	}
+	return addr;
+}
+
+inline void WebSiteResource::clearIp6Addr() {
+	lock.LockWrite();
+	r.clear_ip6_addr_1();
+	r.clear_ip6_addr_2();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setIpAddrExpire(long time) {
+	lock.LockWrite();
+	r.set_ip_addr_expire(time);
+	lock.Unlock();
+}
+
+inline long WebSiteResource::getIpAddrExpire() {
+	lock.LockRead();
+	long expire = (long)r.ip_addr_expire();
+	lock.Unlock();
+	return expire;
+}
+
+inline void WebSiteResource::clearIpAddrExpire() {
+	lock.LockWrite();
+	r.clear_ip_addr_expire();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setRobotsExpire(long time) {
+	lock.LockWrite();
+	r.set_robots_expire(time);
+	lock.Unlock();
+}
+
+inline long WebSiteResource::getRobotsExpire() {
+	lock.LockRead();
+	long expire = (long)r.robots_expire();
+	lock.Unlock();
+	return expire;
+}
+
+inline void WebSiteResource::clearRobotsExpire() {
+	lock.LockWrite();
+	r.clear_robots_expire();
+	lock.Unlock();
+}
+
+#endif

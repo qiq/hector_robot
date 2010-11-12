@@ -7,14 +7,16 @@
 
 #include <config.h>
 
+#include <string>
+#include <vector>
 #include "Module.h"
 #include "ObjectValues.h"
 
 class GenerateWebResource : public Module {
 public:
-	GenerateWebResource(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	GenerateWebResource(ObjectRegistry *objects, const char *id, int threadIndex);
 	~GenerateWebResource();
-	bool Init(vector<pair<string, string> > *params);
+	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	Resource *ProcessInput(bool sleep);
 
@@ -36,7 +38,7 @@ private:
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
-	vector<string> *listNamesSync();
+	std::vector<std::string> *listNamesSync();
 };
 
 inline Module::Type GenerateWebResource::getType() {
@@ -55,7 +57,7 @@ inline bool GenerateWebResource::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline vector<string> *GenerateWebResource::listNamesSync() {
+inline std::vector<std::string> *GenerateWebResource::listNamesSync() {
 	return values->listNamesSync();
 }
 

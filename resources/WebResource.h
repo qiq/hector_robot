@@ -14,7 +14,10 @@
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "ProtobufResource.h"
+#include "ResourceFieldInfo.h"
 #include "WebResource.pb.h"
+
+class WebSiteResource;
 
 class WebResource : public ProtobufResource {
 public:
@@ -103,12 +106,19 @@ public:
 	const std::string &getUrlQuery();
 	void clearUrlQuery();
 
+	// web resource may contain link to the web site
+	WebSiteResource *getWebSiteResource();
+	void setWebSiteResource(WebSiteResource *ws);
+	void clearWebSiteResource();
+
 	static const int typeId = 10;
 
 protected:
 	// saved properties
 	hector::resources::WebResource r;
 	// memory-only
+	WebSiteResource *ws;
+
 	bool header_map_ready;
 	bool header_map_dirty;
 	std::tr1::unordered_map<std::string, std::string> headers;
@@ -119,53 +129,8 @@ protected:
 	static log4cxx::LoggerPtr logger;
 };
 
-class WebResourceFieldInfo : public ResourceFieldInfo {
-public:
-	WebResourceFieldInfo(const std::string &name);
-	~WebResourceFieldInfo();
-
-	const std::string &getString(Resource*);
-	int getInt(Resource*);
-	long getLong(Resource*);
-	ip4_addr_t getIp4Addr(Resource*);
-	ip6_addr_t getIp6Addr(Resource*);
-	const std::string &getString2(Resource*, const std::string&);
-
-	void setString(Resource*, const std::string&);
-	void setInt(Resource*, int);
-	void setLong(Resource*, long);
-	void setIp4Addr(Resource*, ip4_addr_t);
-	void setIp6Addr(Resource*, ip6_addr_t);
-	void setString2(Resource*, const std::string&, const std::string&);
-
-	void clear(Resource*);
-	void clearString2(Resource*, const std::string&);
-
-private:
-	union {
-		const std::string &(WebResource::*s)();
-		int (WebResource::*i)();
-		long (WebResource::*l)();
-		ip4_addr_t (WebResource::*a4)();
-		ip6_addr_t (WebResource::*a6)();
-		const std::string &(WebResource::*s2)(const std::string&);
-	} get_u;
-	union {
-		void (WebResource::*s)(const std::string&);
-		void (WebResource::*i)(int);
-		void (WebResource::*l)(long);
-		void (WebResource::*a4)(ip4_addr_t);
-		void (WebResource::*a6)(ip6_addr_t);
-		void (WebResource::*s2)(const std::string&, const std::string&);
-	} set_u;
-	union {
-		void (WebResource::*c)();
-		void (WebResource::*s2)(const std::string&);
-	} clear_u;
-};
-
 inline ResourceFieldInfo *WebResource::getFieldInfo(const char *name) {
-	return new WebResourceFieldInfo(name);
+	return new ResourceFieldInfoT<WebResource>(name);
 }
 
 inline int WebResource::getTypeId() {
@@ -415,6 +380,18 @@ inline const std::string &WebResource::getUrlQuery() {
 
 inline void WebResource::clearUrlQuery() {
 	r.clear_url_query();
+}
+
+inline void WebResource::setWebSiteResource(WebSiteResource *ws) {
+	this->ws = ws;
+}
+
+inline WebSiteResource *WebResource::getWebSiteResource() {
+	return ws;
+}
+
+inline void WebResource::clearWebSiteResource() {
+	ws = NULL;
 }
 
 #endif

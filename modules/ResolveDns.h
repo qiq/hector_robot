@@ -27,11 +27,11 @@ typedef struct DnsResourceInfo_ {
 
 class ResolveDns : public Module {
 public:
-	ResolveDns(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	ResolveDns(ObjectRegistry *objects, const char *id, int threadIndex);
 	~ResolveDns();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources);
+	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
 	int ProcessingResources();
 
 	void StartResolution(WebResource *wr);
@@ -49,7 +49,7 @@ private:
 	int fd;			// file descriptor we are waiting for read
 	std::vector<DnsResourceInfo*> unused;
 	std::tr1::unordered_map<int, DnsResourceInfo*> running;
-	queue<Resource*> *outputResources;
+	std::queue<Resource*> *outputResources;
 
 	char *getItems(const char *name);
 	char *getRepeat(const char *name);

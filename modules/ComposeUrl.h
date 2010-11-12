@@ -13,9 +13,9 @@
 
 class ComposeUrl : public Module {
 public:
-	ComposeUrl(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	ComposeUrl(ObjectRegistry *objects, const char *id, int threadIndex);
 	~ComposeUrl();
-	bool Init(vector<pair<string, string> > *params);
+	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	Resource *ProcessSimple(Resource *resource);
 
@@ -34,7 +34,7 @@ private:
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
-	vector<string> *listNamesSync();
+	std::vector<std::string> *listNamesSync();
 };
 
 inline Module::Type ComposeUrl::getType() {
@@ -53,7 +53,7 @@ inline bool ComposeUrl::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline vector<string> *ComposeUrl::listNamesSync() {
+inline std::vector<std::string> *ComposeUrl::listNamesSync() {
 	return values->listNamesSync();
 }
 

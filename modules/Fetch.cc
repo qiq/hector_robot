@@ -14,7 +14,6 @@
 #include <ev.h>
 #include <limits>
 #include "Fetch.h"
-#include "ProcessingEngine.h"
 #include "TestResource.h"
 
 using namespace std;
@@ -22,7 +21,7 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-Fetch::Fetch(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
+Fetch::Fetch(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	minServerRelax = 60;
 	timeout = 10;
@@ -515,6 +514,6 @@ int Fetch::ProcessingResources() {
 
 // factory functions
 
-extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
-	return new Fetch(objects, engine, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+	return new Fetch(objects, id, threadIndex);
 }

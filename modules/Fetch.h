@@ -25,7 +25,7 @@ typedef struct CurlResourceInfo_ {
 	long contentLength;	// content size of current object (copy of Content-Length, if known)
 	long maxContentLength;	// copy from Fetch object
 	bool contentIsText;	// content is text (text/html or text/plain)?
-	deque<WebResource*> waiting;	// waiting resource in the current hash bucket
+	std::deque<WebResource*> waiting;	// waiting resource in the current hash bucket
 	CURL *easy;		// CURL easy handle (to be reused)
 	curl_socket_t socketfd;	// socket used by CURL
 	struct curl_slist *headers; // headers to be set
@@ -52,7 +52,7 @@ typedef struct CurlInfo_ {
 	time_t currentTime;	// current time
 
 	CurlResourceInfo *resourceInfo;
-	vector<CurlResourceInfo*> resourceInfoHeap;
+	std::vector<CurlResourceInfo*> resourceInfoHeap;
 
         log4cxx::LoggerPtr logger;
 } CurlInfo;
@@ -60,11 +60,11 @@ typedef struct CurlInfo_ {
 
 class Fetch : public Module {
 public:
-	Fetch(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	Fetch(ObjectRegistry *objects, const char *id, int threadIndex);
 	~Fetch();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources);
+	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
 	int ProcessingResources();
 
 	CurlInfo curlInfo;
@@ -85,7 +85,7 @@ private:
 
 	ObjectValues<Fetch> *values;
 
-	queue<Resource*> *outputResources;
+	std::queue<Resource*> *outputResources;
 
 	char *getItems(const char *name);
 	char *getMinServerRelax(const char *name);

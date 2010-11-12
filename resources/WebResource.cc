@@ -159,7 +159,8 @@ string *WebResource::toString(Object::LogLevel logLevel) {
 	return s;
 }
 
-WebResourceFieldInfo::WebResourceFieldInfo(const std::string &name) {
+template<class T>
+ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 	if (name == "id") {
 		type = INT;
 		get_u.i = &WebResource::getId;
@@ -248,82 +249,4 @@ WebResourceFieldInfo::WebResourceFieldInfo(const std::string &name) {
 	} else {
 		type = UNKNOWN;
 	}
-}
-
-const string &WebResourceFieldInfo::getString(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.s ? (static_cast<WebResource*>(resource)->*get_u.s)() : empty_string;
-}
-
-int WebResourceFieldInfo::getInt(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.i ? (static_cast<WebResource*>(resource)->*get_u.i)() : -1;
-}
-
-long WebResourceFieldInfo::getLong(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.l ? (static_cast<WebResource*>(resource)->*get_u.l)() : -1;
-}
-
-ip4_addr_t WebResourceFieldInfo::getIp4Addr(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.a4 ? (static_cast<WebResource*>(resource)->*get_u.a4)() : ip4_addr_empty;
-}
-
-ip6_addr_t WebResourceFieldInfo::getIp6Addr(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.a6 ? (static_cast<WebResource*>(resource)->*get_u.a6)() : ip6_addr_empty;
-}
-
-const std::string &WebResourceFieldInfo::getString2(Resource *resource, const std::string &name) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	return get_u.s2 ? (static_cast<WebResource*>(resource)->*get_u.s2)(name) : empty_string;
-}
-
-void WebResourceFieldInfo::setString(Resource *resource, const std::string &value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.s)
-		(static_cast<WebResource*>(resource)->*set_u.s)(value);
-}
-
-void WebResourceFieldInfo::setInt(Resource *resource, int value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.i)
-		(static_cast<WebResource*>(resource)->*set_u.i)(value);
-}
-
-void WebResourceFieldInfo::setLong(Resource *resource, long value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.l)
-		(static_cast<WebResource*>(resource)->*set_u.l)(value);
-}
-
-void WebResourceFieldInfo::setIp4Addr(Resource *resource, ip4_addr_t value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.a4)
-		(static_cast<WebResource*>(resource)->*set_u.a4)(value);
-}
-
-void WebResourceFieldInfo::setIp6Addr(Resource *resource, ip6_addr_t value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.a6)
-		(static_cast<WebResource*>(resource)->*set_u.a6)(value);
-}
-
-void WebResourceFieldInfo::setString2(Resource *resource, const std::string &name, const std::string &value) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (set_u.s2)
-		(static_cast<WebResource*>(resource)->*set_u.s2)(name, value);
-}
-
-void WebResourceFieldInfo::clear(Resource *resource) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (clear_u.c)
-		(static_cast<WebResource*>(resource)->*clear_u.c)();
-}
-
-void WebResourceFieldInfo::clearString2(Resource *resource, const std::string &name) {
-	assert(resource->getTypeId() == WebResource::typeId);
-	if (clear_u.s2)
-		(static_cast<WebResource*>(resource)->*clear_u.s2)(name);
 }

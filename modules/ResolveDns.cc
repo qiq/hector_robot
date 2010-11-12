@@ -15,7 +15,7 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-ResolveDns::ResolveDns(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex): Module(objects, engine, id, threadIndex) {
+ResolveDns::ResolveDns(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	repeat = 3;
 	timeout = 10;
@@ -211,6 +211,6 @@ int ResolveDns::ProcessingResources() {
 
 // factory functions
 
-extern "C" Module* create(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex) {
-	return new ResolveDns(objects, engine, id, threadIndex);
+extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+	return new ResolveDns(objects, id, threadIndex);
 }
