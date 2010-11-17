@@ -1,5 +1,5 @@
 /**
- * Fetch object (html page) using HTTP.
+ * Fetcher object (html page) using HTTP.
  * Uses CURL in non-blocking mode and libev.
  */
 
@@ -23,7 +23,7 @@ typedef struct CurlResourceInfo_ {
 	WebResource *current;	// currently processed Resource
 	std::string *content;	// content to be filled (pointer to current WebResource)
 	long contentLength;	// content size of current object (copy of Content-Length, if known)
-	long maxContentLength;	// copy from Fetch object
+	long maxContentLength;	// copy from Fetcher object
 	bool contentIsText;	// content is text (text/html or text/plain)?
 	std::deque<WebResource*> waiting;	// waiting resource in the current hash bucket
 	CURL *easy;		// CURL easy handle (to be reused)
@@ -40,7 +40,7 @@ typedef struct CurlResourceInfo_ {
 } CurlResourceInfo;
 
 typedef struct CurlInfo_ {
-	class Fetch *parent;
+	class Fetcher *parent;
 
 	struct ev_loop *loop;
 	struct ev_timer curlTimer;
@@ -58,10 +58,10 @@ typedef struct CurlInfo_ {
 } CurlInfo;
 
 
-class Fetch : public Module {
+class Fetcher : public Module {
 public:
-	Fetch(ObjectRegistry *objects, const char *id, int threadIndex);
-	~Fetch();
+	Fetcher(ObjectRegistry *objects, const char *id, int threadIndex);
+	~Fetcher();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
@@ -69,9 +69,9 @@ public:
 
 	CurlInfo curlInfo;
 	void QueueResource(WebResource *wr);
-	void StartQueuedResourcesFetch();
-	void StartResourceFetch(WebResource *wr, int index);
-	void FinishResourceFetch(CurlResourceInfo *ri, int result);
+	void StartQueuedResourcesFetcher();
+	void StartResourceFetcher(WebResource *wr, int index);
+	void FinishResourceFetcher(CurlResourceInfo *ri, int result);
 
 private:
 	int items;		// ObjectLock, items processed
@@ -83,7 +83,7 @@ private:
 	long maxContentLength;	// ObjectLock, maximum length of the content to download
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 
-	ObjectValues<Fetch> *values;
+	ObjectValues<Fetcher> *values;
 
 	std::queue<Resource*> *outputResources;
 
@@ -109,23 +109,23 @@ private:
 	std::vector<std::string> *listNamesSync();
 };
 
-inline Module::Type Fetch::getType() {
+inline Module::Type Fetcher::getType() {
 	return MULTI;
 }
 
-inline char *Fetch::getValueSync(const char *name) {
+inline char *Fetcher::getValueSync(const char *name) {
 	return values->getValueSync(name);
 }
 
-inline bool Fetch::setValueSync(const char *name, const char *value) {
+inline bool Fetcher::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
 }
 
-inline bool Fetch::isInitOnly(const char *name) {
+inline bool Fetcher::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline std::vector<std::string> *Fetch::listNamesSync() {
+inline std::vector<std::string> *Fetcher::listNamesSync() {
 	return values->listNamesSync();
 }
 

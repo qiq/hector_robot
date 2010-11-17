@@ -5,52 +5,52 @@
 
 #include <assert.h>
 #include "common.h"
-#include "GenerateWebResource.h"
+#include "WebResourceGenerator.h"
 #include "WebResource.h"
 
 using namespace std;
 
-GenerateWebResource::GenerateWebResource(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+WebResourceGenerator::WebResourceGenerator(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	maxItems = 0;
 	idPrefix = NULL;
 
-	values = new ObjectValues<GenerateWebResource>(this);
-	values->addGetter("items", &GenerateWebResource::getItems);
-	values->addGetter("maxItems", &GenerateWebResource::getMaxItems);
-	values->addSetter("maxItems", &GenerateWebResource::setMaxItems, true);
-	values->addGetter("idPrefix", &GenerateWebResource::getIdPrefix);
-	values->addSetter("idPrefix", &GenerateWebResource::setIdPrefix);
+	values = new ObjectValues<WebResourceGenerator>(this);
+	values->addGetter("items", &WebResourceGenerator::getItems);
+	values->addGetter("maxItems", &WebResourceGenerator::getMaxItems);
+	values->addSetter("maxItems", &WebResourceGenerator::setMaxItems, true);
+	values->addGetter("idPrefix", &WebResourceGenerator::getIdPrefix);
+	values->addSetter("idPrefix", &WebResourceGenerator::setIdPrefix);
 }
 
-GenerateWebResource::~GenerateWebResource() {
+WebResourceGenerator::~WebResourceGenerator() {
 	free(idPrefix);
 
 	delete values;
 }
 
-char *GenerateWebResource::getItems(const char *name) {
+char *WebResourceGenerator::getItems(const char *name) {
 	return int2str(items);
 }
 
-char *GenerateWebResource::getMaxItems(const char *name) {
+char *WebResourceGenerator::getMaxItems(const char *name) {
 	return int2str(maxItems);
 }
 
-void GenerateWebResource::setMaxItems(const char *name, const char *value) {
+void WebResourceGenerator::setMaxItems(const char *name, const char *value) {
 	maxItems = str2int(value);
 }
 
-char *GenerateWebResource::getIdPrefix(const char *name) {
+char *WebResourceGenerator::getIdPrefix(const char *name) {
 	return idPrefix ? strdup(idPrefix) : NULL;
 }
 
-void GenerateWebResource::setIdPrefix(const char *name, const char *value) {
+void WebResourceGenerator::setIdPrefix(const char *name, const char *value) {
 	free(idPrefix);
 	idPrefix = strdup(value);
 }
 
-bool GenerateWebResource::Init(vector<pair<string, string> > *params) {
+bool WebResourceGenerator::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 	if (maxItems)
@@ -63,7 +63,7 @@ bool GenerateWebResource::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *GenerateWebResource::ProcessInput(bool sleep) {
+Resource *WebResourceGenerator::ProcessInput(bool sleep) {
 	ObjectLockRead();
 	int it = items;
 	ObjectUnlock();
@@ -85,5 +85,5 @@ Resource *GenerateWebResource::ProcessInput(bool sleep) {
 // the class factories
 
 extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new GenerateWebResource(objects, id, threadIndex);
+	return (Module*)new WebResourceGenerator(objects, id, threadIndex);
 }

@@ -6,38 +6,38 @@
 #include <assert.h>
 #include "googleurl/src/gurl.h"
 #include "common.h"
-#include "ComposeUrl.h"
+#include "UrlComposer.h"
 #include "WebResource.h"
 
 using namespace std;
 
-ComposeUrl::ComposeUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+UrlComposer::UrlComposer(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	clear = 0;
 
-	values = new ObjectValues<ComposeUrl>(this);
-	values->addGetter("items", &ComposeUrl::getItems);
-	values->addGetter("clear", &ComposeUrl::getClear);
-	values->addSetter("clear", &ComposeUrl::setClear);
+	values = new ObjectValues<UrlComposer>(this);
+	values->addGetter("items", &UrlComposer::getItems);
+	values->addGetter("clear", &UrlComposer::getClear);
+	values->addSetter("clear", &UrlComposer::setClear);
 }
 
-ComposeUrl::~ComposeUrl() {
+UrlComposer::~UrlComposer() {
 	delete values;
 }
 
-char *ComposeUrl::getItems(const char *name) {
+char *UrlComposer::getItems(const char *name) {
 	return int2str(items);
 }
 
-char *ComposeUrl::getClear(const char *name) {
+char *UrlComposer::getClear(const char *name) {
 	return bool2str(clear);
 }
 
-void ComposeUrl::setClear(const char *name, const char *value) {
+void UrlComposer::setClear(const char *name, const char *value) {
 	clear = str2bool(value);
 }
 
-bool ComposeUrl::Init(vector<pair<string, string> > *params) {
+bool UrlComposer::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 	typeId = Resource::NameToId("WebResource");
@@ -48,7 +48,7 @@ bool ComposeUrl::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *ComposeUrl::ProcessSimple(Resource *resource) {
+Resource *UrlComposer::ProcessSimple(Resource *resource) {
 	if (resource->getTypeId() != WebResource::typeId)
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
@@ -104,5 +104,5 @@ Resource *ComposeUrl::ProcessSimple(Resource *resource) {
 // the class factories
 
 extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new ComposeUrl(objects, id, threadIndex);
+	return (Module*)new UrlComposer(objects, id, threadIndex);
 }

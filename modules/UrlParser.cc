@@ -6,27 +6,27 @@
 #include <assert.h>
 #include "googleurl/src/gurl.h"
 #include "common.h"
-#include "ParseUrl.h"
+#include "UrlParser.h"
 #include "WebResource.h"
 
 using namespace std;
 
-ParseUrl::ParseUrl(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+UrlParser::UrlParser(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 
-	values = new ObjectValues<ParseUrl>(this);
-	values->addGetter("items", &ParseUrl::getItems);
+	values = new ObjectValues<UrlParser>(this);
+	values->addGetter("items", &UrlParser::getItems);
 }
 
-ParseUrl::~ParseUrl() {
+UrlParser::~UrlParser() {
 	delete values;
 }
 
-char *ParseUrl::getItems(const char *name) {
+char *UrlParser::getItems(const char *name) {
 	return int2str(items);
 }
 
-bool ParseUrl::Init(vector<pair<string, string> > *params) {
+bool UrlParser::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 	typeId = Resource::NameToId("WebResource");
@@ -37,7 +37,7 @@ bool ParseUrl::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *ParseUrl::ProcessSimple(Resource *resource) {
+Resource *UrlParser::ProcessSimple(Resource *resource) {
 	if (resource->getTypeId() != WebResource::typeId)
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
@@ -64,5 +64,5 @@ Resource *ParseUrl::ProcessSimple(Resource *resource) {
 // the class factories
 
 extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return (Module*)new ParseUrl(objects, id, threadIndex);
+	return (Module*)new UrlParser(objects, id, threadIndex);
 }

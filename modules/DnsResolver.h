@@ -1,5 +1,5 @@
 /**
- * ResolveDns: translate DNS name to IP address
+ * DnsResolver: translate DNS name to IP address
  */
 
 #ifndef _MODULES_RESOLVE_DNS_H_
@@ -14,21 +14,21 @@
 #include "ObjectValues.h"
 #include "WebResource.h"
 
-class ResolveDns;
+class DnsResolver;
 
 typedef struct DnsResourceInfo_ {
 	int id;			// unbound request id
 	WebResource *current;	// currently processed Resource
 	int retryCount;		// how many we tried
-	ResolveDns *parent;	// parent
+	DnsResolver *parent;	// parent
         log4cxx::LoggerPtr logger;
 } DnsResourceInfo;
 
 
-class ResolveDns : public Module {
+class DnsResolver : public Module {
 public:
-	ResolveDns(ObjectRegistry *objects, const char *id, int threadIndex);
-	~ResolveDns();
+	DnsResolver(ObjectRegistry *objects, const char *id, int threadIndex);
+	~DnsResolver();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
@@ -43,7 +43,7 @@ private:
 	int maxRequests;	// initOnly, number of concurrent requests
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 
-	ObjectValues<ResolveDns> *values;
+	ObjectValues<DnsResolver> *values;
 
 	struct ub_ctx* ctx;	// unbound context
 	int fd;			// file descriptor we are waiting for read
@@ -67,23 +67,23 @@ private:
 	std::vector<std::string> *listNamesSync();
 };
 
-inline Module::Type ResolveDns::getType() {
+inline Module::Type DnsResolver::getType() {
 	return MULTI;
 }
 
-inline char *ResolveDns::getValueSync(const char *name) {
+inline char *DnsResolver::getValueSync(const char *name) {
 	return values->getValueSync(name);
 }
 
-inline bool ResolveDns::setValueSync(const char *name, const char *value) {
+inline bool DnsResolver::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
 }
 
-inline bool ResolveDns::isInitOnly(const char *name) {
+inline bool DnsResolver::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline std::vector<std::string> *ResolveDns::listNamesSync() {
+inline std::vector<std::string> *DnsResolver::listNamesSync() {
 	return values->listNamesSync();
 }
 

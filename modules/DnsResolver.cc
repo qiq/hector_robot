@@ -1,12 +1,12 @@
 /**
- * ResolveDns module.
+ * DnsResolver module.
  */
 #include <config.h>
 
 #include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
-#include "ResolveDns.h"
+#include "DnsResolver.h"
 #include "ProcessingEngine.h"
 #include "TestResource.h"
 
@@ -15,62 +15,62 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-ResolveDns::ResolveDns(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	repeat = 3;
 	timeout = 10;
 	maxRequests = 1000;
 	timeTick = DEFAULT_TIME_TICK;
 
-	values = new ObjectValues<ResolveDns>(this);
-	values->addGetter("items", &ResolveDns::getItems);
-	values->addGetter("repeat", &ResolveDns::getRepeat);
-	values->addSetter("repeat", &ResolveDns::setRepeat, true);
-	values->addGetter("timeout", &ResolveDns::getTimeout);
-	values->addSetter("timeout", &ResolveDns::setTimeout);
-	values->addGetter("maxRequests", &ResolveDns::getMaxRequests);
-	values->addSetter("maxRequests", &ResolveDns::setMaxRequests, true);
-	values->addGetter("timeTick", &ResolveDns::getTimeTick);
-	values->addSetter("timeTick", &ResolveDns::setTimeTick);
+	values = new ObjectValues<DnsResolver>(this);
+	values->addGetter("items", &DnsResolver::getItems);
+	values->addGetter("repeat", &DnsResolver::getRepeat);
+	values->addSetter("repeat", &DnsResolver::setRepeat, true);
+	values->addGetter("timeout", &DnsResolver::getTimeout);
+	values->addSetter("timeout", &DnsResolver::setTimeout);
+	values->addGetter("maxRequests", &DnsResolver::getMaxRequests);
+	values->addSetter("maxRequests", &DnsResolver::setMaxRequests, true);
+	values->addGetter("timeTick", &DnsResolver::getTimeTick);
+	values->addSetter("timeTick", &DnsResolver::setTimeTick);
 }
 
-ResolveDns::~ResolveDns() {
+DnsResolver::~DnsResolver() {
 	delete values;
 }
 
-char *ResolveDns::getItems(const char *name) {
+char *DnsResolver::getItems(const char *name) {
 	return int2str(items);
 }
 
-char *ResolveDns::getRepeat(const char *name) {
+char *DnsResolver::getRepeat(const char *name) {
 	return int2str(repeat);
 }
 
-void ResolveDns::setRepeat(const char *name, const char *value) {
+void DnsResolver::setRepeat(const char *name, const char *value) {
 	repeat = str2int(value);
 }
 
-char *ResolveDns::getTimeout(const char *name) {
+char *DnsResolver::getTimeout(const char *name) {
 	return int2str(timeout);
 }
 
-void ResolveDns::setTimeout(const char *name, const char *value) {
+void DnsResolver::setTimeout(const char *name, const char *value) {
 	timeout = str2int(value);
 }
 
-char *ResolveDns::getMaxRequests(const char *name) {
+char *DnsResolver::getMaxRequests(const char *name) {
 	return int2str(maxRequests);
 }
 
-void ResolveDns::setMaxRequests(const char *name, const char *value) {
+void DnsResolver::setMaxRequests(const char *name, const char *value) {
 	maxRequests = str2int(value);
 }
 
-char *ResolveDns::getTimeTick(const char *name) {
+char *DnsResolver::getTimeTick(const char *name) {
 	return int2str(timeTick);
 }
 
-void ResolveDns::setTimeTick(const char *name, const char *value) {
+void DnsResolver::setTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
 }
 
@@ -102,7 +102,7 @@ void CompletedCallback(void *data, int err, struct ub_result *result) {
 	ri->parent->FinishResolution(ri);
 }
 
-void ResolveDns::StartResolution(WebResource *wr) {
+void DnsResolver::StartResolution(WebResource *wr) {
 	DnsResourceInfo *ri = unused.back();
 	unused.pop_back();
 	ri->current = wr;
@@ -115,7 +115,7 @@ void ResolveDns::StartResolution(WebResource *wr) {
 	running[ri->id] = ri;
 }
 
-void ResolveDns::FinishResolution(DnsResourceInfo *ri) {
+void DnsResolver::FinishResolution(DnsResourceInfo *ri) {
 	outputResources->push(ri->current);
 	ObjectLockWrite();
 	items++;
@@ -124,7 +124,7 @@ void ResolveDns::FinishResolution(DnsResourceInfo *ri) {
 	unused.push_back(ri);
 }
 
-bool ResolveDns::Init(vector<pair<string, string> > *params) {
+bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 
@@ -154,7 +154,7 @@ bool ResolveDns::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int ResolveDns::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
 	this->outputResources = outputResources;
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && running.size() < maxRequests) {
@@ -205,12 +205,12 @@ int ResolveDns::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> 
 	return maxRequests-running.size();
 }
 
-int ResolveDns::ProcessingResources() {
+int DnsResolver::ProcessingResources() {
 	return running.size();
 }
 
 // factory functions
 
 extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return new ResolveDns(objects, id, threadIndex);
+	return new DnsResolver(objects, id, threadIndex);
 }

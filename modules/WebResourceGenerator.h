@@ -2,8 +2,8 @@
  * Generate WebResource with random content. Meant to be used as a test.
  */
 
-#ifndef _GENERATE_WEB_RESOURCE_H_
-#define _GENERATE_WEB_RESOURCE_H_
+#ifndef _WEB_RESOURCE_GENERATOR_H_
+#define _WEB_RESOURCE_GENERATOR_H_
 
 #include <config.h>
 
@@ -12,10 +12,10 @@
 #include "Module.h"
 #include "ObjectValues.h"
 
-class GenerateWebResource : public Module {
+class WebResourceGenerator : public Module {
 public:
-	GenerateWebResource(ObjectRegistry *objects, const char *id, int threadIndex);
-	~GenerateWebResource();
+	WebResourceGenerator(ObjectRegistry *objects, const char *id, int threadIndex);
+	~WebResourceGenerator();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
 	Resource *ProcessInput(bool sleep);
@@ -27,7 +27,7 @@ private:
 	int maxItems;		// initOnly
 	char *idPrefix;		// ObjectLock
 
-	ObjectValues<GenerateWebResource> *values;
+	ObjectValues<WebResourceGenerator> *values;
 
 	char *getItems(const char *name);
 	char *getMaxItems(const char *name);
@@ -41,23 +41,23 @@ private:
 	std::vector<std::string> *listNamesSync();
 };
 
-inline Module::Type GenerateWebResource::getType() {
+inline Module::Type WebResourceGenerator::getType() {
 	return INPUT;
 }
 
-inline char *GenerateWebResource::getValueSync(const char *name) {
+inline char *WebResourceGenerator::getValueSync(const char *name) {
 	return values->getValueSync(name);
 }
 
-inline bool GenerateWebResource::setValueSync(const char *name, const char *value) {
+inline bool WebResourceGenerator::setValueSync(const char *name, const char *value) {
 	return values->setValueSync(name, value);
 }
 
-inline bool GenerateWebResource::isInitOnly(const char *name) {
+inline bool WebResourceGenerator::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline std::vector<std::string> *GenerateWebResource::listNamesSync() {
+inline std::vector<std::string> *WebResourceGenerator::listNamesSync() {
 	return values->listNamesSync();
 }
 

@@ -1,5 +1,4 @@
-- prejmenovat moduly
-- dodelat testy, pocitat s lokalnim web serverem
+- dodelat testy, pocitat s lokalnim web serverem (v Perlu)
 - test na webresource
 - upravit resourceinfo, aby fungoval pro websiteresource
 

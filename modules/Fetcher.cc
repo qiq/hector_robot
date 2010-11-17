@@ -13,7 +13,7 @@
 #include <curl/curl.h>
 #include <ev.h>
 #include <limits>
-#include "Fetch.h"
+#include "Fetcher.h"
 #include "TestResource.h"
 
 using namespace std;
@@ -21,37 +21,37 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-Fetch::Fetch(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
+Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	minServerRelax = 60;
 	timeout = 10;
 	from = NULL;
-	userAgent = strdup("Mozilla/5.0 (compatible; hector_robot/Fetch 1.0; +http://host/)");
+	userAgent = strdup("Mozilla/5.0 (compatible; hector_robot/Fetcher 1.0; +http://host/)");
 	maxRequests = 5;
 	maxContentLength = 1024*1024;
 	timeTick = DEFAULT_TIME_TICK;
 
-	values = new ObjectValues<Fetch>(this);
-	values->addGetter("items", &Fetch::getItems);
-	values->addGetter("minServerRelax", &Fetch::getMinServerRelax);
-	values->addSetter("minServerRelax", &Fetch::setMinServerRelax);
-	values->addGetter("timeout", &Fetch::getTimeout);
-	values->addSetter("timeout", &Fetch::setTimeout);
-	values->addGetter("from", &Fetch::getFrom);
-	values->addSetter("from", &Fetch::setFrom, true);
-	values->addGetter("userAgent", &Fetch::getUserAgent);
-	values->addSetter("userAgent", &Fetch::setUserAgent, true);
-	values->addGetter("maxRequests", &Fetch::getMaxRequests);
-	values->addSetter("maxRequests", &Fetch::setMaxRequests, true);
-	values->addGetter("maxContentLength", &Fetch::getMaxContentLength);
-	values->addSetter("maxContentLength", &Fetch::setMaxContentLength);
-	values->addGetter("timeTick", &Fetch::getTimeTick);
-	values->addSetter("timeTick", &Fetch::setTimeTick);
+	values = new ObjectValues<Fetcher>(this);
+	values->addGetter("items", &Fetcher::getItems);
+	values->addGetter("minServerRelax", &Fetcher::getMinServerRelax);
+	values->addSetter("minServerRelax", &Fetcher::setMinServerRelax);
+	values->addGetter("timeout", &Fetcher::getTimeout);
+	values->addSetter("timeout", &Fetcher::setTimeout);
+	values->addGetter("from", &Fetcher::getFrom);
+	values->addSetter("from", &Fetcher::setFrom, true);
+	values->addGetter("userAgent", &Fetcher::getUserAgent);
+	values->addSetter("userAgent", &Fetcher::setUserAgent, true);
+	values->addGetter("maxRequests", &Fetcher::getMaxRequests);
+	values->addSetter("maxRequests", &Fetcher::setMaxRequests, true);
+	values->addGetter("maxContentLength", &Fetcher::getMaxContentLength);
+	values->addSetter("maxContentLength", &Fetcher::setMaxContentLength);
+	values->addGetter("timeTick", &Fetcher::getTimeTick);
+	values->addSetter("timeTick", &Fetcher::setTimeTick);
 
 	curlInfo.logger = this->logger;
 }
 
-Fetch::~Fetch() {
+Fetcher::~Fetcher() {
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
 		delete ri->current;
@@ -66,65 +66,65 @@ Fetch::~Fetch() {
 	delete values;
 }
 
-char *Fetch::getItems(const char *name) {
+char *Fetcher::getItems(const char *name) {
 	return int2str(items);
 }
 
-char *Fetch::getMinServerRelax(const char *name) {
+char *Fetcher::getMinServerRelax(const char *name) {
 	return int2str(minServerRelax);
 }
 
-void Fetch::setMinServerRelax(const char *name, const char *value) {
+void Fetcher::setMinServerRelax(const char *name, const char *value) {
 	minServerRelax = str2int(value);
 }
 
-char *Fetch::getTimeout(const char *name) {
+char *Fetcher::getTimeout(const char *name) {
 	return int2str(timeout);
 }
 
-void Fetch::setTimeout(const char *name, const char *value) {
+void Fetcher::setTimeout(const char *name, const char *value) {
 	timeout = str2int(value);
 }
 
-char *Fetch::getFrom(const char *name) {
+char *Fetcher::getFrom(const char *name) {
 	return from ? strdup(from) : NULL;
 }
 
-void Fetch::setFrom(const char *name, const char *value) {
+void Fetcher::setFrom(const char *name, const char *value) {
 	free(from);
 	from = strdup(value);
 }
 
-char *Fetch::getUserAgent(const char *name) {
+char *Fetcher::getUserAgent(const char *name) {
 	return userAgent ? strdup(userAgent) : NULL;
 }
 
-void Fetch::setUserAgent(const char *name, const char *value) {
+void Fetcher::setUserAgent(const char *name, const char *value) {
 	free(userAgent);
 	userAgent = strdup(value);
 }
 
-char *Fetch::getMaxRequests(const char *name) {
+char *Fetcher::getMaxRequests(const char *name) {
 	return int2str(maxRequests);
 }
 
-void Fetch::setMaxRequests(const char *name, const char *value) {
+void Fetcher::setMaxRequests(const char *name, const char *value) {
 	maxRequests = str2int(value);
 }
 
-char *Fetch::getMaxContentLength(const char *name) {
+char *Fetcher::getMaxContentLength(const char *name) {
 	return int2str(maxContentLength);
 }
 
-void Fetch::setMaxContentLength(const char *name, const char *value) {
+void Fetcher::setMaxContentLength(const char *name, const char *value) {
 	maxContentLength = str2long(value);
 }
 
-char *Fetch::getTimeTick(const char *name) {
+char *Fetcher::getTimeTick(const char *name) {
 	return int2str(timeTick);
 }
 
-void Fetch::setTimeTick(const char *name, const char *value) {
+void Fetcher::setTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
 }
 
@@ -177,7 +177,7 @@ void CheckCompleted(CurlInfo *ci) {
 			int result = (int)msg->data.result;
 			CurlResourceInfo *ri;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ri);
-			ci->parent->FinishResourceFetch(ri, result);
+			ci->parent->FinishResourceFetcher(ri, result);
 			curl_multi_remove_handle(ci->multi, easy);
 		}
 	}
@@ -293,7 +293,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 	return realsize;
 }
 
-void Fetch::QueueResource(WebResource *wr) {
+void Fetcher::QueueResource(WebResource *wr) {
 	// count hash of the IP address
 	uint32_t ip = wr->getIp4Addr().addr;
 	if (ip == 0) {
@@ -317,11 +317,11 @@ void Fetch::QueueResource(WebResource *wr) {
 		}
 		return;
 	}
-	Fetch::StartResourceFetch(wr, hash);
+	Fetcher::StartResourceFetcher(wr, hash);
 }
 
 // check resources in the heap and start fetch of resources that waited long enough
-void Fetch::StartQueuedResourcesFetch() {
+void Fetcher::StartQueuedResourcesFetcher() {
 	ObjectLockRead();
 	int wait = minServerRelax;
 	ObjectUnlock();
@@ -332,12 +332,12 @@ void Fetch::StartQueuedResourcesFetch() {
 		WebResource *wr = ri->waiting.front();
 		int index = ri->index;
 		ri->waiting.pop_front();
-		StartResourceFetch(wr, index);
+		StartResourceFetcher(wr, index);
 	}
 }
 
 // really start download
-void Fetch::StartResourceFetch(WebResource *wr, int index) {
+void Fetcher::StartResourceFetcher(WebResource *wr, int index) {
 	// set URL
 	const string &url = wr->getUrl();
 	if (url.empty()) {
@@ -384,7 +384,7 @@ void Fetch::StartResourceFetch(WebResource *wr, int index) {
 }
 
 // save resource to the outputQueue, process errors, etc.
-void Fetch::FinishResourceFetch(CurlResourceInfo *ri, int result) {
+void Fetcher::FinishResourceFetcher(CurlResourceInfo *ri, int result) {
 	ri->current->setStatus(result);
 	outputResources->push(ri->current);
 	ObjectLockWrite();
@@ -404,7 +404,7 @@ void Fetch::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	}
 }
 
-bool Fetch::Init(vector<pair<string, string> > *params) {
+bool Fetcher::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 
@@ -470,12 +470,12 @@ bool Fetch::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int Fetch::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
 	curlInfo.currentTime = time(NULL);
 	this->outputResources = outputResources;
 
 	// start queued resources
-	StartQueuedResourcesFetch();
+	StartQueuedResourcesFetcher();
 
 	// queue/start input resources
 	while (inputResources->size() > 0 && curlInfo.resources < maxRequests) {
@@ -508,12 +508,12 @@ fprintf(stderr, "timeout...\n");
 	return maxRequests-curlInfo.resources;
 }
 
-int Fetch::ProcessingResources() {
+int Fetcher::ProcessingResources() {
 	return curlInfo.resources;
 }
 
 // factory functions
 
 extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
-	return new Fetch(objects, id, threadIndex);
+	return new Fetcher(objects, id, threadIndex);
 }

@@ -1,11 +1,12 @@
 # items: number of resources created
+# urlList: list of URL (text or CDATA section)
+# urlFile: file with list of URL
 
-package ResolveDns;
+package WebResourceCreator;
 
 use warnings;
 use strict;
 use HectorRobot;
-use Net::DNS;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
@@ -14,8 +15,10 @@ sub new {
 		'_object' => $object,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
-		'_resolver' => undef,
 		'items' => 0,
+		'urlList' => undef,
+		'urlFile' => undef,
+		'_url' => [],
 	};
 	bless($self, $class);
 	return $self;
@@ -44,14 +47,27 @@ sub Init {
 			$self->{$p->[0]} = $p->[1];
 		}
 	}
-	$self->{'_resolver'} = Net::DNS::Resolver->new(search => ''),
-
+	my @url;
+	if (defined $self->{'urlList'}) {
+		push(@url, @{$self->createUrlList($self->{'urlList'})});
+	}
+	if (defined $self->{'urlFile'}) {
+		if (defined open(my $fh, '<'.$self->{'urlFile'})) {
+			my @lines = <$fh>;
+			close($fh);
+			push(@url, @{$self->createUrlList(join("\n", @lines))});
+		} else {
+			$self->{'_object'}->log_error("Cannot open file: ".$self->{'urlFile'});
+			return 0;
+		}
+	}
+	$self->{'_url'} = \@url;
 	return 1;
 }
 
 sub getType {
 	my ($self) = @_;
-	return $Hector::Module::SIMPLE;
+	return $Hector::Module::INPUT;
 }
 
 sub getValueSync {
@@ -90,38 +106,20 @@ sub RestoreCheckpoint {
 	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
-sub ProcessSimple() {
+sub ProcessInput() {
 	my ($self, $resource) = @_;
 
-	my $host = $resource->getUrlHost();
-	if (not defined $host) {
-		$self->{'_object'}->log_error("Resource does not contain URL host: ".$resource->getId());
-		return $resource;
+	if (defined $resource) {
+		$self->{'_object'}->log_error("Resource is already defined.");
+		return undef;
 	}
-	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
-		my $addr = Hector::str2Ip4Addr_w($host);
-		$resource->setIp4Addr($addr);
-		Hector::ip4AddrDelete_w($addr);
-	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
-		my $addr = Hector::str2Ip6Addr($host);
-		$resource->setIp6Addr($addr);
-		Hector::ip6AddrDelete_w($addr);
-	} else {
-		my $request = $self->{'_resolver'}->search($host, 'A');
-		if ($request) {
-			foreach my $rr ($request->answer) {
-				next unless $rr->type eq "A";
-				$self->{'_object'}->log_error("$host: ".$rr->address.' ('.$rr->ttl.')');
-				my $addr = Hector::str2Ip4Addr($rr->address);
-				$resource->setIp4Addr($addr);
-				Hector::ip4AddrDelete_w($addr);
-				$resource->setIpAddrExpire(time() + $rr->ttl);
-			}
-		} else {
-			$self->{'_object'}->log_debug("Query failed ($host): ".$self->{'_resolver'}->errorstring);
-		}
+	if (@{$self->{'_url'}} == 0) {
+		$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
+		return undef;
 	}
-
+	$resource = HectorRobot::WebResource->new();
+	$resource->setId($self->{'_threadIndex'}*10000+$self->{'items'});
+	$resource->setUrl(shift(@{$self->{'_url'}}));
 	$self->{'items'}++;
 	return $resource;
 }
