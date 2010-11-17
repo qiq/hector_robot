@@ -10,9 +10,10 @@
 
 #include <config.h>
 
-#include <vector>
+#include <functional>
 #include <string>
 #include <tr1/unordered_map>
+#include <vector>
 #include <Judy.h>
 #include <log4cxx/logger.h>
 #include "common.h"
@@ -63,9 +64,15 @@ public:
 	std::string *toString(Object::LogLevel = Object::INFO);
 
 	// WebSiteResource-specific
-	void setHostname(const std::string &hostname);
-	const std::string &getHostname();
-	void clearHostname();
+        void setUrlScheme(int urlScheme);
+        int getUrlScheme();
+	void clearUrlScheme();
+	void setUrlHost(const std::string &urlHost);
+	const std::string &getUrlHost();
+	void clearUrlHost();
+	void setUrlPort(int urlPort);
+	int getUrlPort();
+	void clearUrlPort();
 	void setIp4Addr(ip4_addr_t addr);
 	ip4_addr_t getIp4Addr();
 	void clearIp4Addr();
@@ -87,9 +94,8 @@ public:
 	void clearRobotsExpire();
 
 	// path info get/set
-	// TODO:
-	//setPathInfo(conat char *path, WebSitePath *info);
-	//WebSitePath *getPathInfo(const char *path);
+	bool setPathInfo(const char *path, const WebSitePath *info);
+	const WebSitePath *getPathInfo(const char *path);
 
 	static const int typeId = 11;
 
@@ -99,7 +105,7 @@ protected:
 	// saved properties
 	hector::resources::WebSiteResource r;
 	// memory-only
-	// paths Judy array
+	// paths in Judy array
 	Pvoid_t paths;
 
 	static MemoryPool<WebSitePath> pool;
@@ -116,6 +122,13 @@ protected:
 	void JarrayToProtobuf();
 
 	static log4cxx::LoggerPtr logger;
+};
+
+struct WebSiteResource_hash: public std::unary_function<WebSiteResource*, size_t> {
+        /** hash function for the WebSiteResource& type */
+        size_t operator() (WebSiteResource *wsr) const {
+                return std::tr1::hash<std::string>()(wsr->getUrlHost())+13*wsr->getUrlPort()+373*wsr->getUrlScheme();
+        }
 };
 
 inline ResourceFieldInfo *WebSiteResource::getFieldInfo(const char *name) {
@@ -212,24 +225,47 @@ inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStre
 	return result;
 }
 
+inline void WebSiteResource::setUrlScheme(int urlScheme) {
+	r.set_url_scheme((Scheme)urlScheme);
+}
 
-inline void WebSiteResource::setHostname(const std::string &hostname) {
+inline int WebSiteResource::getUrlScheme() {
+	return (int)r.url_scheme();
+}
+
+inline void WebSiteResource::clearUrlScheme() {
+	r.clear_url_scheme();
+}
+
+inline void WebSiteResource::setUrlHost(const std::string &urlHost) {
 	lock.LockWrite();
-	r.set_hostname(hostname);
+	r.set_url_host(urlHost);
 	lock.Unlock();
 }
 
-inline const std::string &WebSiteResource::getHostname() {
+inline const std::string &WebSiteResource::getUrlHost() {
 	lock.LockRead();
-	const std::string &hostname = r.hostname();
+	const std::string &urlHost = r.url_host();
 	lock.Unlock();
-	return hostname;
+	return urlHost;
 }
 
-inline void WebSiteResource::clearHostname() {
+inline void WebSiteResource::clearUrlHost() {
 	lock.LockWrite();
-	r.clear_hostname();
+	r.clear_url_host();
 	lock.Unlock();
+}
+
+inline void WebSiteResource::setUrlPort(int urlPort) {
+	r.set_url_port(urlPort);
+}
+
+inline int WebSiteResource::getUrlPort() {
+	return r.url_port();
+}
+
+inline void WebSiteResource::clearUrlPort() {
+	r.clear_url_port();
 }
 
 inline void WebSiteResource::setIp4Addr(ip4_addr_t addr) {
@@ -322,6 +358,37 @@ inline void WebSiteResource::clearRobotsExpire() {
 	lock.LockWrite();
 	r.clear_robots_expire();
 	lock.Unlock();
+}
+
+inline bool WebSiteResource::setPathInfo(const char *path, const WebSitePath *info) {
+	lock.LockWrite();
+	PWord_t PValue;
+	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
+	if (PValue) {
+		WebSitePath *wsp = (WebSitePath*)PValue;
+		*wsp = *info;
+	} else {
+		WebSitePath *wsp = pool.alloc();
+		*wsp = *info;
+		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
+		if (PValue == PJERR) {
+			LOG_ERROR("Malloc failed");
+			lock.Unlock();
+			return false;
+		}
+		*PValue = (Word_t)wsp;
+	}
+	lock.Unlock();
+	return true;
+}
+
+inline const WebSitePath *WebSiteResource::getPathInfo(const char *path) {
+	lock.LockRead();
+	PWord_t PValue;
+	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
+	WebSitePath *result = PValue ? (WebSitePath*)PValue : NULL;
+	lock.Unlock();
+	return result;
 }
 
 #endif

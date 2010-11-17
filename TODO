@@ -1,7 +1,7 @@
-- dodelat websiteresource, aby pouzival jarray
-	- pridat interface na path
-	- upravit resourceinfo, aby fungoval pro websiteresource
-- pridat detekci jarray do configure.ac
+- prejmenovat moduly
+- dodelat testy, pocitat s lokalnim web serverem
+- test na webresource
+- upravit resourceinfo, aby fungoval pro websiteresource
 
 - upravit fetch a resolvedns, aby fungovaly s libovolnym resource
 	- mozna jen resolvedns(?), fetch potrebuje primo modifikovatelny string
@@ -71,6 +71,8 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - cistici modul
 
 DONE
+- dodelat websiteresource, aby pouzival jarray
+- pridat detekci jarray do configure.ac
 - filter: upravit, aby nevyzadoval WebResource
 - resolver module (blokujici, v Perlu)
 	- jen obyc prevede jmeno na IP adresu

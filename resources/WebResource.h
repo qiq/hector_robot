@@ -15,9 +15,8 @@
 #include "common.h"
 #include "ProtobufResource.h"
 #include "ResourceFieldInfo.h"
+#include "Scheme.h"
 #include "WebResource.pb.h"
-
-class WebSiteResource;
 
 class WebResource : public ProtobufResource {
 public:
@@ -84,8 +83,8 @@ public:
 	void clearIpAddrExpire();
 
 	// Url parts
-        void setUrlScheme(const std::string &urlScheme);
-        const std::string &getUrlScheme();
+        void setUrlScheme(int urlScheme);
+        int getUrlScheme();
 	void clearUrlScheme();
         void setUrlUsername(const std::string &urlUsername);
         const std::string &getUrlUsername();
@@ -106,18 +105,13 @@ public:
 	const std::string &getUrlQuery();
 	void clearUrlQuery();
 
-	// web resource may contain link to the web site
-	WebSiteResource *getWebSiteResource();
-	void setWebSiteResource(WebSiteResource *ws);
-	void clearWebSiteResource();
-
 	static const int typeId = 10;
 
 protected:
 	// saved properties
 	hector::resources::WebResource r;
 	// memory-only
-	WebSiteResource *ws;
+	Resource *attachedResource;
 
 	bool header_map_ready;
 	bool header_map_dirty;
@@ -298,12 +292,12 @@ inline void WebResource::clearIpAddrExpire() {
 	r.clear_ip_addr_expire();
 }
 
-inline void WebResource::setUrlScheme(const std::string &urlScheme) {
-	r.set_url_scheme(urlScheme);
+inline void WebResource::setUrlScheme(int urlScheme) {
+	r.set_url_scheme((Scheme)urlScheme);
 }
 
-inline const std::string &WebResource::getUrlScheme() {
-	return r.url_scheme();
+inline int WebResource::getUrlScheme() {
+	return (int)r.url_scheme();
 }
 
 inline void WebResource::clearUrlScheme() {
@@ -380,18 +374,6 @@ inline const std::string &WebResource::getUrlQuery() {
 
 inline void WebResource::clearUrlQuery() {
 	r.clear_url_query();
-}
-
-inline void WebResource::setWebSiteResource(WebSiteResource *ws) {
-	this->ws = ws;
-}
-
-inline WebSiteResource *WebResource::getWebSiteResource() {
-	return ws;
-}
-
-inline void WebResource::clearWebSiteResource() {
-	ws = NULL;
 }
 
 #endif

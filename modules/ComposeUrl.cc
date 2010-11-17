@@ -52,9 +52,18 @@ Resource *ComposeUrl::ProcessSimple(Resource *resource) {
 	if (resource->getTypeId() != WebResource::typeId)
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
-	if (wr->getUrlScheme() == "")
+	string s;
+	switch (wr->getUrlScheme()) {
+	case SCHEME_HTTP:
+		s = "http";
+		break;
+	case SCHEME_HTTPS:
+		s = "https";
+		break;
+	case SCHEME_NONE:
+	default:
 		return resource;
-	string s = wr->getUrlScheme();
+	}
 	s += "://";
 	if (wr->getUrlUsername() != "") {
 		s += wr->getUrlUsername();

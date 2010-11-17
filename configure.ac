@@ -35,6 +35,7 @@ AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
 AC_SUBST(HECTOR_CORE_PREFIX)
+AC_CHECK_LIB(Judy, JudySLIns)
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10

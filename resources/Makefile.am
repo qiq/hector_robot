@@ -16,9 +16,17 @@ hectorinclude_HEADERS = WebResource.h WebResource.pb.h WebResource.i WebSiteReso
 libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
 libWebResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
+BUILT_SOURCES += Scheme.pb.h Scheme.pb.cc
+Scheme.pb.cc Scheme.pb.h: Scheme.proto
+	$(PROTOC) Scheme.proto --cpp_out=.
+
+EXTRA_DIST += Scheme.proto Scheme.i
+CLEANFILES += Scheme.pb.h Scheme.pb.cc
+
 BUILT_SOURCES += WebResource.pb.h WebResource.pb.cc
 WebResource.pb.cc WebResource.pb.h: WebResource.proto
 	$(PROTOC) WebResource.proto --cpp_out=.
+WebResource.pb.h WebResource.pb.cc: Scheme.pb.h Scheme.pb.cc
 
 WebResource_la_SOURCES = WebResourceWrapper.h WebResourceWrapper.cc
 WebResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
@@ -34,6 +42,7 @@ libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 BUILT_SOURCES += WebSiteResource.pb.h WebSiteResource.pb.cc
 WebSiteResource.pb.cc WebSiteResource.pb.h: WebSiteResource.proto
 	$(PROTOC) WebSiteResource.proto --cpp_out=.
+WebSiteResource.pb.h WebSiteResource.pb.cc: Scheme.pb.h Scheme.pb.cc
 
 WebSiteResource_la_SOURCES = WebSiteResourceWrapper.h WebSiteResourceWrapper.cc
 WebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version

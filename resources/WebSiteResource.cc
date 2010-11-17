@@ -24,7 +24,6 @@ int WebSiteResource::getSize() {
 }
 
 bool WebSiteResource::ProtobufToJarray() {
-	//uint8_t path[MAX_PATH_SIZE];
 	for (int i = 0; i < r.paths_size(); i++) {
 		const ::hector::resources::WebSitePath &p = r.paths(i);
 		WebSitePath *wsp = pool.alloc();

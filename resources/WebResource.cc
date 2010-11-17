@@ -103,8 +103,8 @@ string *WebResource::toString(Object::LogLevel logLevel) {
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
 	*s = buf;
-	if (this->getUrlScheme().length() > 0) {
-		snprintf(buf, sizeof(buf), " (%s", this->getUrlScheme().c_str());
+	if (this->getUrlScheme() != SCHEME_NONE) {
+		snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->getUrlScheme()).c_str());
 		*s += buf;
 		if (this->getUrlUsername().length() > 0) {
 			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
@@ -212,9 +212,9 @@ ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 		set_u.l = &WebResource::setIpAddrExpire;
 		clear_u.c = &WebResource::clearIpAddrExpire;
 	} else if (name == "urlScheme") {
-		type = STRING;
-		get_u.s = &WebResource::getUrlScheme;
-		set_u.s = &WebResource::setUrlScheme;
+		type = INT;
+		get_u.i = &WebResource::getUrlScheme;
+		set_u.i = &WebResource::setUrlScheme;
 		clear_u.c = &WebResource::clearUrlScheme;
 	} else if (name == "urlUsername") {
 		type = STRING;

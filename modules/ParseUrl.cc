@@ -42,7 +42,12 @@ Resource *ParseUrl::ProcessSimple(Resource *resource) {
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
 	GURL *gurl = new GURL(wr->getUrl());
-	wr->setUrlScheme(gurl->scheme().c_str());
+	if (gurl->SchemeIs("http"))
+		wr->setUrlScheme(SCHEME_HTTP);
+	else if (gurl->SchemeIs("https"))
+		wr->setUrlScheme(SCHEME_HTTPS);
+	else
+		wr->setUrlScheme(SCHEME_NONE);
 	wr->setUrlUsername(gurl->username().c_str());
 	wr->setUrlPassword(gurl->password().c_str());
 	wr->setUrlHost(gurl->host().c_str());

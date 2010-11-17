@@ -7,6 +7,8 @@
 #include "WebResource.h"
 %}
 
+%include "Scheme.i"
+
 class WebResource : public Resource {
 public:
         WebResource();
@@ -57,8 +59,8 @@ public:
         long getIpAddrExpire();
         void clearIpAddrExpire();
 
-        void setUrlScheme(const std::string &urlScheme);
-        const std::string &getUrlScheme();
+        void setUrlScheme(int urlScheme);
+        int getUrlScheme();
         void clearUrlScheme();
         void setUrlUsername(const std::string &urlUsername);
         const std::string &getUrlUsername();

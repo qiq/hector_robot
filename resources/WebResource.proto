@@ -1,9 +1,11 @@
 package hector.resources;
 
+import "Scheme.proto";
+
 //FIXME:
 //option java_package = "com.example.tutorial";
 //option java_outer_classname = "AddressBookProtos";
-option optimize_for = SPEED; 
+option optimize_for = SPEED;
 
 message WebResource {
 	required uint32 id = 1;			// id of a resource
@@ -23,7 +25,7 @@ message WebResource {
 	optional fixed32 ip_addr_expire = 16;	// IP address DNS mapping expire time
 
 	// parsed url
-	optional string url_scheme = 30;	// parts of URL
+	optional Scheme url_scheme = 30;	// parts of URL
 	optional string url_username = 31;
 	optional string url_password = 32;
 	optional string url_host = 33;

@@ -5,7 +5,7 @@ AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@ -m
 AM_LIBTOOLFLAGS = --tag=disable-static
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = GenerateWebResource.la ParseUrl.la ComposeUrl.la Fetch.la ResolveDns.la #GetUrlInfo.la #Filter.la
+modules_LTLIBRARIES = GenerateWebResource.la ParseUrl.la ComposeUrl.la Fetch.la ResolveDns.la WebSiteManager.la #Filter.la
 
 GenerateWebResource_la_SOURCES = GenerateWebResource.h GenerateWebResource.cc
 GenerateWebResource_la_LIBADD = ../resources/libWebResource.la
@@ -33,7 +33,7 @@ ResolveDns_la_CXXFLAGS = $(AM_CXXFLAGS)
 ResolveDns_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
 ResolveDns_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la
 
-#GetUrlInfo_la_SOURCES = GetUrlInfo.h GetUrlInfo.cc
-#GetUrlInfo_la_CXXFLAGS = $(AM_CXXFLAGS)
-#GetUrlInfo_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-#GetUrlInfo_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la
+WebSiteManager_la_SOURCES = WebSiteManager.h WebSiteManager.cc
+WebSiteManager_la_CXXFLAGS = $(AM_CXXFLAGS)
+WebSiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
+WebSiteManager_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la

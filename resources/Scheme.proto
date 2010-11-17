@@ -1,0 +1,6 @@
+// keep synchronized with Scheme.h
+enum Scheme {
+	NONE = 0;
+	HTTP = 1;
+	HTTPS = 2;
+};
