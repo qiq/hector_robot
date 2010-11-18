@@ -57,6 +57,7 @@ public:
 	bool Deserialize(const char *data, int size);
 	int getSerializedSize();
 	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
 	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// used by queues in case there is limit on queue size
 	int getSize();
@@ -211,6 +212,18 @@ inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStrea
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
 	bool result = MessageSerialize(&r, output);
+	r.clear_paths();
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
+	//if (header_map_dirty)
+	//	SaveHeaders();
+	lock.LockRead();
+	// fill protocol-buffers space using JArray
+	JarrayToProtobuf();
+	bool result = MessageSerializeWithCachedSizes(&r, output);
 	r.clear_paths();
 	lock.Unlock();
 	return result;
