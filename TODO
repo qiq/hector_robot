@@ -1,12 +1,15 @@
 - dodelat testy, pocitat s lokalnim web serverem (v Perlu)
+- lokalni dns server (v Perlu) pouzit pro test dns a dns + perl
 - test na webresource
 - upravit resourceinfo, aby fungoval pro websiteresource
+- nacitani a ukladani we websitemanager
+
+- modul pro zpracovani robots.txt (wr + wsr, vypln ve wsr)
 
 - upravit fetch a resolvedns, aby fungovaly s libovolnym resource
 	- mozna jen resolvedns(?), fetch potrebuje primo modifikovatelny string
 
 - items: jen korektne zpracovane resources, ne vsechny -- predelat
-
 - jmena metod na velka pismena (krome getteru/setteru)
 
 - webresource: pridat

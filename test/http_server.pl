@@ -5,7 +5,7 @@ use warnings;
 use HTTP::Daemon;
 use HTTP::Status;
 
-# base of Perl example
+# based on the Perl example
 
 my $port = 1235;
 $port = shift(@ARGV) if (@ARGV > 0);
