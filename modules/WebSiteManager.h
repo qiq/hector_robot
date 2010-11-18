@@ -21,7 +21,7 @@
 
 class CallDns : public CallProcessingEngine {
 public:
-	CallDns(ProcessingEngine *engine, int maxResources);
+	CallDns(ProcessingEngine *engine, int maxRequests);
 	~CallDns() {};
 
 protected:	
@@ -35,7 +35,7 @@ private:
 
 class CallRobots : public CallProcessingEngine {
 public:
-	CallRobots(ProcessingEngine *engine, int maxResources);
+	CallRobots(ProcessingEngine *engine, int maxRequests);
 	~CallRobots() {};
 
 protected:	
@@ -55,12 +55,16 @@ public:
 	Module::Type getType();
 	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
 	int ProcessingResources();
+	bool SaveCheckpointSync(const char *path);
+	bool RestoreCheckpointSync(const char *path);
 
 private:
 	// properties
 	int items;		// ObjectLock
 	int maxRequests;	// ObjectLock, number of concurrent requests
 	int timeTick;		// ObjectLock
+	char *dnsEngine;	// read-only
+	char *robotsEngine;	// read-only
 
 	ObjectValues<WebSiteManager> *values;
 	char *getItems(const char *name);
@@ -68,6 +72,12 @@ private:
 	void setMaxRequests(const char *name, const char *value);
 	char *getTimeTick(const char *name);
 	void setTimeTick(const char *name, const char *value);
+	char *getDnsEngine(const char *name);
+	char *getRobotsEngine(const char *name);
+	char *getSave(const char *name);
+	void setSave(const char *name, const char *value);
+	char *getLoad(const char *name);
+	void setLoad(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
@@ -92,6 +102,8 @@ private:
 	WebSiteResource *getWebSiteResource(WebResource *wr);
 	void StartProcessing(WebResource *wr, WebSiteResource *wsr, bool robotsOnly);
 	void FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources);
+	bool LoadWebSiteResources(const char *filename);
+	bool SaveWebSiteResources(const char *filename);
 };
 
 inline Module::Type WebSiteManager::getType() {

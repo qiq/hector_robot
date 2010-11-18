@@ -3,9 +3,14 @@
  */
 #include <config.h>
 
+#include <fcntl.h>
 #include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "WebSiteManager.h"
 #include "TestResource.h"
 
@@ -14,7 +19,7 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-CallDns::CallDns(ProcessingEngine *engine, int maxResources) : CallProcessingEngine(engine, maxResources) {
+CallDns::CallDns(ProcessingEngine *engine, int maxRequests) : CallProcessingEngine(engine, maxRequests) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
@@ -43,7 +48,7 @@ Resource *CallDns::FinishResource(Resource *tmp) {
 	return wsr;
 }
 
-CallRobots::CallRobots(ProcessingEngine *engine, int maxResources) : CallProcessingEngine(engine, maxResources) {
+CallRobots::CallRobots(ProcessingEngine *engine, int maxRequests) : CallProcessingEngine(engine, maxRequests) {
 }
 
 Resource *CallRobots::PrepareResource(Resource *src) {
@@ -81,6 +86,8 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	items = 0;
 	maxRequests = 1000;
 	timeTick = DEFAULT_TIME_TICK;
+	dnsEngine = NULL;
+	robotsEngine = NULL;
 
 	values = new ObjectValues<WebSiteManager>(this);
 	values->addGetter("items", &WebSiteManager::getItems);
@@ -88,6 +95,8 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	values->addSetter("timeTick", &WebSiteManager::setTimeTick);
 	values->addGetter("maxRequests", &WebSiteManager::getMaxRequests);
 	values->addSetter("maxRequests", &WebSiteManager::setMaxRequests);
+	values->addGetter("dnsEngine", &WebSiteManager::getDnsEngine);
+	values->addGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
 
 	pool = new MemoryPool<WebSiteResource>(10*1024);
 }
@@ -117,9 +126,60 @@ void WebSiteManager::setTimeTick(const char *name, const char *value) {
 	timeTick = str2int(value);
 }
 
+char *WebSiteManager::getDnsEngine(const char *name) {
+	return dnsEngine ? strdup(dnsEngine) : NULL;
+}
+
+char *WebSiteManager::getRobotsEngine(const char *name) {
+	return robotsEngine ? strdup(robotsEngine) : NULL;
+}
+
+char *WebSiteManager::getSave(const char *name) {
+	return strdup("");
+}
+
+// actually save all wsr records
+void WebSiteManager::setSave(const char *name, const char *value) {
+	if (!SaveWebSiteResources(value))
+		LOG_ERROR("Cannot save WebSiteManager data");
+}
+
+char *WebSiteManager::getLoad(const char *name) {
+	return strdup("");
+}
+
+// actually load all wsr records
+void WebSiteManager::setLoad(const char *name, const char *value) {
+	if (!LoadWebSiteResources(value))
+		LOG_ERROR("Cannot load WebSiteManager data");
+}
+
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
+
+	if (!dnsEngine || strlen(dnsEngine) == 0) {
+		LOG_ERROR("dnsEngine not defined");
+		return false;
+	}
+	ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->getObject(dnsEngine));
+	if (!engine) {
+		LOG_ERROR("Invalid dnsEngine parameter" << dnsEngine);
+	return false;
+	}
+	callDns = new CallDns(engine, maxRequests);
+
+	if (!robotsEngine || strlen(robotsEngine) == 0) {
+		LOG_ERROR("robotsEngine not defined");
+		return false;
+	}
+	engine = dynamic_cast<ProcessingEngine*>(objects->getObject(robotsEngine));
+	if (!engine) {
+		LOG_ERROR("Invalid robotsEngine parameter" << robotsEngine);
+	return false;
+	}
+	callRobots = new CallRobots(engine, maxRequests);
+
 	return true;
 }
 
@@ -173,6 +233,76 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 	}
 }
 
+bool WebSiteManager::LoadWebSiteResources(const char *filename) {
+	int fd = open(filename, O_RDONLY);
+	if (fd < 0) {
+		LOG_ERROR("Cannot open file " << filename << ": " << strerror(errno));
+		return false;
+	}
+	google::protobuf::io::FileInputStream *stream = new google::protobuf::io::FileInputStream(fd);
+
+	bool result = true;
+	char buffer[5];
+	while (1) {
+		int r = ReadBytes(fd, buffer, 5);
+		if (r < 0) {
+			LOG_ERROR("Error reading from file: " << strerror(errno));
+			result = false;
+			break;
+		}
+		if (r == 0)	// finished
+			break;
+		if (r != 5) {
+			LOG_ERROR("Error reading from file: " << strerror(errno));
+			result = false;
+			break;
+		}
+		WebSiteResource *wsr = pool->alloc();
+		if (!wsr->Deserialize(stream, *(uint32_t*)buffer)) {
+			result = false;
+			break;
+		}
+		// TODO: set resource id, so that it is unique?
+		sites[wsr] = wsr;
+	}
+	if (stream)
+		stream->Close();
+	return result;
+}
+
+bool WebSiteManager::SaveWebSiteResources(const char *filename) {
+	int fd = open(filename, O_WRONLY);
+	if (fd < 0) {
+		LOG_ERROR("Cannot open file " << filename << ": " << strerror(errno));
+		return false;
+	}
+	google::protobuf::io::FileOutputStream *stream = new google::protobuf::io::FileOutputStream(fd);
+
+	bool result = true;
+	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
+		char buffer[5];
+		*(uint32_t*)buffer = (uint32_t)iter->second->getSerializedSize();
+		*(uint8_t*)(buffer+4) = WebSiteResource::typeId;
+		int r = WriteBytes(fd, buffer, 5);
+		if (r < 0) {
+			LOG_ERROR("Error writing to file: " << strerror(errno));
+			result = false;
+			break;
+		}
+		if (r == 0)	// finished
+			break;
+		if (r != 5) {
+			LOG_ERROR("Error writing to file: " << strerror(errno));
+			result = false;
+			break;
+		}
+		iter->second->SerializeWithCachedSizes(stream);
+	}
+	if (stream)
+		stream->Close();
+	return result;
+}
+
 int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
 	int currentTime = time(NULL);
 	ObjectLockRead();
@@ -224,6 +354,18 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 
 int WebSiteManager::ProcessingResources() {
 	return callDnsInput.size() + callDns->ProcessingResources() + callDnsOutput.size() + callRobotsInput.size() + callRobots->ProcessingResources() + callRobotsOutput.size();
+}
+
+bool WebSiteManager::SaveCheckpointSync(const char *path) {
+	char buffer[1024];
+	snprintf(buffer, sizeof(buffer), "%s.%s", path, getId());
+	return SaveWebSiteResources(buffer);
+}
+
+bool WebSiteManager::RestoreCheckpointSync(const char *path) {
+	char buffer[1024];
+	snprintf(buffer, sizeof(buffer), "%s.%s", path, getId());
+	return LoadWebSiteResources(buffer);
 }
 
 // factory functions
