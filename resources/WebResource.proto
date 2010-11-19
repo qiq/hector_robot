@@ -2,9 +2,6 @@ package hector.resources;
 
 import "Scheme.proto";
 
-//FIXME:
-//option java_package = "com.example.tutorial";
-//option java_outer_classname = "AddressBookProtos";
 option optimize_for = SPEED;
 
 message WebResource {

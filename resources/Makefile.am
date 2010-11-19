@@ -8,20 +8,24 @@ CLEANFILES =
 ALIASES =
 
 resourcesdir = $(libdir)/hector/resources
-resources_LTLIBRARIES = libWebResource.la WebResource.la libWebSiteResource.la WebSiteResource.la
+resources_LTLIBRARIES = libScheme.la libWebResource.la WebResource.la libWebSiteResource.la WebSiteResource.la
 
 hectorincludedir = $(includedir)/hector
 hectorinclude_HEADERS = WebResource.h WebResource.pb.h WebResource.i WebSiteResource.h WebSiteResource.pb.h WebSiteResource.i
-
-libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
-libWebResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
 BUILT_SOURCES += Scheme.pb.h Scheme.pb.cc
 Scheme.pb.cc Scheme.pb.h: Scheme.proto
 	$(PROTOC) Scheme.proto --cpp_out=.
 
+libScheme_la_SOURCES = Scheme.h Scheme.pb.h Scheme.pb.cc
+libScheme_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+
 EXTRA_DIST += Scheme.proto Scheme.i
 CLEANFILES += Scheme.pb.h Scheme.pb.cc
+
+libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
+libWebResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+libWebResource_la_LIBADD = libScheme.la
 
 BUILT_SOURCES += WebResource.pb.h WebResource.pb.cc
 WebResource.pb.cc WebResource.pb.h: WebResource.proto
@@ -38,6 +42,7 @@ ALIASES += WebResource.la
 
 libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc
 libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+libWebSiteResource_la_LIBADD = libScheme.la
 
 BUILT_SOURCES += WebSiteResource.pb.h WebSiteResource.pb.cc
 WebSiteResource.pb.cc WebSiteResource.pb.h: WebSiteResource.proto
