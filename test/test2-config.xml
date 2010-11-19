@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test1: Create WebResources, dump and consume them.
+test2: Create WebResources, parse urls, dump them and compose them again.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -21,8 +21,10 @@ test1: Create WebResources, dump and consume them.
 							http://www.nicnevime.cz:443/
 							https://www.vimeovine.cz/ ]]>
 						</param>
-						<param name="urlFile" value="test1.data.url"/>
 					</Module>
+					<Module id="M_parseurl" lib="UrlParser.la"/>
+					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_composeurl" lib="UrlComposer.la"/>
 					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>

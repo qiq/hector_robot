@@ -1,0 +1,10 @@
+[0, 0]: url: http://qiq:abc@localhost/path?q=a#2 (HTTP qiq:abc localhost:80 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[0, 0]: url: http://qiq:abc@localhost/path?q=a (HTTP qiq:abc localhost:80 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[1, 0]: url: http://qiq:abc@localhost:8080/path?q=a#2 (HTTP qiq:abc localhost:8080 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[1, 0]: url: http://qiq:abc@localhost:8080/path?q=a (HTTP qiq:abc localhost:8080 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[2, 0]: url: http://google.com/path?q=a#2 (HTTP google.com:80 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[2, 0]: url: http://google.com/path?q=a (HTTP google.com:80 /path q=a), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[3, 0]: url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[3, 0]: url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[4, 0]: url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[4, 0]: url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
