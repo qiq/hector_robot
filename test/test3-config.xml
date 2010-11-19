@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test3: Filter module test
+test3: Create WebResources, parse urls, resolve DNS and dump result
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -9,43 +9,27 @@ test3: Filter module test
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
 		<logConfig>test.log.props</logConfig>
-		<ProcessingEngine id="test_processing_engine">
+		<ProcessingEngine id="PE_test">
 			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="CreateWebResource.pm">
-						<param name="urlList"><![CDATA[
-							http://qiq:qiq@localhost/path?q=xxx#ref
-							http://qiq:qiq@localhost:8080/path?q=xxx#ref
-						]]></param>
+					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[						http://www.test.com/foo/bar
+							http://www.test.org/
+							http://google.com/
+							http://www.nicnevime.cz:443/
+							https://www.vimeovine.cz/ ]]>
+						</param>
 					</Module>
-					<Module id="M_parse" lib="ParseUrl.la"/>
-					<Module id="M_filter" lib="Filter.la">
-						<param name="ruleList"><![CDATA[
-							* => urlQuery = "abc"
-							urlHost == "localhost" => urlScheme = ftp
-							urlHost != "localhostx" => urlHost = "xxxxxx"
-							urlHost =~ /.*XXX$/i && urlQuery =~ /abc/ => urlQuery = "qqeerryy"
-							urlHost !~ /.*x$/ => DROP
-							urlHost =~ /l.*lhost/ => status = 11, urlHost = "nohost"
-							urlHost < "test" => urlPath = "/PATH"
-							urlHost > "test" => urlPath = "/HATP"
-							urlHost > "test" && urlPath == "/HATP" => urlPath = "/pAtH"
-							ip4Addr =~ 127.0.0.0/8 => ip4Addr = 147.231.50.50, status = 1
-							ip4Addr !~ 147.231.50.50/8 => urlQuery = "abcd", status = 0
-							ip6Addr =~ ::/44 => ip6Addr = 1:2:3:4:5:6:7:8
-							urlPort == 8080 => clear(urlUsername), clear(urlPassword)
-							urlPort != 8080 => urlUsername = "nobody", clear(urlPassword), ACCEPT
-							* => DROP
-						]]></param>
-					</Module>
-					<Module id="M_compose" lib="ComposeUrl.la">
-						<param name="clear" value="1"/>
+					<Module id="M_parseurl" lib="UrlParser.la"/>
+					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_dns" lib="DnsResolver.pm" type="perl">
+						<param name="nameServer" value="127.0.0.1"/>
+						<param name="port" value="5354"/>
 					</Module>
 					<Module id="M_dump" lib="Dump.la"/>
-					<Module id="M_save" lib="Save.la">
-						<param name="filename" value="test3.data.out"/>
-					</Module>
+					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>
 		</ProcessingEngine>

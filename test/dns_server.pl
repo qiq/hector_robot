@@ -20,10 +20,14 @@ sub reply_handler {
 		my ($ttl, $rdata) = (3600, "127.0.0.1");
 		push @ans, Net::DNS::RR->new("$qname $ttl $qclass $qtype $rdata");
 		$rcode = "NOERROR";
-	} elsif ($qname eq "www.test.com") {
+	} elsif ($qtype eq "A" && $qname eq "www.test.org") {
+		my ($ttl, $rdata) = (3600, "10.10.10.10");
+		push @ans, Net::DNS::RR->new("$qname $ttl $qclass $qtype $rdata");
 		$rcode = "NOERROR";
-	} else {
-		$rcode = "NXDOMAIN";
+	} elsif ($qname eq "www.test.com" or $qname eq "www.test.org") {
+		$rcode = "NOERROR";
+	} elsif ($qtype eq "A" && $qname eq "shutdown") {
+		exit;
 	}
 
 	# mark the answer as authoritive (by setting the 'aa' flag
