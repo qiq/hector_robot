@@ -7,8 +7,13 @@ using namespace std;
 log4cxx::LoggerPtr WebResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebResource"));
 
 WebResource::WebResource() {
-	this->header_map_ready = false;
-	this->header_map_dirty = false;
+	header_map_ready = false;
+	header_map_dirty = false;
+}
+
+WebResource::WebResource(const WebResource &wr) : ProtobufResource(wr), r(wr.r), headers(wr.headers) {
+	header_map_ready = false;
+	header_map_dirty = false;
 }
 
 WebResource::~WebResource() {

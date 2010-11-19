@@ -14,6 +14,11 @@ public:
         WebResource();
         ~WebResource();
         Resource *Clone();
+        std::string *Serialize();
+        bool Deserialize(const char *data, int size);
+        int getSerializedSize();
+        bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+        bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getTypeId();
         const char *getTypeStr();
         const char *getModuleStr();
@@ -21,11 +26,6 @@ public:
         void setId(int id);
         int getStatus();
         void setStatus(int status);
-        std::string *Serialize();
-        bool Deserialize(const char *data, int size);
-        int getSerializedSize();
-        bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
-        bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getSize();
         char *toString(Object::LogLevel = Object::INFO);
 

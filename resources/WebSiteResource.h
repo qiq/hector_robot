@@ -34,9 +34,17 @@ typedef struct WebSitePath_ {
 class WebSiteResource : public ProtobufResource {
 public:
 	WebSiteResource();
+	WebSiteResource(const WebSiteResource &wsr);
 	~WebSiteResource();
 	// create copy of a resource
 	ProtobufResource *Clone();
+	// save and restore resource
+	std::string *Serialize();
+	bool Deserialize(const char *data, int size);
+	int getSerializedSize();
+	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// get info about a resource field
 	ResourceFieldInfo *getFieldInfo(const char *name);
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
@@ -45,20 +53,16 @@ public:
 	const char *getTypeStr();
 	// module prefix (e.g. Hector for Hector::TestResource)
 	const char *getModuleStr();
-	// id should be unique across all resources
+	// id should be unique across all in-memory resources
 	int getId();
 	void setId(int id);
 	// status may be tested in Processor to select target queue
 	int getStatus();
 	void setStatus(int status);
-
-	// save and restore resource
-	std::string *Serialize();
-	bool Deserialize(const char *data, int size);
-	int getSerializedSize();
-	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
+	// resource may contain link to other resource, it is only kept only in the memory
+	Resource *getAttachedResource();
+	void setAttachedResource(Resource *attachedResource);
+	void clearAttachedResource();
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
@@ -111,13 +115,6 @@ protected:
 
 	static MemoryPool<WebSitePath> pool;
 
-	//bool header_map_ready;
-	//bool header_map_dirty;
-	//std::tr1::unordered_map<std::string, std::string> headers;
-
-	//void LoadHeaders();
-	//void SaveHeaders();
-
 	// helper methods to convert from Judy array to protobuf representation and vice-versa
 	bool ProtobufToJarray();
 	void JarrayToProtobuf();
@@ -150,9 +147,9 @@ inline const char *WebSiteResource::getModuleStr() {
 
 inline int WebSiteResource::getId() {
 	lock.LockRead();
-	int id = r.id();
+	int result = id;
 	lock.Unlock();
-	return id;
+	return result;
 }
 
 inline void WebSiteResource::setId(int id) {
@@ -163,14 +160,33 @@ inline void WebSiteResource::setId(int id) {
 
 inline int WebSiteResource::getStatus() {
 	lock.LockRead();
-	int status = r.status();
+	int result = status;
 	lock.Unlock();
-	return status;
+	return result;
 }
 
 inline void WebSiteResource::setStatus(int status) {
 	lock.LockWrite();
 	r.set_status(status);
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setAttachedResource(Resource *attachedResource) {
+	lock.LockWrite();
+        this->attachedResource = attachedResource;
+	lock.Unlock();
+}
+
+inline Resource *WebSiteResource::getAttachedResource() {
+	lock.LockRead();
+        Resource *result = attachedResource;
+	lock.Unlock();
+	return result;
+}
+
+inline void WebSiteResource::clearAttachedResource() {
+	lock.LockWrite();
+        attachedResource = NULL;
 	lock.Unlock();
 }
 
@@ -185,8 +201,6 @@ inline std::string *WebSiteResource::Serialize() {
 }
 
 inline bool WebSiteResource::Deserialize(const char *data, int size) {
-	//header_map_ready = false;
-	//header_map_dirty = false;
 	bool result = MessageDeserialize(&r, data, size);
 	ProtobufToJarray();
 	r.clear_paths();
@@ -194,8 +208,6 @@ inline bool WebSiteResource::Deserialize(const char *data, int size) {
 }
 
 inline int WebSiteResource::getSerializedSize() {
-	//if (header_map_dirty)
-	//	SaveHeaders();
 	lock.LockRead();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
@@ -206,8 +218,6 @@ inline int WebSiteResource::getSerializedSize() {
 }
 
 inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
-	//if (header_map_dirty)
-	//	SaveHeaders();
 	lock.LockRead();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
@@ -218,8 +228,6 @@ inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStrea
 }
 
 inline bool WebSiteResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
-	//if (header_map_dirty)
-	//	SaveHeaders();
 	lock.LockRead();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
@@ -230,8 +238,6 @@ inline bool WebSiteResource::SerializeWithCachedSizes(google::protobuf::io::Zero
 }
 
 inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
-	//header_map_ready = false;
-	//header_map_dirty = false;
 	bool result = MessageDeserialize(&r, input, size);
 	ProtobufToJarray();
 	r.clear_paths();

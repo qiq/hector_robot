@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test1: CreateWebResource module testing.
+test1: Create WebResource and save it to the file.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">

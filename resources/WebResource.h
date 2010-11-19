@@ -21,9 +21,17 @@
 class WebResource : public ProtobufResource {
 public:
 	WebResource();
+	WebResource(const WebResource &wr);
 	~WebResource();
 	// create copy of a resource
 	ProtobufResource *Clone();
+	// save and restore resource
+	std::string *Serialize();
+	bool Deserialize(const char *data, int size);
+	int getSerializedSize();
+	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
+	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// get info about a resource field
 	ResourceFieldInfo *getFieldInfo(const char *name);
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
@@ -32,20 +40,6 @@ public:
 	const char *getTypeStr();
 	// module prefix (e.g. Hector for Hector::TestResource)
 	const char *getModuleStr();
-	// id should be unique across all resources
-	int getId();
-	void setId(int id);
-	// status may be tested in Processor to select target queue
-	int getStatus();
-	void setStatus(int status);
-
-	// save and restore resource
-	std::string *Serialize();
-	bool Deserialize(const char *data, int size);
-	int getSerializedSize();
-	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
@@ -111,8 +105,6 @@ public:
 protected:
 	// saved properties
 	hector::resources::WebResource r;
-	// memory-only
-	Resource *attachedResource;
 
 	bool header_map_ready;
 	bool header_map_dirty;
@@ -140,58 +132,54 @@ inline const char *WebResource::getModuleStr() {
 	return "HectorRobot";
 }
 
-inline int WebResource::getId() {
-	return r.id();
-}
-
-inline void WebResource::setId(int id) {
-	r.set_id(id);
-}
-
-inline int WebResource::getStatus() {
-	return r.status();
-}
-
-inline void WebResource::setStatus(int status) {
-	r.set_status(status);
-}
-
 inline std::string *WebResource::Serialize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	r.set_id(getId());
+	r.set_status(getStatus());
 	return MessageSerialize(&r);
 }
 
 inline bool WebResource::Deserialize(const char *data, int size) {
 	header_map_ready = false;
 	header_map_dirty = false;
-	return MessageDeserialize(&r, data, size);
+	bool result = MessageDeserialize(&r, data, size);
+	// we keep id
+	setStatus(r.status());
+	return result;
 }
 
 inline int WebResource::getSerializedSize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	r.set_id(getId());
+	r.set_status(getStatus());
 	return MessageGetSerializedSize(&r);
 }
 
 inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
 	if (header_map_dirty)
 		SaveHeaders();
+	r.set_id(getId());
+	r.set_status(getStatus());
 	return MessageSerialize(&r, output);
 }
 
 inline bool WebResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
 	if (header_map_dirty)
 		SaveHeaders();
+	// r.id and r.status were set in getSerializedSize() already
 	return MessageSerializeWithCachedSizes(&r, output);
 }
 
 inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
 	header_map_ready = false;
 	header_map_dirty = false;
-	return MessageDeserialize(&r, input, size);
+	bool result = MessageDeserialize(&r, input, size);
+	// we keep id
+	setStatus(r.status());
+	return result;
 }
-
 
 inline void WebResource::setUrl(const std::string &url) {
 	r.set_url(url);

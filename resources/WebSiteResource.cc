@@ -8,11 +8,16 @@ log4cxx::LoggerPtr WebSiteResource::logger(log4cxx::Logger::getLogger("lib.proce
 MemoryPool<WebSitePath> WebSiteResource::pool(1024);
 
 WebSiteResource::WebSiteResource() {
-	//this->header_map_ready = false;
-	//this->header_map_dirty = false;
+	paths = NULL;
+}
+
+WebSiteResource::WebSiteResource(const WebSiteResource &wsr) : ProtobufResource(wsr), lock(wsr.lock), r(wsr.r), paths(NULL) {
+	ProtobufToJarray();
+	r.clear_paths();
 }
 
 WebSiteResource::~WebSiteResource() {
+	JudySLFreeArray(&paths, NULL);
 }
 
 ProtobufResource *WebSiteResource::Clone() {
