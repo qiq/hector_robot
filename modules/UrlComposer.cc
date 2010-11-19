@@ -53,12 +53,15 @@ Resource *UrlComposer::ProcessSimple(Resource *resource) {
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
 	string s;
+	int defaultPort;
 	switch (wr->getUrlScheme()) {
 	case SCHEME_HTTP:
 		s = "http";
+		defaultPort = 80;
 		break;
 	case SCHEME_HTTPS:
 		s = "https";
+		defaultPort = 443;
 		break;
 	case SCHEME_NONE:
 	default:
@@ -72,9 +75,10 @@ Resource *UrlComposer::ProcessSimple(Resource *resource) {
 		s += "@";
 	}
 	s += wr->getUrlHost();
-	if (wr->getUrlPort() != 80) {
-		s += ":";
-		s += wr->getUrlPort();
+	if (wr->getUrlPort() != defaultPort) {
+		char buffer[20];
+		snprintf(buffer, sizeof(buffer), ":%d", wr->getUrlPort());
+		s += buffer;
 	}
 	s += wr->getUrlPath();
 	if (wr->getUrlQuery() != "") {
