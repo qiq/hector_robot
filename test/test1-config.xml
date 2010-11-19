@@ -13,28 +13,14 @@ test1: Create WebResource and save it to the file.
 			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="CreateWebResource.pm">
+					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
 						<param name="urlList">
-<![CDATA[
-							http://qiq:abc@localhost/path?q=a#2
+<![CDATA[						http://qiq:abc@localhost/path?q=a#2
 							http://qiq:abc@localhost:8080/path?q=a#2
-							http://google.com/path?q=a#2
-]]>
+							http://google.com/path?q=a#2 ]]>
 						</param>
 					</Module>
-					<Module id="M_xxx2" lib="ParseUrl.la"/>
-					<Module id="M_dump" type="perl" lib="Dump.pm"/>
-					<Module id="M_filter" lib="Filter.la">
-						<param name="ruleList">
-<![CDATA[
-urlPort == 8080 => ACCEPT
-url =~ /.*localhost.*/ => DROP
-url =~ s/google.com/idnes.cz/g => ACCEPT
-]]>
-						</param>
-					</Module>
-					<Module id="M_xxx" type="perl" lib="DnsResolver.pm"/>
-					<Module id="M_dump2" type="perl" lib="Dump.pm"/>
+					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>

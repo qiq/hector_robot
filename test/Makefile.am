@@ -4,10 +4,10 @@ TESTS =
 EXTRA_DIST = test_common.sh test.log.props
 CLEANFILES = test.log test*.log.valgrind
 
-#TESTS += test1.sh
-#EXTRA_DIST += test1.sh test1-config.xml test1.log.correct test1.data.url
-#CLEANFILES += test1.log.test test1.data.out
+TESTS += test1.sh
+EXTRA_DIST += test1.sh test1-config.xml test1.log.correct test1.data.url
+CLEANFILES += test1.log.test
 
-TESTS += test3.sh
-EXTRA_DIST += test3.sh test3-config.xml test3.log.correct
-CLEANFILES += test3.log.test test3.data.out
+#TESTS += test3.sh
+#EXTRA_DIST += test3.sh test3-config.xml test3.log.correct
+#CLEANFILES += test3.log.test test3.data.out
