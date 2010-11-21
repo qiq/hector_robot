@@ -28,6 +28,8 @@ sub reply_handler {
 		$rcode = "NOERROR";
 	} elsif ($qtype eq "A" && $qname eq "shutdown") {
 		exit;
+	} else {
+		$rcode = "NXDOMAIN";
 	}
 
 	# mark the answer as authoritive (by setting the 'aa' flag

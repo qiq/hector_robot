@@ -15,7 +15,7 @@ Obecne
 	- unbound: caching name server (bude cachovat informace)
 	- libunbound + libevent (libev): async DNS
 
-- celkove: max. 8-16 GB RAM
+- celkove: max. 8-16 GB RAM, spis 32 GB RAM (mame 48GB)
 
 Coding style:
 - includes: C, C++ (+STL), other libs, local

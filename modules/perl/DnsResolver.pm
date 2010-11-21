@@ -16,25 +16,14 @@ sub new {
 		'_threadIndex' => $threadIndex,
 		'_resolver' => undef,
 		'items' => 0,
+		'forwardServer' => undef,
+		'forwardPort' => undef,
 	};
 	bless($self, $class);
 	return $self;
 }
 
 sub DESTROY {
-}
-
-sub createUrlList {
-	my ($self, $s) = @_;
-	return [] if (not defined $s);
-	my @a;
-	foreach my $url (split(/[\n\r]+/, $s)) {
-		$url =~ s/^\s+//;
-		$url =~ s/\s+$//;
-		next if ($url eq '');
-		push(@a, $url);
-	}
-	return \@a;
 }
 
 sub Init {
@@ -44,7 +33,12 @@ sub Init {
 			$self->{$p->[0]} = $p->[1];
 		}
 	}
-	$self->{'_resolver'} = Net::DNS::Resolver->new(search => ''),
+	my %args = (
+		'search' => '',
+	);
+	$args{'nameservers'} = [ $self->{'forwardServer'} ] if (defined $self->{'forwardServer'});
+	$args{'forwardPort'} = $self->{'forwardPort'} if (defined $self->{'forwardPort'});
+	$self->{'_resolver'} = Net::DNS::Resolver->new(%args),
 
 	return 1;
 }
@@ -107,18 +101,21 @@ sub ProcessSimple() {
 		$resource->setIp6Addr($addr);
 		Hector::ip6AddrDelete_w($addr);
 	} else {
-		my $request = $self->{'_resolver'}->search($host, 'A');
-		if ($request) {
-			foreach my $rr ($request->answer) {
+		my $answer = $self->{'_resolver'}->search($host, 'A');
+		if (defined $answer) {
+			foreach my $rr ($answer->answer) {
 				next unless $rr->type eq "A";
-				$self->{'_object'}->log_error("$host: ".$rr->address.' ('.$rr->ttl.')');
-				my $addr = Hector::str2Ip4Addr($rr->address);
+				$self->{'_object'}->log_debug("$host: ".$rr->address.' ('.$rr->ttl.')');
+				my $addr = Hector::str2Ip4Addr_w($rr->address);
 				$resource->setIp4Addr($addr);
 				Hector::ip4AddrDelete_w($addr);
 				$resource->setIpAddrExpire(time() + $rr->ttl);
+				$resource->setStatus(0);
+				last;
 			}
 		} else {
 			$self->{'_object'}->log_debug("Query failed ($host): ".$self->{'_resolver'}->errorstring);
+			$resource->setStatus(1);
 		}
 	}
 

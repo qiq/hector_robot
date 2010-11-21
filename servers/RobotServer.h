@@ -14,7 +14,7 @@
 class RobotServer : public BaseServer {
 public:
 	RobotServer(ObjectRegistry *objects, std::vector<ProcessingEngine*> *engines);
-	~RobotServer();
+	~RobotServer() {};
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	bool HandleExtension(SimpleHTTPConn *conn);
 

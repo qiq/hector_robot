@@ -5,7 +5,8 @@
 #undef die // Perl
 #define SWIG_FILE_WITH_INIT // for Python
 
-class TestResource;     // for Perl SWIG (otherwise does not compile
+class TestResource;             // for Perl SWIG (otherwise does not compile
+class TestProtobufResource;
 %}
 
 %import Hector.i

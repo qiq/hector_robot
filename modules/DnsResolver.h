@@ -8,7 +8,9 @@
 #include <config.h>
 
 #include <tr1/unordered_map>
+extern "C" {
 #include <unbound.h>
+}
 #include "common.h"
 #include "Module.h"
 #include "ObjectValues.h"
@@ -19,7 +21,6 @@ class DnsResolver;
 typedef struct DnsResourceInfo_ {
 	int id;			// unbound request id
 	WebResource *current;	// currently processed Resource
-	int retryCount;		// how many we tried
 	DnsResolver *parent;	// parent
         log4cxx::LoggerPtr logger;
 } DnsResourceInfo;
@@ -38,10 +39,10 @@ public:
 	void FinishResolution(DnsResourceInfo *ri);
 private:
 	int items;		// ObjectLock, items processed
-	int repeat;		// ObjectLock, repeat request if timeout occurs
-	int timeout;		// ObjectLock, resolution timeout
 	int maxRequests;	// initOnly, number of concurrent requests
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
+	char *forwardServer;	// initOnly, DNS server to use
+	int forwardPort;	// initOnly, port number of the DNS server
 
 	ObjectValues<DnsResolver> *values;
 
@@ -50,16 +51,17 @@ private:
 	std::vector<DnsResourceInfo*> unused;
 	std::tr1::unordered_map<int, DnsResourceInfo*> running;
 	std::queue<Resource*> *outputResources;
+	uint32_t currentTime;	// time of ProcessMulti() call
 
 	char *getItems(const char *name);
-	char *getRepeat(const char *name);
-	void setRepeat(const char *name, const char *value);
-	char *getTimeout(const char *name);
-	void setTimeout(const char *name, const char *value);
 	char *getMaxRequests(const char *name);
 	void setMaxRequests(const char *name, const char *value);
 	char *getTimeTick(const char *name);
 	void setTimeTick(const char *name, const char *value);
+	char *getForwardServer(const char *name);
+	void setForwardServer(const char *name, const char *value);
+	char *getForwardPort(const char *name);
+	void setForwardPort(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);

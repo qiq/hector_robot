@@ -6,6 +6,10 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <unistd.h>
+extern "C" {
+#include <ldns/wire2host.h>
+}
 #include "DnsResolver.h"
 #include "ProcessingEngine.h"
 #include "TestResource.h"
@@ -17,21 +21,21 @@ using namespace std;
 
 DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	repeat = 3;
-	timeout = 10;
 	maxRequests = 1000;
 	timeTick = DEFAULT_TIME_TICK;
+	forwardServer = NULL;
+	forwardPort = 0;
 
 	values = new ObjectValues<DnsResolver>(this);
 	values->addGetter("items", &DnsResolver::getItems);
-	values->addGetter("repeat", &DnsResolver::getRepeat);
-	values->addSetter("repeat", &DnsResolver::setRepeat, true);
-	values->addGetter("timeout", &DnsResolver::getTimeout);
-	values->addSetter("timeout", &DnsResolver::setTimeout);
 	values->addGetter("maxRequests", &DnsResolver::getMaxRequests);
 	values->addSetter("maxRequests", &DnsResolver::setMaxRequests, true);
 	values->addGetter("timeTick", &DnsResolver::getTimeTick);
 	values->addSetter("timeTick", &DnsResolver::setTimeTick);
+	values->addGetter("forwardServer", &DnsResolver::getForwardServer);
+	values->addSetter("forwardServer", &DnsResolver::setForwardServer);
+	values->addGetter("forwardPort", &DnsResolver::getForwardPort);
+	values->addSetter("forwardPort", &DnsResolver::setForwardPort);
 }
 
 DnsResolver::~DnsResolver() {
@@ -40,22 +44,6 @@ DnsResolver::~DnsResolver() {
 
 char *DnsResolver::getItems(const char *name) {
 	return int2str(items);
-}
-
-char *DnsResolver::getRepeat(const char *name) {
-	return int2str(repeat);
-}
-
-void DnsResolver::setRepeat(const char *name, const char *value) {
-	repeat = str2int(value);
-}
-
-char *DnsResolver::getTimeout(const char *name) {
-	return int2str(timeout);
-}
-
-void DnsResolver::setTimeout(const char *name, const char *value) {
-	timeout = str2int(value);
 }
 
 char *DnsResolver::getMaxRequests(const char *name) {
@@ -74,26 +62,60 @@ void DnsResolver::setTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
 }
 
+char *DnsResolver::getForwardServer(const char *name) {
+	return forwardServer ? strdup(forwardServer) : NULL;
+}
+
+void DnsResolver::setForwardServer(const char *name, const char *value) {
+	free(forwardServer);
+	forwardServer = strdup(value);
+}
+
+char *DnsResolver::getForwardPort(const char *name) {
+	return int2str(forwardPort);
+}
+
+void DnsResolver::setForwardPort(const char *name, const char *value) {
+	forwardPort = str2long(value);
+}
+
 // called by libunbound when resource address is resolved
 void CompletedCallback(void *data, int err, struct ub_result *result) {
 	DnsResourceInfo *ri = (DnsResourceInfo*)data;
 	if (err == 0) {
-		if (result->havedata) {
+		bool error = false;
+		if (result->havedata && result->len[0] == 4) {
 			ip4_addr_t addr;
 			addr.addr = ntohl(((struct in_addr*)result->data[0])->s_addr);
 			ri->current->setIp4Addr(addr);
-			ri->current->setStatus(0);
+			// we want TTL, so that we have to parse the packet again (ugh!)
+			ldns_pkt *pkt;
+			if (ldns_wire2pkt(&pkt, (const uint8_t *)result->answer_packet, result->answer_len) == LDNS_STATUS_OK) {
+				ldns_rr_list *answer = pkt->_answer;
+				if (answer->_rr_count >= 1) {
+					struct timeval currentTime;
+					gettimeofday(&currentTime, NULL);
+					ri->current->setIpAddrExpire(currentTime.tv_sec + answer->_rrs[0]->_ttl);
+					ri->current->setStatus(0);
+				} else {
+					LOG4CXX_DEBUG(ri->logger, "Error parsing packet data: " << ri->current->getUrlHost());
+					error = true;
+				}
+			} else {
+				LOG4CXX_DEBUG(ri->logger, "Error parsing packet data: " << ri->current->getUrlHost());
+				error = true;
+			}
 		} else {
+			error = true;
 			if (result->nxdomain) {
 				LOG4CXX_DEBUG(ri->logger, "NXDOMAIN: " << ri->current->getUrlHost());
-				ri->current->setIp4Addr(ip4_addr_empty);
-				ri->current->setStatus(1);
 			} else {
-				LOG4CXX_ERROR(ri->logger, "TODO: process timeout and other errors " << result->rcode);
-				// FIXME: process timeout somehow
-				ri->current->setIp4Addr(ip4_addr_empty);
-				ri->current->setStatus(1);
+				LOG4CXX_ERROR(ri->logger, "Query failed: " << result->rcode);
 			}
+		}
+		if (error) {
+			ri->current->setIp4Addr(ip4_addr_empty);
+			ri->current->setStatus(1);
 		}
 		ub_resolve_free(result);
 	} else {
@@ -106,8 +128,7 @@ void DnsResolver::StartResolution(WebResource *wr) {
 	DnsResourceInfo *ri = unused.back();
 	unused.pop_back();
 	ri->current = wr;
-	ri->retryCount = 0;
-	int result = ub_resolve_async(ctx, (char*)wr->getUrlHost().c_str(), 1, 1, (void*)ri, CompletedCallback, &ri->id);
+	int result = ub_resolve_async(ctx, (char*)wr->getUrlHost().c_str(), 1, 1, (void*)ri, &CompletedCallback, &ri->id);
 	if (result != 0) {
 		LOG_ERROR("Cannot start asynchronous DNS lookup: " << result);
 		return;
@@ -145,6 +166,21 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 		return false;
 	}
 
+	if (forwardServer) {
+		int retval;
+		if (forwardPort) {
+			char buffer[1024];
+			snprintf(buffer, sizeof(buffer), "%s@%d", forwardServer, forwardPort);
+			retval = ub_ctx_set_fwd(ctx, buffer);
+		} else {
+			retval = ub_ctx_set_fwd(ctx, forwardServer);
+		}
+		if (retval < 0) {
+			LOG_ERROR("Could not set forwarder DNS server (" << forwardServer << "): " <<  ub_strerror(retval));
+			return false;
+		}
+	}
+
 	for (int i = 0; i < maxRequests; i++) {
 		DnsResourceInfo *ri = new DnsResourceInfo();
 		ri->parent = this;
@@ -177,7 +213,7 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 	ObjectUnlock();
 	int timeout = timeoutFull;
 	struct timeval currentTime;
-	while (timeout > 0) {
+	while (running.size() > 0 && timeout > 0) {
 		// wait for results
 	        struct timeval tv;
 	        tv.tv_sec = timeout / 1000000;
@@ -185,7 +221,7 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 		fd_set rfds;
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);
-		int retval = select(1, &rfds, NULL, NULL, &tv);
+		int retval = select(fd+1, &rfds, NULL, NULL, &tv);
 		if (retval < 0) {
 	                LOG_ERROR("Error in select() = " << errno);
 	                return maxRequests-running.size();
@@ -198,7 +234,7 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 			}
 		}
 		gettimeofday(&currentTime, NULL);
-		timeout = timeoutFull * 1000000 - (currentTime.tv_sec - startTime.tv_sec) * 1000000 + (currentTime.tv_usec - startTime.tv_usec);
+		timeout = timeoutFull - (currentTime.tv_sec - startTime.tv_sec) * 1000000 + (currentTime.tv_usec - startTime.tv_usec);
 	}
 
 	// finished resources are already appended to the outputResources queue

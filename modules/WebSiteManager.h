@@ -10,7 +10,9 @@
 #include <config.h>
 
 #include <tr1/unordered_map>
+extern "C" {
 #include <unbound.h>
+}
 #include "CallProcessingEngine.h"
 #include "common.h"
 #include "MemoryPool.h"
