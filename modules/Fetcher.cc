@@ -400,6 +400,10 @@ void Fetcher::FinishResourceFetcher(CurlResourceInfo *ri, int result) {
 }
 
 bool Fetcher::Init(vector<pair<string, string> > *params) {
+	// second stage?
+	if (!params)
+		return true;
+
 	if (!values->InitValues(params))
 		return false;
 

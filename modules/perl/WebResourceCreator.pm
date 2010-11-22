@@ -43,6 +43,10 @@ sub createUrlList {
 
 sub Init {
 	my ($self, $params) = @_;
+
+	# second stage?
+	return 1 if (not defined $params);
+
 	foreach my $p (@{$params}) {
 		if (exists $self->{$p->[0]}) {
 			$self->{$p->[0]} = $p->[1];

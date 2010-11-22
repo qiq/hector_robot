@@ -42,7 +42,7 @@ ALIASES += WebResource.la
 
 libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc
 libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
-libWebSiteResource_la_LIBADD = libScheme.la
+libWebSiteResource_la_LIBADD = libScheme.la -lJudy
 
 BUILT_SOURCES += WebSiteResource.pb.h WebSiteResource.pb.cc
 WebSiteResource.pb.cc WebSiteResource.pb.h: WebSiteResource.proto

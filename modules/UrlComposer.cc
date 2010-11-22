@@ -38,6 +38,10 @@ void UrlComposer::setClear(const char *name, const char *value) {
 }
 
 bool UrlComposer::Init(vector<pair<string, string> > *params) {
+	// second stage?
+	if (!params)
+		return true;
+
 	if (!values->InitValues(params))
 		return false;
 	typeId = Resource::NameToId("WebResource");

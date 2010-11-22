@@ -36,4 +36,4 @@ DnsResolver_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib
 WebSiteManager_la_SOURCES = WebSiteManager.h WebSiteManager.cc
 WebSiteManager_la_CXXFLAGS = $(AM_CXXFLAGS)
 WebSiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-WebSiteManager_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la
+WebSiteManager_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la

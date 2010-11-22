@@ -146,6 +146,10 @@ void DnsResolver::FinishResolution(DnsResourceInfo *ri) {
 }
 
 bool DnsResolver::Init(vector<pair<string, string> > *params) {
+	// second stage?
+	if (!params)
+		return true;
+
 	if (!values->InitValues(params))
 		return false;
 

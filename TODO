@@ -1,4 +1,3 @@
-- dodelat testy, pocitat s lokalnim web serverem (v Perlu)
 - upravit resourceinfo, aby fungoval pro websiteresource
 
 - modul pro zpracovani robots.txt (wr + wsr, vypln ve wsr)
@@ -14,10 +13,10 @@
 	- cil presmerovani
 
 - website manager
-	- nacitat a ukladat websiteresources
-	- poustet dns resolution + robots.txt download
-	- zpracovavat newlink
-	- bude si ukladat websites v hash tabulce, paths v judy array/hash
+	- OK nacitat a ukladat websiteresources
+	- OK: poustet dns resolution + robots.txt download
+	- OK: bude si ukladat websites v hash tabulce, paths v judy array/hash
+	- TODO: zpracovavat newlink
 
 - website resource
 	- hostname: domenove jmeno 20 + 4 + 16 + 4 + hash + 4 + hash? + 32 lock
@@ -70,6 +69,7 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - cistici modul
 
 DONE
+- dodelat testy, pocitat s lokalnim web serverem (v Perlu)
 - lokalni dns server (v Perlu) pouzit pro test dns a dns + perl
 - test na webresource
 - nacitani a ukladani we websitemanager

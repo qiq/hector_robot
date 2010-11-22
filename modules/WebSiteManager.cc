@@ -19,7 +19,7 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-CallDns::CallDns(ProcessingEngine *engine, int maxRequests) : CallProcessingEngine(engine, maxRequests) {
+CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
@@ -48,7 +48,7 @@ Resource *CallDns::FinishResource(Resource *tmp) {
 	return wsr;
 }
 
-CallRobots::CallRobots(ProcessingEngine *engine, int maxRequests) : CallProcessingEngine(engine, maxRequests) {
+CallRobots::CallRobots(int maxRequests) : CallProcessingEngine(maxRequests) {
 }
 
 Resource *CallRobots::PrepareResource(Resource *src) {
@@ -96,7 +96,13 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	values->addGetter("maxRequests", &WebSiteManager::getMaxRequests);
 	values->addSetter("maxRequests", &WebSiteManager::setMaxRequests);
 	values->addGetter("dnsEngine", &WebSiteManager::getDnsEngine);
+	values->addSetter("dnsEngine", &WebSiteManager::setDnsEngine);
 	values->addGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
+	values->addSetter("robotsEngine", &WebSiteManager::setRobotsEngine);
+	values->addGetter("load", &WebSiteManager::getLoad);
+	values->addSetter("load", &WebSiteManager::setLoad);
+	values->addGetter("save", &WebSiteManager::getSave);
+	values->addSetter("save", &WebSiteManager::setSave);
 
 	pool = new MemoryPool<WebSiteResource>(10*1024);
 }
@@ -130,8 +136,18 @@ char *WebSiteManager::getDnsEngine(const char *name) {
 	return dnsEngine ? strdup(dnsEngine) : NULL;
 }
 
+void WebSiteManager::setDnsEngine(const char *name, const char *value) {
+	free(dnsEngine);
+	dnsEngine = strdup(value);
+}
+
 char *WebSiteManager::getRobotsEngine(const char *name) {
 	return robotsEngine ? strdup(robotsEngine) : NULL;
+}
+
+void WebSiteManager::setRobotsEngine(const char *name, const char *value) {
+	free(robotsEngine);
+	robotsEngine = strdup(value);
 }
 
 char *WebSiteManager::getSave(const char *name) {
@@ -155,6 +171,24 @@ void WebSiteManager::setLoad(const char *name, const char *value) {
 }
 
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {
+	// second stage?
+	if (!params) {
+		ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->getObject(dnsEngine));
+		if (!engine) {
+			LOG_ERROR("Invalid dnsEngine parameter: " << dnsEngine);
+			return false;
+		}
+		callDns->setProcessingEngine(engine);
+
+		engine = dynamic_cast<ProcessingEngine*>(objects->getObject(robotsEngine));
+		if (!engine) {
+			LOG_ERROR("Invalid robotsEngine parameter: " << robotsEngine);
+			return false;
+		}
+		callRobots->setProcessingEngine(engine);
+		return true;
+	}
+
 	if (!values->InitValues(params))
 		return false;
 
@@ -162,23 +196,13 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 		LOG_ERROR("dnsEngine not defined");
 		return false;
 	}
-	ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->getObject(dnsEngine));
-	if (!engine) {
-		LOG_ERROR("Invalid dnsEngine parameter" << dnsEngine);
-	return false;
-	}
-	callDns = new CallDns(engine, maxRequests);
+	callDns = new CallDns(maxRequests);
 
 	if (!robotsEngine || strlen(robotsEngine) == 0) {
 		LOG_ERROR("robotsEngine not defined");
 		return false;
 	}
-	engine = dynamic_cast<ProcessingEngine*>(objects->getObject(robotsEngine));
-	if (!engine) {
-		LOG_ERROR("Invalid robotsEngine parameter" << robotsEngine);
-	return false;
-	}
-	callRobots = new CallRobots(engine, maxRequests);
+	callRobots = new CallRobots(maxRequests);
 
 	return true;
 }
@@ -202,7 +226,7 @@ WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
 }
 
 void WebSiteManager::StartProcessing(WebResource *wr, WebSiteResource *wsr, bool robotsOnly) {
-	// resource is not yet being processed
+	// wsr is not yet being processed
 	tr1::unordered_map<WebSiteResource*, WebResource*>::iterator iter = processingResources.find(wsr);
 	if (iter == processingResources.end()) {
 		wr->setAttachedResource(wsr);
@@ -262,7 +286,6 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 			result = false;
 			break;
 		}
-		// TODO: set resource id, so that it is unique?
 		sites[wsr] = wsr;
 	}
 	if (stream)

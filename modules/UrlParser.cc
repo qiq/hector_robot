@@ -27,6 +27,10 @@ char *UrlParser::getItems(const char *name) {
 }
 
 bool UrlParser::Init(vector<pair<string, string> > *params) {
+	// second stage?
+	if (!params)
+		return true;
+
 	if (!values->InitValues(params))
 		return false;
 	typeId = Resource::NameToId("WebResource");

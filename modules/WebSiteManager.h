@@ -23,7 +23,7 @@ extern "C" {
 
 class CallDns : public CallProcessingEngine {
 public:
-	CallDns(ProcessingEngine *engine, int maxRequests);
+	CallDns(int maxRequests);
 	~CallDns() {};
 
 protected:	
@@ -37,7 +37,7 @@ private:
 
 class CallRobots : public CallProcessingEngine {
 public:
-	CallRobots(ProcessingEngine *engine, int maxRequests);
+	CallRobots(int maxRequests);
 	~CallRobots() {};
 
 protected:	
@@ -75,7 +75,9 @@ private:
 	char *getTimeTick(const char *name);
 	void setTimeTick(const char *name, const char *value);
 	char *getDnsEngine(const char *name);
+	void setDnsEngine(const char *name, const char *value);
 	char *getRobotsEngine(const char *name);
+	void setRobotsEngine(const char *name, const char *value);
 	char *getSave(const char *name);
 	void setSave(const char *name, const char *value);
 	char *getLoad(const char *name);

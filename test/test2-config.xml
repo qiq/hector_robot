@@ -23,9 +23,9 @@ test2: Create WebResources, parse urls, dump them and compose them again.
 						</param>
 					</Module>
 					<Module id="M_parseurl" lib="UrlParser.la"/>
-					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_dump1" lib="Dump.la"/>
 					<Module id="M_composeurl" lib="UrlComposer.la"/>
-					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_dump2" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>
