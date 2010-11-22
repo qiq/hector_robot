@@ -134,7 +134,6 @@ void CheckCompleted(CurlInfo *ci);
 void TimeTickCallback(EV_P_ struct ev_timer *t, int revents) {
 	CurlInfo *ci = (CurlInfo*)t->data;
 
-fprintf(stderr, "TimeTickCallback\n");
 	ev_unloop(ci->loop, EVUNLOOP_ONE);
 }
 
@@ -149,10 +148,8 @@ void SocketCallback(EV_P_ struct ev_io *w, int revents) {
 		return;
 	}
 	CheckCompleted(ci);
-	if (ci->stillRunning <= 0) {
+	if (ci->stillRunning <= 0)
 		ev_timer_stop(ci->loop, &ci->curlTimer);
-fprintf(stderr, "removing timer\n");
-}
 }
 
 // called by libev when the Curl timeout expires
@@ -216,9 +213,7 @@ int MultiSocketCallback(CURL *easy, curl_socket_t s, int what, void *userp, void
 
 // update the event timer after curl_multi library calls (CURLMOPT_TIMERFUNCTION)
 int MultiTimerCallback(CURLM *multi, long timeout_ms, CurlInfo *ci) {
-fprintf(stderr, "ev_timer_stop()\n");
 	ev_timer_stop(ci->loop, &ci->curlTimer);
-fprintf(stderr, "ev_timer_start(%ld)\n", timeout_ms);
 	if (timeout_ms > 0) {
 		double t = timeout_ms / 1000;
 		ev_timer_init(&ci->curlTimer, TimerCallback, t, 0.);
@@ -500,9 +495,7 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	curlInfo.tickTimer.data = &curlInfo;
 
 	// run loop: wait for socket actions or timeout
-fprintf(stderr, "Waiting for timeout...\n");
 	ev_loop(curlInfo.loop, 0);
-fprintf(stderr, "timeout...\n");
 
 	// finished resources are already appended to the outputResources queue
 	return maxRequests-curlInfo.resources;
