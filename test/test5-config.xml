@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+test5: Create WebResources, parse urls, resolve DNS and download a web page, then dump the result
+-->
+<Config>
+	<Server id="test" lib="RobotServer.la">
+		<threads>1</threads>
+		<serverHost>*</serverHost>
+		<serverPort>1100</serverPort>
+		<logConfig>test.log.props</logConfig>
+		<ProcessingEngine id="PE_test">
+			<Processor id="P_input">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[						http://127.0.0.1:8012/foo.html ]]>
+						</param>
+					</Module>
+					<Module id="M_parseurl" lib="UrlParser.la"/>
+					<Module id="M_dump1" lib="Dump.la"/>
+					<Module id="M_fetch" type="perl"  lib="Fetcher.pm">
+						<param name="timeTick" value="100000"/>
+					</Module>
+					<Module id="M_dump2" lib="Dump.la"/>
+					<Module id="M_output" lib="TestOutput.la"/>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
