@@ -1,0 +1,4 @@
+[0, 0]: url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[0, 0]: url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html ), time: 0, mime: , size: 17, ip4: 127.0.0.1, ip6: ::, 
+[1, 0]: url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::
+[1, 7]: url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 / ), time: 0, mime: , size: 0, ip4: 0.0.0.0, ip6: ::

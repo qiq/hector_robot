@@ -13,6 +13,7 @@ $port = shift(@ARGV) if (@ARGV > 0);
 my $d = HTTP::Daemon->new(
 	LocalAddr => 'localhost',
 	LocalPort => $port,
+	ReuseAddr => 1, 
 ) || die($!);
 #print "Please contact me at: <URL:", $d->url, ">\n";
 while (my $c = $d->accept) {

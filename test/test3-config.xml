@@ -25,8 +25,8 @@ test3: Create WebResources, parse urls, resolve DNS and dump result
 					<Module id="M_parseurl" lib="UrlParser.la"/>
 					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_dns" lib="DnsResolver.pm" type="perl">
-						<param name="nameServer" value="127.0.0.1"/>
-						<param name="port" value="5354"/>
+						<param name="forwardServer" value="127.0.0.1"/>
+						<param name="forwardPort" value="5354"/>
 					</Module>
 					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
