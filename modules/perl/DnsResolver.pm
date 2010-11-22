@@ -37,7 +37,7 @@ sub Init {
 		'search' => '',
 	);
 	$args{'nameservers'} = [ $self->{'forwardServer'} ] if (defined $self->{'forwardServer'});
-	$args{'forwardPort'} = $self->{'forwardPort'} if (defined $self->{'forwardPort'});
+	$args{'port'} = $self->{'forwardPort'} if (defined $self->{'forwardPort'});
 	$self->{'_resolver'} = Net::DNS::Resolver->new(%args),
 
 	return 1;
