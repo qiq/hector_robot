@@ -19,6 +19,7 @@ sub new {
 		'urlList' => undef,
 		'urlFile' => undef,
 		'_url' => [],
+		'_finished' => 0,
 	};
 	bless($self, $class);
 	return $self;
@@ -114,7 +115,10 @@ sub ProcessInput() {
 		return undef;
 	}
 	if (@{$self->{'_url'}} == 0) {
-		$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
+		if (not $self->{'_finished'}) {
+			$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
+			$self->{'_finished'} = 1;
+		}
 		return undef;
 	}
 	$resource = HectorRobot::WebResource->new();
