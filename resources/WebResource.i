@@ -1,7 +1,6 @@
 %include "std_string.i"
-
+%include "std_vector.i"
 %newobject WebResource::Serialize();
-%newobject WebResource::toString();
 
 %{
 #include "WebResource.h"
@@ -27,7 +26,7 @@ public:
         int getStatus();
         void setStatus(int status);
         int getSize();
-        char *toString(Object::LogLevel = Object::INFO);
+        std::string toString(Object::LogLevel = Object::INFO);
 
         void setUrl(const std::string &url);
         const std::string &getUrl();
@@ -41,12 +40,12 @@ public:
         void setContent(const std::string &content);
         const std::string &getContent();
         void clearContent();
-        void setHeaderFields(std::vector<std::string> *header_names, std::vector<std::string> *header_values);
+        void setHeaderFields(std::vector<std::string> &header_names, std::vector<std::string> &header_values);
         std::vector<std::string> *getHeaderNames();
         void setHeaderValue(const std::string &name, const std::string &value);
         const std::string &getHeaderValue(const std::string &name);
         void clearHeaderFields();
-        void setExtractedUrls(std::vector<std::string> *extracted_urls);
+        void setExtractedUrls(std::vector<std::string> &extracted_urls);
         std::vector<std::string> *getExtractedUrls();
         void clearExtractedUrls();
         void setIp4Addr(ip4_addr_t addr);
@@ -81,3 +80,10 @@ public:
         const std::string &getUrlQuery();
         void clearUrlQuery();
 };
+
+%inline %{
+WebResource *ResourceToWebResource(Resource *r) {
+        return dynamic_cast<WebResource*>(r);
+}
+%}
+

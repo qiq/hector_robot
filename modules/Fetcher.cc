@@ -62,6 +62,8 @@ Fetcher::~Fetcher() {
 			curl_slist_free_all(ri->headers);
 	}
 	curl_multi_cleanup(curlInfo.multi);
+	free(userAgent);
+	free(from);
 
 	delete values;
 }
@@ -174,7 +176,7 @@ void CheckCompleted(CurlInfo *ci) {
 			int result = (int)msg->data.result;
 			CurlResourceInfo *ri;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ri);
-			ci->parent->FinishResourceFetcher(ri, result);
+			ci->parent->FinishResourceFetch(ri, result);
 			curl_multi_remove_handle(ci->multi, easy);
 		}
 	}
@@ -281,6 +283,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		if (name == "Content-Size") {
 			ri->contentLength = atol(s.c_str());
 		} else if (name == "Content-Type") {
+			ri->current->setMimeType(s);
 			if (!s.compare(0, 9, "text/html") || !s.compare(0, 10, "text/plain"))
 				ri->contentIsText = true;
 		}
@@ -312,11 +315,11 @@ void Fetcher::QueueResource(WebResource *wr) {
 		}
 		return;
 	}
-	Fetcher::StartResourceFetcher(wr, hash);
+	StartResourceFetch(wr, hash);
 }
 
 // check resources in the heap and start fetch of resources that waited long enough
-void Fetcher::StartQueuedResourcesFetcher() {
+void Fetcher::StartQueuedResourcesFetch() {
 	ObjectLockRead();
 	int wait = minServerRelax;
 	ObjectUnlock();
@@ -327,12 +330,12 @@ void Fetcher::StartQueuedResourcesFetcher() {
 		WebResource *wr = ri->waiting.front();
 		int index = ri->index;
 		ri->waiting.pop_front();
-		StartResourceFetcher(wr, index);
+		StartResourceFetch(wr, index);
 	}
 }
 
 // really start download
-void Fetcher::StartResourceFetcher(WebResource *wr, int index) {
+void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// set URL
 	const string &url = wr->getUrl();
 	if (url.empty()) {
@@ -379,7 +382,7 @@ void Fetcher::StartResourceFetcher(WebResource *wr, int index) {
 }
 
 // save resource to the outputQueue, process errors, etc.
-void Fetcher::FinishResourceFetcher(CurlResourceInfo *ri, int result) {
+void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	ri->current->setStatus(result);
 	outputResources->push(ri->current);
 	ObjectLockWrite();
@@ -460,7 +463,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 
 		ri->socketfd = -1;
 		ri->evSet = false;
-		ri->time = std::numeric_limits<unsigned int>::max();
+		ri->time = 0;
 		ri->info = &curlInfo;
 
 		ri->contentLength = 0;
@@ -474,7 +477,7 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	this->outputResources = outputResources;
 
 	// start queued resources
-	StartQueuedResourcesFetcher();
+	StartQueuedResourcesFetch();
 
 	// queue/start input resources
 	while (inputResources->size() > 0 && curlInfo.resources < maxRequests) {

@@ -39,7 +39,11 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 }
 
 DnsResolver::~DnsResolver() {
+	assert(running.size() == 0);
 	delete values;
+	ub_ctx_delete(ctx);
+	for (vector<DnsResourceInfo*>::iterator iter = unused.begin(); iter != unused.end(); ++iter)
+		delete *iter;
 }
 
 char *DnsResolver::getItems(const char *name) {
@@ -98,19 +102,20 @@ void CompletedCallback(void *data, int err, struct ub_result *result) {
 					ri->current->setIpAddrExpire(currentTime.tv_sec + answer->_rrs[0]->_ttl);
 					ri->current->setStatus(0);
 				} else {
-					LOG4CXX_DEBUG(ri->logger, "Error parsing packet data: " << ri->current->getUrlHost());
+					LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": error parsing packet data.");
 					error = true;
 				}
+				ldns_pkt_free(pkt);
 			} else {
-				LOG4CXX_DEBUG(ri->logger, "Error parsing packet data: " << ri->current->getUrlHost());
+				LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": error parsing packet data.");
 				error = true;
 			}
 		} else {
 			error = true;
 			if (result->nxdomain) {
-				LOG4CXX_DEBUG(ri->logger, "NXDOMAIN: " << ri->current->getUrlHost());
+				LOG4CXX_DEBUG(ri->logger, ri->current->getUrlHost() << ": NXDOMAIN");
 			} else {
-				LOG4CXX_ERROR(ri->logger, "Query failed: " << result->rcode);
+				LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": Query failed (" << ub_strerror(result->rcode) << ")");
 			}
 		}
 		if (error) {
@@ -119,7 +124,7 @@ void CompletedCallback(void *data, int err, struct ub_result *result) {
 		}
 		ub_resolve_free(result);
 	} else {
-		LOG4CXX_DEBUG(ri->logger, "Resolve error: " << ub_strerror(err));
+		LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": Resolve error (" << ub_strerror(err) << ")");
         }
 	ri->parent->FinishResolution(ri);
 }

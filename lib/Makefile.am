@@ -19,3 +19,10 @@ libgoogleurl_la_SOURCES = googleurl/src/gurl.h googleurl/src/url_canon.h googleu
 libgoogleurl_la_CXXFLAGS = @ICU_CXXFLAGS@ -I googleurl -Wno-deprecated -DNDEBUG
 libgoogleurl_la_LDFLAGS = @ICU_LIBS@
 libgoogleurl_la_LIBTOOLFLAGS = --tag=disable-shared
+
+bin_PROGRAMS = test
+test_SOURCES = \
+	test.cc
+test_CXXFLAGS = -I$(top_srcdir)/lib/googleurl
+test_LDFLAGS = -lpthread
+test_LDADD = libgoogleurl.la

@@ -89,7 +89,8 @@ private:
 	std::vector<std::string> *listNamesSync();
 
 	MemoryPool<WebSiteResource> *pool;
-	std::tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash> sites;
+	std::tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal> sites;
+	WebSiteResource key;
 
 	CallDns *callDns;
 	std::queue<Resource*> callDnsInput;

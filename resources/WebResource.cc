@@ -27,13 +27,13 @@ int WebResource::getSize() {
 	return 1; //FIXME
 }
 
-void WebResource::setHeaderFields(std::vector<std::string> *names, std::vector<std::string> *values) {
+void WebResource::setHeaderFields(std::vector<std::string> &names, std::vector<std::string> &values) {
 	r.clear_header_names();
 	r.clear_header_values();
-	assert(names->size() == values->size());
-	for (int i = 0; i < names->size(); i++) {
-		r.add_header_names((*names)[i]);
-		r.add_header_values((*values)[i]);
+	assert(names.size() == values.size());
+	for (int i = 0; i < names.size(); i++) {
+		r.add_header_names(names[i]);
+		r.add_header_values(values[i]);
 	}
 }
 
@@ -84,9 +84,9 @@ void WebResource::clearHeaderFields() {
 	headers.clear();
 }
 
-void WebResource::setExtractedUrls(vector<string> *extracted_urls) {
+void WebResource::setExtractedUrls(vector<string> &extracted_urls) {
 	r.clear_extracted_urls();
-	for (vector<string>::iterator iter = extracted_urls->begin(); iter != extracted_urls->end(); ++iter) {
+	for (vector<string>::iterator iter = extracted_urls.begin(); iter != extracted_urls.end(); ++iter) {
 		r.add_extracted_urls(*iter);
 	}
 }
@@ -103,63 +103,59 @@ void WebResource::clearExtractedUrls() {
 	r.clear_extracted_urls();
 }
 
-string *WebResource::toString(Object::LogLevel logLevel) {
-	string *s = new string();
+string WebResource::toString(Object::LogLevel logLevel) {
+	string s;
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
-	*s = buf;
-	if (this->getUrlScheme() != SCHEME_NONE) {
-		snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->getUrlScheme()).c_str());
-		*s += buf;
-		if (this->getUrlUsername().length() > 0) {
-			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
-			*s += buf;
-		}
-		snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str(), this->getUrlQuery().c_str());
-		*s += buf;
+	s = buf;
+	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->getUrlScheme()).c_str());
+	s += buf;
+	if (this->getUrlUsername().length() > 0) {
+		snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
+		s += buf;
 	}
+	snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str(), this->getUrlQuery().c_str());
+	s += buf;
 	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType().c_str(), this->getContent().length());
-	*s += buf;
+	s += buf;
 	char *a = ip4Addr2Str(this->getIp4Addr());
 	snprintf(buf, sizeof(buf), ", ip4: %s", a);
 	free(a);
-	*s += buf;
+	s += buf;
 	a = ip6Addr2Str(this->getIp6Addr());
 	snprintf(buf, sizeof(buf), ", ip6: %s", a);
 	free(a);
-	*s += buf;
+	s += buf;
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
-		*s += buf;
+		s += buf;
 	}
-	*s += "\n";
 	if (header_map_dirty)
 		SaveHeaders();
 	vector<string> *v = this->getHeaderNames();
-	if (v) {
-		*s += "headers:\n";
+	if (v->size() > 0) {
+		s += "\nheaders:";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			const std::string &value = this->getHeaderValue(iter->c_str());
-			*s += *iter;
-			*s += ": ";
-			*s += value;
-			*s += "\n";
+			s += "\n";
+			s += *iter;
+			s += ": ";
+			s += value;
 		}
-		delete v;
 	}
+	delete v;
 	v = this->getExtractedUrls();
-	if (v) {
-		*s += "urls:\n";
+	if (v->size() > 0) {
+		s += "\nurls:";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			*s += *iter;
-			*s += "\n";
+			s += "\n";
+			s += *iter;
 		}
-		delete v;
 	}
+	delete v;
 	if (this->getContent().length() > 0) {
-		*s += "content:\n";
-		*s += this->getContent();
-		*s += "\n";
+		s += "\ncontent:\n";
+		s += this->getContent();
 	}
 	return s;
 }

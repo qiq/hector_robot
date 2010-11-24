@@ -69,9 +69,9 @@ public:
 
 	CurlInfo curlInfo;
 	void QueueResource(WebResource *wr);
-	void StartQueuedResourcesFetcher();
-	void StartResourceFetcher(WebResource *wr, int index);
-	void FinishResourceFetcher(CurlResourceInfo *ri, int result);
+	void StartQueuedResourcesFetch();
+	void StartResourceFetch(WebResource *wr, int index);
+	void FinishResourceFetch(CurlResourceInfo *ri, int result);
 
 private:
 	int items;		// ObjectLock, items processed

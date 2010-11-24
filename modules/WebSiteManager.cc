@@ -63,7 +63,7 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	wr->setUrlScheme(wsr->getUrlScheme());
 	wr->setUrlHost(wsr->getUrlHost());
 	wr->setUrlPort(wsr->getUrlPort());
-	wr->setUrlPath("robots.txt");
+	wr->setUrlPath("/robots.txt");
 	wr->setIp4Addr(wsr->getIp4Addr());
 	wr->setIp6Addr(wsr->getIp6Addr());
 	wr->setAttachedResource(wsr);
@@ -75,10 +75,6 @@ Resource *CallRobots::FinishResource(Resource *tmp) {
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp->getAttachedResource());
 	wr->clearAttachedResource();
 	unused.push_back(wr);
-
-	wsr->setIp4Addr(wr->getIp4Addr());
-	wsr->setIp6Addr(wr->getIp6Addr());
-	wsr->setIpAddrExpire(wr->getIpAddrExpire());
 	return wsr;
 }
 
@@ -110,6 +106,10 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 WebSiteManager::~WebSiteManager() {
 	delete values;
 	delete pool;
+	free(dnsEngine);
+	free(robotsEngine);
+	delete callDns;
+	delete callRobots;
 }
 
 char *WebSiteManager::getItems(const char *name) {
@@ -209,11 +209,10 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 
 // try to get wsr, if not present, create it
 WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
-	WebSiteResource key;
 	key.setUrlScheme(wr->getUrlScheme());
 	key.setUrlHost(wr->getUrlHost());
 	key.setUrlPort(wr->getUrlPort());
-	tr1::unordered_map<WebSiteResource*, WebSiteResource*>::iterator iter = sites.find(&key);
+	tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.find(&key);
 	if (iter != sites.end())
 		return iter->second;
 	// create, if not found
@@ -255,6 +254,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 		wr->setAttachedResource(wsr);
 		outputResources->push(wr);
 	}
+	processingResources.erase(wsr);
 }
 
 bool WebSiteManager::LoadWebSiteResources(const char *filename) {
@@ -294,7 +294,7 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 }
 
 bool WebSiteManager::SaveWebSiteResources(const char *filename) {
-	int fd = open(filename, O_WRONLY);
+	int fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	if (fd < 0) {
 		LOG_ERROR("Cannot open file " << filename << ": " << strerror(errno));
 		return false;
@@ -302,7 +302,7 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 	google::protobuf::io::FileOutputStream *stream = new google::protobuf::io::FileOutputStream(fd);
 
 	bool result = true;
-	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
+	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
 		char buffer[5];
 		*(uint32_t*)buffer = (uint32_t)iter->second->getSerializedSize();
 		*(uint8_t*)(buffer+4) = WebSiteResource::typeId;
@@ -365,9 +365,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
         int robotsN = callRobots->Process(&callRobotsInput, &callRobotsOutput, tick);
 	robotsN -= callRobotsInput.size();
 	while (callRobotsOutput.size() > 0) {
-		WebResource *wr = static_cast<WebResource*>(callRobotsOutput.front());
-		callDnsOutput.pop();
-		WebSiteResource *wsr = static_cast<WebSiteResource*>(wr->getAttachedResource());
+		WebSiteResource *wsr = static_cast<WebSiteResource*>(callRobotsOutput.front());
+		callRobotsOutput.pop();
 		FinishProcessing(wsr, outputResources);
 	}
 

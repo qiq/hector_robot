@@ -37,7 +37,7 @@ public:
 	WebSiteResource(const WebSiteResource &wsr);
 	~WebSiteResource();
 	// create copy of a resource
-	ProtobufResource *Clone();
+	Resource *Clone();
 	// save and restore resource
 	std::string *Serialize();
 	bool Deserialize(const char *data, int size);
@@ -66,7 +66,7 @@ public:
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
-	std::string *toString(Object::LogLevel = Object::INFO);
+	std::string toString(Object::LogLevel = Object::INFO);
 
 	// WebSiteResource-specific
         void setUrlScheme(int urlScheme);
@@ -88,10 +88,10 @@ public:
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
 
-	void setAllowUrls(std::vector<std::string> *allow_urls);
+	void setAllowUrls(const std::vector<std::string> &allow_urls);
 	std::vector<std::string> *getAllowUrls();
 	void clearAllowUrls();
-	void setDisallowUrls(std::vector<std::string> *disallow_urls);
+	void setDisallowUrls(const std::vector<std::string> &disallow_urls);
 	std::vector<std::string> *getDisallowUrls();
 	void clearDisallowUrls();
 	void setRobotsExpire(long time);
@@ -101,6 +101,7 @@ public:
 	// path info get/set
 	bool setPathInfo(const char *path, const WebSitePath *info);
 	const WebSitePath *getPathInfo(const char *path);
+	std::vector<std::string> *getPathList();
 
 	static const int typeId = 11;
 
@@ -127,6 +128,12 @@ struct WebSiteResource_hash: public std::unary_function<WebSiteResource*, size_t
         size_t operator() (WebSiteResource *wsr) const {
                 return std::tr1::hash<std::string>()(wsr->getUrlHost())+13*wsr->getUrlPort()+373*wsr->getUrlScheme();
         }
+};
+
+struct WebSiteResource_equal {
+	bool operator()(WebSiteResource* wsr1, WebSiteResource* wsr2) const {
+		return (wsr1->getUrlHost() == wsr2->getUrlHost() && wsr1->getUrlPort() == wsr2->getUrlPort() && wsr1->getUrlScheme() == wsr2->getUrlScheme());
+	}
 };
 
 inline ResourceFieldInfo *WebSiteResource::getFieldInfo(const char *name) {
@@ -379,6 +386,44 @@ inline void WebSiteResource::clearRobotsExpire() {
 	lock.Unlock();
 }
 
+inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_urls) {
+	r.clear_allow_urls();
+	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
+		r.add_allow_urls(*iter);
+	}
+}
+
+inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
+	std::vector<std::string> *result = new std::vector<std::string>();
+	for (int i = 0; i < r.allow_urls_size(); i++) {
+		result->push_back(r.allow_urls(i));
+	}
+	return result;
+}
+
+inline void WebSiteResource::clearAllowUrls() {
+	r.clear_allow_urls();
+}
+
+inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &disallow_urls) {
+	r.clear_disallow_urls();
+	for (std::vector<std::string>::const_iterator iter = disallow_urls.begin(); iter != disallow_urls.end(); ++iter) {
+		r.add_disallow_urls(*iter);
+	}
+}
+
+inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
+	std::vector<std::string> *result = new std::vector<std::string>();
+	for (int i = 0; i < r.disallow_urls_size(); i++) {
+		result->push_back(r.disallow_urls(i));
+	}
+	return result;
+}
+
+inline void WebSiteResource::clearDisallowUrls() {
+	r.clear_disallow_urls();
+}
+
 inline bool WebSiteResource::setPathInfo(const char *path, const WebSitePath *info) {
 	lock.LockWrite();
 	PWord_t PValue;
@@ -407,6 +452,22 @@ inline const WebSitePath *WebSiteResource::getPathInfo(const char *path) {
 	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
 	WebSitePath *result = PValue ? (WebSitePath*)PValue : NULL;
 	lock.Unlock();
+	return result;
+}
+
+inline std::vector<std::string> *WebSiteResource::getPathList() {
+	std::vector<std::string> *result = new std::vector<std::string>();
+
+	uint8_t path[MAX_PATH_SIZE];
+	path[0] = '\0';
+	PWord_t PValue;
+	// JSLF(PValue, paths, path);		// get first string
+	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
+	while (PValue) {
+		result->push_back((char*)path);
+		// JSLN(PValue, paths, path);	// get next string
+		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
+	}
 	return result;
 }
 

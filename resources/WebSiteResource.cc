@@ -20,7 +20,7 @@ WebSiteResource::~WebSiteResource() {
 	JudySLFreeArray(&paths, NULL);
 }
 
-ProtobufResource *WebSiteResource::Clone() {
+Resource *WebSiteResource::Clone() {
 	return new WebSiteResource(*this);
 }
 
@@ -67,104 +67,70 @@ void WebSiteResource::JarrayToProtobuf() {
 	}
 }
 
+string WebSiteResource::toString(Object::LogLevel logLevel) {
+	string s;
 
-void WebSiteResource::setAllowUrls(vector<string> *allow_urls) {
-	r.clear_allow_urls();
-	for (vector<string>::iterator iter = allow_urls->begin(); iter != allow_urls->end(); ++iter) {
-		r.add_allow_urls(*iter);
-	}
-}
-
-vector<string> *WebSiteResource::getAllowUrls() {
-	vector<string> *result = new vector<string>();
-	for (int i = 0; i < r.allow_urls_size(); i++) {
-		result->push_back(r.allow_urls(i));
-	}
-	return result;
-}
-
-void WebSiteResource::clearAllowUrls() {
-	r.clear_allow_urls();
-}
-
-void WebSiteResource::setDisallowUrls(vector<string> *disallow_urls) {
-	r.clear_disallow_urls();
-	for (vector<string>::iterator iter = disallow_urls->begin(); iter != disallow_urls->end(); ++iter) {
-		r.add_disallow_urls(*iter);
-	}
-}
-
-vector<string> *WebSiteResource::getDisallowUrls() {
-	vector<string> *result = new vector<string>();
-	for (int i = 0; i < r.disallow_urls_size(); i++) {
-		result->push_back(r.disallow_urls(i));
-	}
-	return result;
-}
-
-void WebSiteResource::clearDisallowUrls() {
-	r.clear_disallow_urls();
-}
-
-string *WebSiteResource::toString(Object::LogLevel logLevel) {
-	string *s = new string();
-/*
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "WebSiteResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
-	*s = buf;
-	if (this->getUrlScheme().length() > 0) {
-		snprintf(buf, sizeof(buf), " (%s", this->getUrlScheme().c_str());
-		*s += buf;
-		if (this->getUrlUsername().length() > 0) {
-			snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
-			*s += buf;
-		}
-		snprintf(buf, sizeof(buf), " %s:%d %s %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str(), this->getUrlQuery().c_str());
-		*s += buf;
-	}
-	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType().c_str(), this->getContent().length());
-	*s += buf;
+	snprintf(buf, sizeof(buf), "WebSiteResource [%d, %d]: ", this->getId(), this->getStatus());
+	s = buf;
+	snprintf(buf, sizeof(buf), " (%s %s:%d)", Scheme_Name((Scheme)this->getUrlScheme()).c_str(), this->getUrlHost().c_str(), this->getUrlPort());
+	s += buf;
 	char *a = ip4Addr2Str(this->getIp4Addr());
 	snprintf(buf, sizeof(buf), ", ip4: %s", a);
 	free(a);
-	*s += buf;
+	s += buf;
 	a = ip6Addr2Str(this->getIp6Addr());
 	snprintf(buf, sizeof(buf), ", ip6: %s", a);
 	free(a);
-	*s += buf;
+	s += buf;
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
-		*s += buf;
+		s += buf;
 	}
-	*s += "\n";
-	if (header_map_dirty)
-		SaveHeaders();
-	vector<string> *v = this->getHeaderNames();
-	if (v) {
-		*s += "headers:\n";
+	if (this->getIpAddrExpire()) {
+		snprintf(buf, sizeof(buf), ", robots expire: %ld", this->getRobotsExpire());
+		s += buf;
+	}
+	s += "\n";
+	vector<string> *v = this->getAllowUrls();
+	if (v->size() > 0) {
+		s += "Allow:\n";
+		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			const std::string &value = this->getHeaderValue(iter->c_str());
-			*s += *iter;
-			*s += ": ";
-			*s += value;
-			*s += "\n";
+			if (first)
+				first = false;
+			else
+				s += ", ";
+			s += *iter;
 		}
-		delete v;
+		s += "\n";
 	}
-	v = this->getExtractedUrls();
-	if (v) {
-		*s += "urls:\n";
+	delete v;
+	v = this->getDisallowUrls();
+	if (v->size() > 0) {
+		s += "Disallow:\n";
+		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			*s += *iter;
-			*s += "\n";
+			if (first)
+				first = false;
+			else
+				s += ", ";
+			s += *iter;
 		}
-		delete v;
+		s += "\n";
 	}
-	if (this->getContent().length() > 0) {
-		*s += "content:\n";
-		*s += this->getContent();
-		*s += "\n";
-	}*/
+	delete v;
+	v = this->getPathList();
+	if (v->size() > 0) {
+		s += "Paths:\n";
+		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
+			const WebSitePath *wsp = getPathInfo(iter->c_str());
+			snprintf(buf, sizeof(buf), " %s: %d %d %d\n", iter->c_str(), wsp->cksum, wsp->status, wsp->lastUpdate);
+			s += buf;
+		}
+	}
+	delete v;
+
 	return s;
 }
 

@@ -18,6 +18,7 @@ my $d = HTTP::Daemon->new(
 #print "Please contact me at: <URL:", $d->url, ">\n";
 while (my $c = $d->accept) {
 	while (my $r = $c->get_request) {
+		#print $r->url->path."\n";
 		if ($r->method eq 'GET' and $r->url->path eq "/foo.html") {
 			$c->send_basic_header(200);
 			print $c "Content-Type: text/plain";
@@ -30,7 +31,7 @@ while (my $c = $d->accept) {
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
 			$c->send_crlf;
-			$c->print("User-agent: *\r\nDisallow: /bar.html\n");
+			$c->print("User-agent: *\r\nDisallow: /*bar.html\$\n");
 			$c->force_last_request();
 		} else {
 			$c->send_error(RC_FORBIDDEN)

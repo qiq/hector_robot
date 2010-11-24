@@ -43,7 +43,7 @@ public:
 	// used by queues in case there is limit on queue size
 	int getSize();
 	// return string representation of the resource (e.g. for debugging purposes)
-	std::string *toString(Object::LogLevel = Object::INFO);
+	std::string toString(Object::LogLevel = Object::INFO);
 
 	// WebResource-specific
 	void setUrl(const std::string &url);
@@ -59,12 +59,12 @@ public:
 	const std::string &getContent();
 	std::string *getContentMutable();
 	void clearContent();
-	void setHeaderFields(std::vector<std::string> *names, std::vector<std::string> *values);
+	void setHeaderFields(std::vector<std::string> &names, std::vector<std::string> &values);
 	std::vector<std::string> *getHeaderNames();
 	void setHeaderValue(const std::string &name, const std::string &value);
 	const std::string &getHeaderValue(const std::string &name);
 	void clearHeaderFields();
-	void setExtractedUrls(std::vector<std::string> *extracted_urls);
+	void setExtractedUrls(std::vector<std::string> &extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
 	void clearExtractedUrls();
 	void setIp4Addr(ip4_addr_t addr);

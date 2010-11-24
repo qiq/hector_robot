@@ -9,5 +9,10 @@ class TestResource;             // for Perl SWIG (otherwise does not compile
 class TestProtobufResource;
 %}
 
+%include std_string.i
+%include std_vector.i
+%template(StringVector_hectorrobot) std::vector<std::string>;
+
 %import Hector.i
 %include WebResource.i
+%include WebSiteResource.i
