@@ -84,10 +84,9 @@ void DnsResolver::setForwardPort(const char *name, const char *value) {
 }
 
 // called by libunbound when resource address is resolved
-void CompletedCallback(void *data, int err, struct ub_result *result) {
+void CompletedCallback(void *data, int error, struct ub_result *result) {
 	DnsResourceInfo *ri = (DnsResourceInfo*)data;
-	if (err == 0) {
-		bool error = false;
+	if (error == 0) {
 		if (result->havedata && result->len[0] == 4) {
 			ip4_addr_t addr;
 			addr.addr = ntohl(((struct in_addr*)result->data[0])->s_addr);
@@ -102,30 +101,33 @@ void CompletedCallback(void *data, int err, struct ub_result *result) {
 					ri->current->setIpAddrExpire(currentTime.tv_sec + answer->_rrs[0]->_ttl);
 					ri->current->setStatus(0);
 				} else {
-					LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": error parsing packet data.");
-					error = true;
+					LOG_INFO_R(ri->parent, ri->current, "Error parsing packet data.");
+					error = 1;
 				}
 				ldns_pkt_free(pkt);
 			} else {
-				LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": error parsing packet data.");
-				error = true;
+				LOG_INFO_R(ri->parent, ri->current, "Error parsing packet data.");
+				error = 1;
 			}
 		} else {
-			error = true;
-			if (result->nxdomain) {
-				LOG4CXX_DEBUG(ri->logger, ri->current->getUrlHost() << ": NXDOMAIN");
+			error = 1;
+			if (result->rcode == 0) {
+				LOG_DEBUG_R(ri->parent, ri->current, "No IP address " << ri->current->getUrlHost());
+			} else if (result->nxdomain) {
+				LOG_DEBUG_R(ri->parent, ri->current, "NXDOMAIN " << ri->current->getUrlHost());
 			} else {
-				LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": Query failed (" << ub_strerror(result->rcode) << ")");
+				LOG_INFO_R(ri->parent, ri->current, "Query failed " << ri->current->getUrlHost() << ": " << ub_strerror(result->rcode));
 			}
-		}
-		if (error) {
-			ri->current->setIp4Addr(ip4_addr_empty);
-			ri->current->setStatus(1);
 		}
 		ub_resolve_free(result);
 	} else {
-		LOG4CXX_INFO(ri->logger, ri->current->getUrlHost() << ": Resolve error (" << ub_strerror(err) << ")");
-        }
+		LOG_INFO_R(ri->parent, ri->current, "Resolve error (" << ub_strerror(error) << ")");
+	}
+
+	if (error != 0) {
+		ri->current->setIp4Addr(ip4_addr_empty);
+		ri->current->setStatus(1);
+	}
 	ri->parent->FinishResolution(ri);
 }
 
@@ -135,7 +137,7 @@ void DnsResolver::StartResolution(WebResource *wr) {
 	ri->current = wr;
 	int result = ub_resolve_async(ctx, (char*)wr->getUrlHost().c_str(), 1, 1, (void*)ri, &CompletedCallback, &ri->id);
 	if (result != 0) {
-		LOG_ERROR("Cannot start asynchronous DNS lookup: " << result);
+		LOG_ERROR(this, "Cannot start asynchronous DNS lookup: " << result);
 		return;
 	}
 	running[ri->id] = ri;
@@ -159,19 +161,19 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 		return false;
 
 	if (maxRequests <= 0) {
-		LOG_ERROR("Invalid maxRequests value: " << maxRequests);
+		LOG_ERROR(this, "Invalid maxRequests value: " << maxRequests);
 		return false;
 	}
 
 	ctx = ub_ctx_create();
 	if (!ctx) {
-		LOG_ERROR("Could not create unbound context");
+		LOG_ERROR(this, "Could not create unbound context");
 		return false;
 	}
 
 	fd = ub_fd(ctx);
 	if (fd == -1) {
-		LOG_ERROR("Could not get unbound ready descriptor");
+		LOG_ERROR(this, "Could not get unbound ready descriptor");
 		return false;
 	}
 
@@ -185,7 +187,7 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 			retval = ub_ctx_set_fwd(ctx, forwardServer);
 		}
 		if (retval < 0) {
-			LOG_ERROR("Could not set forwarder DNS server (" << forwardServer << "): " <<  ub_strerror(retval));
+			LOG_ERROR(this, "Could not set forwarder DNS server (" << forwardServer << "): " <<  ub_strerror(retval));
 			return false;
 		}
 	}
@@ -193,7 +195,6 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	for (int i = 0; i < maxRequests; i++) {
 		DnsResourceInfo *ri = new DnsResourceInfo();
 		ri->parent = this;
-		ri->logger = logger;
 		unused.push_back(ri);
 	}
 	return true;
@@ -232,13 +233,13 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 		FD_SET(fd, &rfds);
 		int retval = select(fd+1, &rfds, NULL, NULL, &tv);
 		if (retval < 0) {
-	                LOG_ERROR("Error in select() = " << errno);
+	                LOG_ERROR(this, "Error in select() = " << errno);
 	                return maxRequests-running.size();
 	        } else if (FD_ISSET(fd, &rfds)) {
 			// process finished resources
 			int retval = ub_process(ctx);
 			if (retval != 0) {
-				LOG_ERROR("Resolve error: " << ub_strerror(retval));
+				LOG_ERROR(this, "Resolve error: " << ub_strerror(retval));
 				return maxRequests-running.size();
 			}
 		}

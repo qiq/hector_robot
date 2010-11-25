@@ -115,7 +115,7 @@ sub ProcessInput() {
 	my ($self, $resource) = @_;
 
 	if (defined $resource) {
-		$self->{'_object'}->log_error("Resource is already defined.");
+		$self->{'_object'}->log_error($resource->toStringShort()." Resource is already defined.");
 		return undef;
 	}
 	if (@{$self->{'_url'}} == 0) {

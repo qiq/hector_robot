@@ -270,7 +270,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		if (!s.compare(0, 4, "HTTP")) {
 			ri->current->setHeaderValue("X-Status", s.c_str());
 		} else {
-			LOG4CXX_DEBUG(ri->info->logger, "Invalid header field: " << s << "xxx");
+			LOG_DEBUG_R(ri->info->parent, ri->current, "Invalid header field: " << s);
 		}
 	} else {
 		// real header
@@ -339,7 +339,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// set URL
 	const string &url = wr->getUrl();
 	if (url.empty()) {
-		LOG_ERROR("No url found (" << wr->getId() << ")");
+		LOG_ERROR_R(this, wr, "No url found");
 		outputResources->push(wr);
 		return;
 	}
@@ -378,7 +378,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// start!
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
 	if (rc != CURLM_OK)
-		LOG_ERROR("Error adding easy handle to multi: " << rc);
+		LOG_ERROR(this, "Error adding easy handle to multi: " << rc);
 }
 
 // save resource to the outputQueue, process errors, etc.
@@ -411,7 +411,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 		return false;
 
 	if (maxRequests <= 0) {
-		LOG_ERROR("Invalid maxRequests value: " << maxRequests);
+		LOG_ERROR(this, "Invalid maxRequests value: " << maxRequests);
 		return false;
 	}
 
@@ -435,7 +435,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 		ri->current = NULL;
 		ri->easy = curl_easy_init();
 		if (!ri->easy) {
-			LOG_ERROR("Cannot initialize easy Curl handle");
+			LOG_ERROR(this, "Cannot initialize easy Curl handle");
 			return false;
 		}
 		curl_easy_setopt(ri->easy, CURLOPT_WRITEFUNCTION, WriteCallback);

@@ -22,6 +22,7 @@ public:
         bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getTypeId();
         const char *getTypeStr();
+        const char *getTypeStrShort();
         const char *getModuleStr();
         int getId();
         void setId(int id);

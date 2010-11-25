@@ -129,20 +129,27 @@ sub ParseRobots() {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	return $resource if ($resource->getTypeStr() ne 'WebResource');
+	if ($resource->getTypeStr() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
+		$resource->setStatusDeleted();
+		return $resource;
+	}
 		
 	my $mime = $resource->getMimeType();
 	if ($mime eq '') {
-		$self->{'_object'}->log_debug("Missing robots.txt mime type (".$resource->getUrlHost().")");
+		$self->{'_object'}->log_debug($resource->toStringShort()." Missing robots.txt mime type (".$resource->getUrlHost().")");
+		$resource->setStatusDeleted();
 		return $resource;
 	}
 	if ($resource->getMimeType() ne "text/plain") {
-		$self->{'_object'}->log_debug("Invalid robots.txt mime type: ".$resource->getMimeType()." (".$resource->getUrlHost().")");
+		$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$resource->getMimeType()." (".$resource->getUrlHost().")");
+		$resource->setStatusDeleted();
 		return $resource;
 	}
 	my $content = $resource->getContent();
 	if (length($content) > 10000) {
 		$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->getUrlHost().")");
+		$resource->setStatusDeleted();
 		return $resource;
 	}
 	my ($allow, $disallow) = $self->ParseRobots($content);

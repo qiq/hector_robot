@@ -51,6 +51,7 @@ public:
 	int getTypeId();
 	// type string of a resource
 	const char *getTypeStr();
+	const char *getTypeStrShort();
 	// module prefix (e.g. Hector for Hector::TestResource)
 	const char *getModuleStr();
 	// id should be unique across all in-memory resources
@@ -146,6 +147,10 @@ inline int WebSiteResource::getTypeId() {
 
 inline const char *WebSiteResource::getTypeStr() {
 	return "WebSiteResource";
+}
+
+inline const char *WebSiteResource::getTypeStrShort() {
+	return "WSR";
 }
 
 inline const char *WebSiteResource::getModuleStr() {
@@ -436,7 +441,7 @@ inline bool WebSiteResource::setPathInfo(const char *path, const WebSitePath *in
 		*wsp = *info;
 		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
 		if (PValue == PJERR) {
-			LOG_ERROR("Malloc failed");
+			LOG4CXX_ERROR(logger, "Malloc failed");
 			lock.Unlock();
 			return false;
 		}

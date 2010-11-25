@@ -93,7 +93,8 @@ sub ProcessSimple() {
 
 	my $host = $resource->getUrlHost();
 	if (not defined $host) {
-		$self->{'_object'}->log_error("Resource does not contain URL host: ".$resource->getId());
+		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL host");
+		$resource->setStatusDeleted();
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
@@ -109,7 +110,7 @@ sub ProcessSimple() {
 		if (defined $answer) {
 			foreach my $rr ($answer->answer) {
 				next unless $rr->type eq "A";
-				$self->{'_object'}->log_debug("$host: ".$rr->address.' ('.$rr->ttl.')');
+				$self->{'_object'}->log_debug($resource->toStringShort()." $host: ".$rr->address.' ('.$rr->ttl.')');
 				my $addr = Hector::str2Ip4Addr_w($rr->address);
 				$resource->setIp4Addr($addr);
 				Hector::ip4AddrDelete_w($addr);
@@ -118,7 +119,7 @@ sub ProcessSimple() {
 				last;
 			}
 		} else {
-			$self->{'_object'}->log_debug("Query failed ($host): ".$self->{'_resolver'}->errorstring);
+			$self->{'_object'}->log_debug($resource->toStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
 			$resource->setStatus(1);
 		}
 	}

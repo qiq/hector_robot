@@ -58,10 +58,10 @@ bool WebResourceGenerator::Init(vector<pair<string, string> > *params) {
 	if (!values->InitValues(params))
 		return false;
 	if (maxItems)
-		LOG_INFO("Going to produce " << maxItems << " WebResources.");
+		LOG_INFO(this, "Going to produce " << maxItems << " WebResources.");
 	typeId = Resource::NameToId("WebResource");
 	if (typeId < 0) {
-		LOG_ERROR("Cannot load WebResource library");
+		LOG_ERROR(this, "Cannot load WebResource library");
 		return false;
 	}
 	return true;
@@ -82,7 +82,7 @@ Resource *WebResourceGenerator::ProcessInput(bool sleep) {
 	ObjectLockWrite();
 	items++;
 	ObjectUnlock();
-	LOG_INFO("Created WebResource (" << wr->getUrl() << ")");
+	LOG_INFO_R(this, wr, "Created (" << wr->getUrl() << ")");
 	return wr;
 }
 

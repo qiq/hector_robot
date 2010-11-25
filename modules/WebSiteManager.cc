@@ -157,7 +157,7 @@ char *WebSiteManager::getSave(const char *name) {
 // actually save all wsr records
 void WebSiteManager::setSave(const char *name, const char *value) {
 	if (!SaveWebSiteResources(value))
-		LOG_ERROR("Cannot save WebSiteManager data");
+		LOG_ERROR(this, "Cannot save WebSiteManager data");
 }
 
 char *WebSiteManager::getLoad(const char *name) {
@@ -167,7 +167,7 @@ char *WebSiteManager::getLoad(const char *name) {
 // actually load all wsr records
 void WebSiteManager::setLoad(const char *name, const char *value) {
 	if (!LoadWebSiteResources(value))
-		LOG_ERROR("Cannot load WebSiteManager data");
+		LOG_ERROR(this, "Cannot load WebSiteManager data");
 }
 
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {
@@ -175,14 +175,14 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 	if (!params) {
 		ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->getObject(dnsEngine));
 		if (!engine) {
-			LOG_ERROR("Invalid dnsEngine parameter: " << dnsEngine);
+			LOG_ERROR(this, "Invalid dnsEngine parameter: " << dnsEngine);
 			return false;
 		}
 		callDns->setProcessingEngine(engine);
 
 		engine = dynamic_cast<ProcessingEngine*>(objects->getObject(robotsEngine));
 		if (!engine) {
-			LOG_ERROR("Invalid robotsEngine parameter: " << robotsEngine);
+			LOG_ERROR(this, "Invalid robotsEngine parameter: " << robotsEngine);
 			return false;
 		}
 		callRobots->setProcessingEngine(engine);
@@ -193,13 +193,13 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 		return false;
 
 	if (!dnsEngine || strlen(dnsEngine) == 0) {
-		LOG_ERROR("dnsEngine not defined");
+		LOG_ERROR(this, "dnsEngine not defined");
 		return false;
 	}
 	callDns = new CallDns(maxRequests);
 
 	if (!robotsEngine || strlen(robotsEngine) == 0) {
-		LOG_ERROR("robotsEngine not defined");
+		LOG_ERROR(this, "robotsEngine not defined");
 		return false;
 	}
 	callRobots = new CallRobots(maxRequests);
@@ -260,7 +260,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 	int fd = open(filename, O_RDONLY);
 	if (fd < 0) {
-		LOG_ERROR("Cannot open file " << filename << ": " << strerror(errno));
+		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
 	google::protobuf::io::FileInputStream *stream = new google::protobuf::io::FileInputStream(fd);
@@ -270,14 +270,14 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 	while (1) {
 		int r = ReadBytes(fd, buffer, 5);
 		if (r < 0) {
-			LOG_ERROR("Error reading from file: " << strerror(errno));
+			LOG_ERROR(this, "Error reading from file: " << strerror(errno));
 			result = false;
 			break;
 		}
 		if (r == 0)	// finished
 			break;
 		if (r != 5) {
-			LOG_ERROR("Error reading from file: " << strerror(errno));
+			LOG_ERROR(this, "Error reading from file: " << strerror(errno));
 			result = false;
 			break;
 		}
@@ -296,7 +296,7 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 	int fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	if (fd < 0) {
-		LOG_ERROR("Cannot open file " << filename << ": " << strerror(errno));
+		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
 	google::protobuf::io::FileOutputStream *stream = new google::protobuf::io::FileOutputStream(fd);
@@ -308,14 +308,14 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 		*(uint8_t*)(buffer+4) = WebSiteResource::typeId;
 		int r = WriteBytes(fd, buffer, 5);
 		if (r < 0) {
-			LOG_ERROR("Error writing to file: " << strerror(errno));
+			LOG_ERROR(this, "Error writing to file: " << strerror(errno));
 			result = false;
 			break;
 		}
 		if (r == 0)	// finished
 			break;
 		if (r != 5) {
-			LOG_ERROR("Error writing to file: " << strerror(errno));
+			LOG_ERROR(this, "Error writing to file: " << strerror(errno));
 			result = false;
 			break;
 		}

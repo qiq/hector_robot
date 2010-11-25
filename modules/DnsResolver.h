@@ -22,7 +22,6 @@ typedef struct DnsResourceInfo_ {
 	int id;			// unbound request id
 	WebResource *current;	// currently processed Resource
 	DnsResolver *parent;	// parent
-        log4cxx::LoggerPtr logger;
 } DnsResourceInfo;
 
 

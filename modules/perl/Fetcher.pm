@@ -106,17 +106,17 @@ sub ProcessSimple() {
 
 	my $url = $resource->getUrl();
 	if (not defined $url) {
-		$self->{'_object'}->log_error("Resource does not contain URL: ".$resource->getId());
+		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL");
+		$resource->setStatusDeleted();
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
-	my $names = Hector::StringVector->new();
-	my $values = Hector::StringVector->new();
-	foreach my $name ($response->header_field_names()) {
-		$names->push($name);
-		$values->push("".$response->header($name)); # N.B.: for conversion to string
+	my @names = $response->header_field_names();
+	my @values;
+	foreach my $name (@names) {
+		push(@values, "".$response->header($name));	# N.B.: force conversion to string
 	}
-	$resource->setHeaderFields($names, $values);
+	$resource->setHeaderFields(\@names, \@values);
 	if ($response->is_success) {
 		$resource->setMimeType($response->header('Content-Type'));
 		$resource->setContent($response->decoded_content);

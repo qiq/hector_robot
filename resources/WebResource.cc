@@ -27,7 +27,7 @@ int WebResource::getSize() {
 	return 1; //FIXME
 }
 
-void WebResource::setHeaderFields(std::vector<std::string> &names, std::vector<std::string> &values) {
+void WebResource::setHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values) {
 	r.clear_header_names();
 	r.clear_header_values();
 	assert(names.size() == values.size());
@@ -84,9 +84,9 @@ void WebResource::clearHeaderFields() {
 	headers.clear();
 }
 
-void WebResource::setExtractedUrls(vector<string> &extracted_urls) {
+void WebResource::setExtractedUrls(const vector<string> &extracted_urls) {
 	r.clear_extracted_urls();
-	for (vector<string>::iterator iter = extracted_urls.begin(); iter != extracted_urls.end(); ++iter) {
+	for (vector<string>::const_iterator iter = extracted_urls.begin(); iter != extracted_urls.end(); ++iter) {
 		r.add_extracted_urls(*iter);
 	}
 }
@@ -106,7 +106,7 @@ void WebResource::clearExtractedUrls() {
 string WebResource::toString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "WebResource [%d, %d]: url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
+	snprintf(buf, sizeof(buf), "[WR %d %d] url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
 	s = buf;
 	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->getUrlScheme()).c_str());
 	s += buf;
@@ -135,9 +135,13 @@ string WebResource::toString(Object::LogLevel logLevel) {
 	vector<string> *v = this->getHeaderNames();
 	if (v->size() > 0) {
 		s += "\nheaders:";
+		bool first;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			const std::string &value = this->getHeaderValue(iter->c_str());
-			s += "\n";
+			if (first)
+				first = false;
+			else
+				s += ", ";
 			s += *iter;
 			s += ": ";
 			s += value;

@@ -81,9 +81,17 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	return $resource if ($resource->getTypeStr() ne 'WebResource');
+	if ($resource->getTypeStr() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
+		$resource->setStatusDeleted();
+		return $resource;
+	}
 	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
-	return $resource if ($wsr->getTypeStr() ne 'WebSiteResource');
+	if ($wsr->getTypeStr() ne 'WebSiteResource') {
+		$self->{'_object'}->log_error($wsr->toStringShort()." Invalid type: ".$wsr->getTypeStr());
+		$resource->setStatusDeleted();
+		return $resource;
+	}
 
 	my $path = $resource->getUrlPath();
 	my $query = $resource->getUrlQuery();
@@ -122,7 +130,7 @@ sub ProcessSimple() {
 			}
 		}
 		if ($disallowed) {
-			$self->{'_object'}->log_debug("Disallowed by robots.txt policy: ".$resource->getUrl());
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy: ".$resource->getUrl());
 			$resource->setStatusDeleted();
 		}
 	}

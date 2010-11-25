@@ -39,7 +39,7 @@ bool WebSiteResource::ProtobufToJarray() {
 		const char *path = p.path().c_str();
 		PWord_t PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
 		if (PValue == PJERR) {
-			LOG_ERROR("Malloc failed");
+			LOG4CXX_ERROR(logger, "Malloc failed");
 			return false;
 		}
 		*PValue = (Word_t)wsp;
@@ -71,7 +71,7 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 	string s;
 
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "WebSiteResource [%d, %d]: ", this->getId(), this->getStatus());
+	snprintf(buf, sizeof(buf), "[WSR %d %d] ", this->getId(), this->getStatus());
 	s = buf;
 	snprintf(buf, sizeof(buf), " (%s %s:%d)", Scheme_Name((Scheme)this->getUrlScheme()).c_str(), this->getUrlHost().c_str(), this->getUrlPort());
 	s += buf;

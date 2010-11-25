@@ -38,6 +38,7 @@ public:
 	int getTypeId();
 	// type string of a resource
 	const char *getTypeStr();
+	const char *getTypeStrShort();
 	// module prefix (e.g. Hector for Hector::TestResource)
 	const char *getModuleStr();
 	// used by queues in case there is limit on queue size
@@ -59,12 +60,12 @@ public:
 	const std::string &getContent();
 	std::string *getContentMutable();
 	void clearContent();
-	void setHeaderFields(std::vector<std::string> &names, std::vector<std::string> &values);
+	void setHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values);
 	std::vector<std::string> *getHeaderNames();
 	void setHeaderValue(const std::string &name, const std::string &value);
 	const std::string &getHeaderValue(const std::string &name);
 	void clearHeaderFields();
-	void setExtractedUrls(std::vector<std::string> &extracted_urls);
+	void setExtractedUrls(const std::vector<std::string> &extracted_urls);
 	std::vector<std::string> *getExtractedUrls();
 	void clearExtractedUrls();
 	void setIp4Addr(ip4_addr_t addr);
@@ -126,6 +127,10 @@ inline int WebResource::getTypeId() {
 
 inline const char *WebResource::getTypeStr() {
 	return "WebResource";
+}
+
+inline const char *WebResource::getTypeStrShort() {
+	return "WR";
 }
 
 inline const char *WebResource::getModuleStr() {

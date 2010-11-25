@@ -35,7 +35,7 @@ bool UrlParser::Init(vector<pair<string, string> > *params) {
 		return false;
 	typeId = Resource::NameToId("WebResource");
 	if (typeId < 0) {
-		LOG_ERROR("Cannot load WebResource library");
+		LOG_ERROR(this, "Cannot load WebResource library");
 		return false;
 	}
 	return true;

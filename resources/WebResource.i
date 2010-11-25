@@ -20,6 +20,7 @@ public:
         bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
         int getTypeId();
         const char *getTypeStr();
+        const char *getTypeStrShort();
         const char *getModuleStr();
         int getId();
         void setId(int id);
@@ -40,12 +41,12 @@ public:
         void setContent(const std::string &content);
         const std::string &getContent();
         void clearContent();
-        void setHeaderFields(std::vector<std::string> &header_names, std::vector<std::string> &header_values);
+        void setHeaderFields(const std::vector<std::string> &header_names, const std::vector<std::string> &header_values);
         std::vector<std::string> *getHeaderNames();
         void setHeaderValue(const std::string &name, const std::string &value);
         const std::string &getHeaderValue(const std::string &name);
         void clearHeaderFields();
-        void setExtractedUrls(std::vector<std::string> &extracted_urls);
+        void setExtractedUrls(const std::vector<std::string> &extracted_urls);
         std::vector<std::string> *getExtractedUrls();
         void clearExtractedUrls();
         void setIp4Addr(ip4_addr_t addr);
