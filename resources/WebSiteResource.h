@@ -3,6 +3,17 @@
  * It uses Google Protocol Buffers to de/serialize.
  * This resource may be shared across more than one module, so locking of
  * mutable variables is necessary.
+ *
+ * We store
+ * - scheme, hostname, port (key)
+ * - ip4 & ip6 address; 0 = no address known
+ * - address expire time; when to do a new DNS resolution request
+ * - list of allowed and disallowed URLs; from parsed robots.txt
+ * - robots.txt expire time; when to get robots.txt again
+ * - list of paths
+ * 	- checksum (fast), 32bits
+ *	- status: ???
+ *	- last updated: when we last downloaded the page
  */
 
 #ifndef _WEB_SITE_RESOURCE_H_
@@ -26,9 +37,14 @@
 #define MAX_PATH_SIZE 2048
 
 typedef struct WebSitePath_ {
-	uint32_t cksum;
-	uint32_t status;
-	uint32_t lastUpdate;
+	uint32_t status;		// status(3B) + error count(1B): OK,
+					// error (maybe more error types),
+					// disabled (too many errors occrued),
+					// redirect permanent
+	uint32_t lastStatusUpdate;	// when status was updated
+	uint32_t cksum;			// checksum, to see whether page was changed or not
+	uint32_t lastModified;		// when page was last changed
+	uint32_t modifiedHistory;	// 4x1B period of modification (2^n minutes)
 } WebSitePath;
 
 class WebSiteResource : public ProtobufResource {
@@ -79,12 +95,9 @@ public:
 	void setUrlPort(int urlPort);
 	int getUrlPort();
 	void clearUrlPort();
-	void setIp4Addr(ip4_addr_t addr);
-	ip4_addr_t getIp4Addr();
-	void clearIp4Addr();
-	void setIp6Addr(ip6_addr_t addr);
-	ip6_addr_t getIp6Addr();
-	void clearIp6Addr();
+	void setIpAddr(IpAddr &addr);
+	IpAddr getIpAddr();
+	void clearIpAddr();
 	void setIpAddrExpire(long time);
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
@@ -114,6 +127,10 @@ protected:
 	// memory-only
 	// paths in Judy array
 	Pvoid_t paths;
+
+	IpAddr addr;
+	void LoadIpAddr();
+	void SaveIpAddr();
 
 	static MemoryPool<WebSitePath> pool;
 
@@ -204,6 +221,7 @@ inline void WebSiteResource::clearAttachedResource() {
 
 inline std::string *WebSiteResource::Serialize() {
 	lock.LockRead();
+	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
 	std::string *result = MessageSerialize(&r);
@@ -216,11 +234,13 @@ inline bool WebSiteResource::Deserialize(const char *data, int size) {
 	bool result = MessageDeserialize(&r, data, size);
 	ProtobufToJarray();
 	r.clear_paths();
+	LoadIpAddr();
 	return result;
 }
 
 inline int WebSiteResource::getSerializedSize() {
 	lock.LockRead();
+	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
 	int result = MessageGetSerializedSize(&r);
@@ -231,6 +251,7 @@ inline int WebSiteResource::getSerializedSize() {
 
 inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
 	lock.LockRead();
+	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
 	bool result = MessageSerialize(&r, output);
@@ -241,6 +262,7 @@ inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStrea
 
 inline bool WebSiteResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
 	lock.LockRead();
+	// IpAddr is already saved
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
 	bool result = MessageSerializeWithCachedSizes(&r, output);
@@ -253,6 +275,7 @@ inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStre
 	bool result = MessageDeserialize(&r, input, size);
 	ProtobufToJarray();
 	r.clear_paths();
+	LoadIpAddr();
 	return result;
 }
 
@@ -299,57 +322,23 @@ inline void WebSiteResource::clearUrlPort() {
 	r.clear_url_port();
 }
 
-inline void WebSiteResource::setIp4Addr(ip4_addr_t addr) {
+inline void WebSiteResource::setIpAddr(IpAddr &addr) {
 	lock.LockWrite();
-	r.set_ip4_addr(addr.addr);
+	this->addr = addr;
 	lock.Unlock();
 }
 
-inline ip4_addr_t WebSiteResource::getIp4Addr() {
-	ip4_addr_t a;
+inline IpAddr WebSiteResource::getIpAddr() {
+	IpAddr a;
 	lock.LockRead();
-	a.addr = r.ip4_addr();
+	a = addr;
 	lock.Unlock();
 	return a;
 }
 
-inline void WebSiteResource::clearIp4Addr() {
+inline void WebSiteResource::clearIpAddr() {
 	lock.LockWrite();
-	r.clear_ip4_addr();
-	lock.Unlock();
-}
-
-inline void WebSiteResource::setIp6Addr(ip6_addr_t addr) {
-	uint64_t a = 0, b = 0;
-	for (int i = 0; i < 8; i++) {
-		a = (a << 8) + addr.addr[15-i];
-		b = (b << 8) + addr.addr[7-i];
-	}
-	lock.LockWrite();
-	r.set_ip6_addr_1(a);
-	r.set_ip6_addr_2(b);
-	lock.Unlock();
-}
-
-inline ip6_addr_t WebSiteResource::getIp6Addr() {
-	ip6_addr_t addr;
-	lock.LockRead();
-	uint64_t a = r.ip6_addr_1();
-	uint64_t b = r.ip6_addr_2();
-	lock.Unlock();
-	for (int i = 0; i < 8; i++) {
-		addr.addr[8+i] = a & 0x00000000000000FF;
-		a >>= 8;
-		addr.addr[i] = b & 0x00000000000000FF;
-		b >>= 8;
-	}
-	return addr;
-}
-
-inline void WebSiteResource::clearIp6Addr() {
-	lock.LockWrite();
-	r.clear_ip6_addr_1();
-	r.clear_ip6_addr_2();
+	addr.setEmpty();
 	lock.Unlock();
 }
 

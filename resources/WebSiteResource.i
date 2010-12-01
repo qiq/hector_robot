@@ -41,12 +41,9 @@ public:
         void setUrlPort(int urlPort);
         int getUrlPort();
         void clearUrlPort();
-        void setIp4Addr(ip4_addr_t addr);
-        ip4_addr_t getIp4Addr();
-        void clearIp4Addr();
-        void setIp6Addr(ip6_addr_t addr);
-        ip6_addr_t getIp6Addr();
-        void clearIp6Addr();
+        void setIpAddr(IpAddr &addr);
+        IpAddr getIpAddr();
+        void clearIpAddr();
         void setIpAddrExpire(long time);
         long getIpAddrExpire();
         void clearIpAddrExpire();

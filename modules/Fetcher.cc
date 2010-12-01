@@ -293,14 +293,18 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 
 void Fetcher::QueueResource(WebResource *wr) {
 	// count hash of the IP address
-	uint32_t ip = wr->getIp4Addr().addr;
-	if (ip == 0) {
-		ip6_addr_t ip6 = wr->getIp6Addr();
-		for (int i = 0; i < 16; i++)
-			ip += ip6.addr[i];
+	IpAddr &ip = wr->getIpAddr();
+	uint32_t ip_sum;
+	if (ip.isIp4Addr()) {
+		ip_sum = ip.getIp4Addr();
+	} else {
+		uint64_t ip6 = ip.getIp6Addr(true);
+		ip_sum = ip6 & 0xFFFFFFFF + (ip6 >> 32) & 0xFFFFFFFF;
+		ip6 = ip.getIp6Addr(false);
+		ip_sum += ip6 & 0xFFFFFFFF + (ip6 >> 32) & 0xFFFFFFFF;
 	}
 	ObjectLockRead();
-	int hash = ip % maxRequests;
+	int hash = ip_sum % maxRequests;
 	int wait = minServerRelax;
 	ObjectUnlock();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[hash];
@@ -350,23 +354,16 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	curl_easy_setopt(ri->easy, CURLOPT_URL, url.c_str());
 
 	// set IP4/6 address
-	ip4_addr_t ip4addr = wr->getIp4Addr();
+	IpAddr &ip = wr->getIpAddr();
 	struct sockaddr_storage addr;
-	if (ip4addr.addr != 0) {
+	if (ip.isIp4Addr()) {
 		addr.ss_family = AF_INET;
-		struct sockaddr_in *addr4 = (struct sockaddr_in*)&addr;
-		addr4->sin_addr.s_addr = htonl(ip4addr.addr);
+		((struct sockaddr_in*)&addr)->sin_addr.s_addr = ip.getIp4Addr();
 	} else {
-		ip6_addr_t ip6addr = wr->getIp6Addr();
 		addr.ss_family = AF_INET6;
 		struct sockaddr_in6 *addr6 = (struct sockaddr_in6*)&addr;
-		if (htons(0xabcd) != 0xabcd) {
-			for (int i = 0; i < 16; i++)
-				addr6->sin6_addr.s6_addr[i] = ip6addr.addr[15-i];
-		} else {
-			for (int i = 0; i < 16; i++)
-				addr6->sin6_addr.s6_addr[i] = ip6addr.addr[i];
-		}
+		*((uint64_t*)addr6->sin6_addr.s6_addr) = ip.getIp6Addr(true);
+		*(((uint64_t*)addr6->sin6_addr.s6_addr)+1) = ip.getIp6Addr(false);
 	}
 	curl_easy_setopt(ri->easy, CURLOPT_DNS_IP_ADDR, &addr);
 	ri->contentLength = 0;

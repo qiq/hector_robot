@@ -42,6 +42,7 @@ private:
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 	char *forwardServer;	// initOnly, DNS server to use
 	int forwardPort;	// initOnly, port number of the DNS server
+	int negativeTTL;	// ObjectLock, number of seconds to keep info about DNS failure/NXdomain
 
 	ObjectValues<DnsResolver> *values;
 
@@ -61,6 +62,8 @@ private:
 	void setForwardServer(const char *name, const char *value);
 	char *getForwardPort(const char *name);
 	void setForwardPort(const char *name, const char *value);
+	char *getNegativeTTL(const char *name);
+	void setNegativeTTL(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);

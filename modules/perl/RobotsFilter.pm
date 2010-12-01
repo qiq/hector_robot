@@ -83,13 +83,13 @@ sub ProcessSimple() {
 
 	if ($resource->getTypeStr() ne 'WebResource') {
 		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setStatusDeleted();
+		$resource->setFlag($Resource::DELETED);
 		return $resource;
 	}
 	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
 	if ($wsr->getTypeStr() ne 'WebSiteResource') {
 		$self->{'_object'}->log_error($wsr->toStringShort()." Invalid type: ".$wsr->getTypeStr());
-		$resource->setStatusDeleted();
+		$resource->setFlag($Resource::DELETED);
 		return $resource;
 	}
 
@@ -131,7 +131,7 @@ sub ProcessSimple() {
 		}
 		if ($disallowed) {
 			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy: ".$resource->getUrl());
-			$resource->setStatusDeleted();
+			$resource->setFlag($Resource::DELETED);
 		}
 	}
 	

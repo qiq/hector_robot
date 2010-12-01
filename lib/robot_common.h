@@ -14,12 +14,13 @@
 #include <string>
 #include <log4cxx/logger.h>
 #include "common.h"
+#include "IpAddr.h"
 
 bool parseLabel(std::string *data, std::string *value);
 bool parseString(std::string *data, std::string *value, char separator);
 bool parseInt(std::string *data, int *value);
 bool parseLong(std::string *data, long *value);
-bool parseIp4(std::string *data, ip4_addr_t *value);
-bool parseIp6(std::string *data, ip6_addr_t *value);
+bool parseIp4(std::string *data, IpAddr *value);
+bool parseIp6(std::string *data, IpAddr *value);
 
 #endif

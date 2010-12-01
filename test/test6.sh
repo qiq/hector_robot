@@ -12,7 +12,7 @@ hector_server_shutdown
 pkill dns_server.pl
 pkill http_server.pl
 
-grep "M_dump[0-9]\[[0-9]\+\]: " test.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[WR .*\)|\1|'|sed -e 's|ip expire:.*||'|sort >$id.log.test
+grep "M_dump[0-9]\[[0-9]\+\]: " test.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[WR .*\)|\1|'|sed -e 's|, ip expire:.*||'|sort >$id.log.test
 test_finish
 test_compare_result
 exit $?

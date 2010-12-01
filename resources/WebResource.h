@@ -13,6 +13,7 @@
 #include <tr1/unordered_map>
 #include <log4cxx/logger.h>
 #include "common.h"
+#include "IpAddr.h"
 #include "ProtobufResource.h"
 #include "ResourceFieldInfo.h"
 #include "Scheme.h"
@@ -65,15 +66,12 @@ public:
 	void setHeaderValue(const std::string &name, const std::string &value);
 	const std::string &getHeaderValue(const std::string &name);
 	void clearHeaderFields();
-	void setExtractedUrls(const std::vector<std::string> &extracted_urls);
-	std::vector<std::string> *getExtractedUrls();
-	void clearExtractedUrls();
-	void setIp4Addr(ip4_addr_t addr);
-	ip4_addr_t getIp4Addr();
-	void clearIp4Addr();
-	void setIp6Addr(ip6_addr_t addr);
-	ip6_addr_t getIp6Addr();
-	void clearIp6Addr();
+	void setRedirectCount(int count);
+	int getRedirectCount();
+	void clearRedirectCount();
+	void setIpAddr(IpAddr &addr);
+	IpAddr &getIpAddr();
+	void clearIpAddr();
 	void setIpAddrExpire(long time);
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
@@ -110,9 +108,12 @@ protected:
 	bool header_map_ready;
 	bool header_map_dirty;
 	std::tr1::unordered_map<std::string, std::string> headers;
-
 	void LoadHeaders();
 	void SaveHeaders();
+
+	IpAddr addr;
+	void LoadIpAddr();
+	void SaveIpAddr();
 
 	static log4cxx::LoggerPtr logger;
 };
@@ -140,6 +141,7 @@ inline const char *WebResource::getModuleStr() {
 inline std::string *WebResource::Serialize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
 	return MessageSerialize(&r);
@@ -151,12 +153,14 @@ inline bool WebResource::Deserialize(const char *data, int size) {
 	bool result = MessageDeserialize(&r, data, size);
 	// we keep id
 	setStatus(r.status());
+	LoadIpAddr();
 	return result;
 }
 
 inline int WebResource::getSerializedSize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
 	return MessageGetSerializedSize(&r);
@@ -165,15 +169,14 @@ inline int WebResource::getSerializedSize() {
 inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
 	if (header_map_dirty)
 		SaveHeaders();
+	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
 	return MessageSerialize(&r, output);
 }
 
 inline bool WebResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
-	if (header_map_dirty)
-		SaveHeaders();
-	// r.id and r.status were set in getSerializedSize() already
+	// Headers and IpAddr, r.id and r.status were set in getSerializedSize() already
 	return MessageSerializeWithCachedSizes(&r, output);
 }
 
@@ -183,6 +186,7 @@ inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *
 	bool result = MessageDeserialize(&r, input, size);
 	// we keep id
 	setStatus(r.status());
+	LoadIpAddr();
 	return result;
 }
 
@@ -237,47 +241,28 @@ inline std::string *WebResource::getContentMutable() {
 inline void WebResource::clearContent() {
 	r.clear_content();
 }
-
-inline void WebResource::setIp4Addr(ip4_addr_t addr) {
-	r.set_ip4_addr(addr.addr);
+inline void WebResource::setRedirectCount(int count) {
+	r.set_redirect_count(count);
 }
 
-inline ip4_addr_t WebResource::getIp4Addr() {
-	ip4_addr_t a;
-	a.addr = r.ip4_addr();
-	return a;
+inline int WebResource::getRedirectCount() {
+	return r.redirect_count();
 }
 
-inline void WebResource::clearIp4Addr() {
-	r.clear_ip4_addr();
+inline void WebResource::clearRedirectCount() {
+	r.clear_redirect_count();
 }
 
-inline void WebResource::setIp6Addr(ip6_addr_t addr) {
-	uint64_t a = 0, b = 0;
-	for (int i = 0; i < 8; i++) {
-		a = (a << 8) + addr.addr[15-i];
-		b = (b << 8) + addr.addr[7-i];
-	}
-	r.set_ip6_addr_1(a);
-	r.set_ip6_addr_2(b);
+inline void WebResource::setIpAddr(IpAddr &addr) {
+	this->addr = addr;
 }
 
-inline ip6_addr_t WebResource::getIp6Addr() {
-	ip6_addr_t addr;
-	uint64_t a = r.ip6_addr_1();
-	uint64_t b = r.ip6_addr_2();
-	for (int i = 0; i < 8; i++) {
-		addr.addr[8+i] = a & 0x00000000000000FF;
-		a >>= 8;
-		addr.addr[i] = b & 0x00000000000000FF;
-		b >>= 8;
-	}
+inline IpAddr &WebResource::getIpAddr() {
 	return addr;
 }
 
-inline void WebResource::clearIp6Addr() {
-	r.clear_ip6_addr_1();
-	r.clear_ip6_addr_2();
+inline void WebResource::clearIpAddr() {
+	addr.setEmpty();
 }
 
 inline void WebResource::setIpAddrExpire(long time) {

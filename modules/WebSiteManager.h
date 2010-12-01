@@ -78,10 +78,10 @@ private:
 	void setDnsEngine(const char *name, const char *value);
 	char *getRobotsEngine(const char *name);
 	void setRobotsEngine(const char *name, const char *value);
-	char *getSave(const char *name);
-	void setSave(const char *name, const char *value);
 	char *getLoad(const char *name);
 	void setLoad(const char *name, const char *value);
+	char *getSave(const char *name);
+	void setSave(const char *name, const char *value);
 
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);

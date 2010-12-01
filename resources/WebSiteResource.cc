@@ -28,13 +28,53 @@ int WebSiteResource::getSize() {
 	return 1; //FIXME
 }
 
+void WebSiteResource::LoadIpAddr() {
+	uint32_t a = r.ip4_addr();
+	if (a != 0) {
+		addr.setIp4Addr(r.ip4_addr());
+	} else {
+		uint64_t a1 = r.ip6_addr_1();
+		uint64_t a2 = r.ip6_addr_2();
+		if (a1 != 0 || a2 != 0) {
+			addr.setIp6Addr(a1, true);
+			addr.setIp6Addr(a2, false);
+		} else {
+			addr.setEmpty();
+		}
+	}
+}
+
+void WebSiteResource::SaveIpAddr() {
+	if (addr.isIp4Addr()) {
+		if (!addr.isEmpty()) {
+			r.set_ip4_addr(addr.getIp4Addr());
+		} else {
+			r.clear_ip4_addr();
+		}
+		r.clear_ip6_addr_1();
+		r.clear_ip6_addr_2();
+	
+	} else {
+		if (!addr.isEmpty()) {
+			r.set_ip6_addr_1(addr.getIp6Addr(true));
+			r.set_ip6_addr_2(addr.getIp6Addr(false));
+		} else {
+			r.clear_ip6_addr_1();
+			r.clear_ip6_addr_2();
+		}
+		r.clear_ip4_addr();
+	}
+}
+
 bool WebSiteResource::ProtobufToJarray() {
 	for (int i = 0; i < r.paths_size(); i++) {
 		const ::hector::resources::WebSitePath &p = r.paths(i);
 		WebSitePath *wsp = pool.alloc();
-		wsp->cksum = p.cksum();
 		wsp->status = p.status();
-		wsp->lastUpdate = p.last_update();
+		wsp->lastStatusUpdate = p.last_status_update();
+		wsp->cksum = p.cksum();
+		wsp->lastModified = p.last_modified();
+		wsp->modifiedHistory = p.modified_history();
 		// JSLI(PValue, paths, paths->path())
 		const char *path = p.path().c_str();
 		PWord_t PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
@@ -59,9 +99,11 @@ void WebSiteResource::JarrayToProtobuf() {
 		// add to protocol-buffers
 		::hector::resources::WebSitePath *p = r.add_paths();
 		p->set_path((char*)path);
-		p->set_cksum(wsp->cksum);
 		p->set_status(wsp->status);
-		p->set_last_update(wsp->lastUpdate);
+		p->set_last_status_update(wsp->lastStatusUpdate);
+		p->set_cksum(wsp->cksum);
+		p->set_last_modified(wsp->lastModified);
+		p->set_modified_history(wsp->modifiedHistory);
 		// JSLN(PValue, paths, path);	// get next string
 		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
 	}
@@ -75,14 +117,8 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 	s = buf;
 	snprintf(buf, sizeof(buf), " (%s %s:%d)", Scheme_Name((Scheme)this->getUrlScheme()).c_str(), this->getUrlHost().c_str(), this->getUrlPort());
 	s += buf;
-	char *a = ip4Addr2Str(this->getIp4Addr());
-	snprintf(buf, sizeof(buf), ", ip4: %s", a);
-	free(a);
-	s += buf;
-	a = ip6Addr2Str(this->getIp6Addr());
-	snprintf(buf, sizeof(buf), ", ip6: %s", a);
-	free(a);
-	s += buf;
+	s += ", ip: ";
+	s += addr.toString();
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
 		s += buf;
@@ -125,7 +161,7 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 		s += "Paths:\n";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			const WebSitePath *wsp = getPathInfo(iter->c_str());
-			snprintf(buf, sizeof(buf), " %s: %d %d %d\n", iter->c_str(), wsp->cksum, wsp->status, wsp->lastUpdate);
+			snprintf(buf, sizeof(buf), " %s: %d %d %d %d %d\n", iter->c_str(), wsp->status, wsp->lastStatusUpdate, wsp->cksum, wsp->lastModified, wsp->modifiedHistory);
 			s += buf;
 		}
 	}

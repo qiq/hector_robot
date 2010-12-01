@@ -42,8 +42,7 @@ Resource *CallDns::FinishResource(Resource *tmp) {
 	wr->clearAttachedResource();
 	unused.push_back(wr);
 
-	wsr->setIp4Addr(wr->getIp4Addr());
-	wsr->setIp6Addr(wr->getIp6Addr());
+	wsr->setIpAddr(wr->getIpAddr());
 	wsr->setIpAddrExpire(wr->getIpAddrExpire());
 	return wsr;
 }
@@ -64,8 +63,8 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	wr->setUrlHost(wsr->getUrlHost());
 	wr->setUrlPort(wsr->getUrlPort());
 	wr->setUrlPath("/robots.txt");
-	wr->setIp4Addr(wsr->getIp4Addr());
-	wr->setIp6Addr(wsr->getIp6Addr());
+	IpAddr ip = wsr->getIpAddr();
+	wr->setIpAddr(ip);
 	wr->setAttachedResource(wsr);
 	return wr;
 }
@@ -150,16 +149,6 @@ void WebSiteManager::setRobotsEngine(const char *name, const char *value) {
 	robotsEngine = strdup(value);
 }
 
-char *WebSiteManager::getSave(const char *name) {
-	return strdup("");
-}
-
-// actually save all wsr records
-void WebSiteManager::setSave(const char *name, const char *value) {
-	if (!SaveWebSiteResources(value))
-		LOG_ERROR(this, "Cannot save WebSiteManager data");
-}
-
 char *WebSiteManager::getLoad(const char *name) {
 	return strdup("");
 }
@@ -168,6 +157,16 @@ char *WebSiteManager::getLoad(const char *name) {
 void WebSiteManager::setLoad(const char *name, const char *value) {
 	if (!LoadWebSiteResources(value))
 		LOG_ERROR(this, "Cannot load WebSiteManager data");
+}
+
+char *WebSiteManager::getSave(const char *name) {
+	return strdup("");
+}
+
+// actually save all wsr records
+void WebSiteManager::setSave(const char *name, const char *value) {
+	if (!SaveWebSiteResources(value))
+		LOG_ERROR(this, "Cannot save WebSiteManager data");
 }
 
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {

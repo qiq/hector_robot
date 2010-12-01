@@ -98,7 +98,7 @@ bool parseLong(string *data, int *value) {
 	return true;
 }
 
-bool parseIp4(string *data, ip4_addr_t *value) {
+bool parseIp4(string *data, IpAddr &ip) {
 	skipWs(data);
 	size_t offset = data->find_first_not_of("0123456789.");
 	string s;
@@ -111,12 +111,10 @@ bool parseIp4(string *data, ip4_addr_t *value) {
 		s = (*data);
 		data->clear();
 	}
-	bool result = inet_pton(AF_INET, s.c_str(), &value->addr) == 1;
-	value->addr = ntohl(value->addr);
-	return result;
+	return ip.ParseIp4Addr(s);
 }
 
-bool parseIp6(string *data, ip6_addr_t *value) {
+bool parseIp6(string *data, IpAddr &ip) {
 	skipWs(data);
 	size_t offset = data->find_first_not_of("0123456789abcdefABCDEF:");
 	string s;
@@ -129,11 +127,5 @@ bool parseIp6(string *data, ip6_addr_t *value) {
 		s = (*data);
 		data->clear();
 	}
-	bool result = inet_pton(AF_INET6, s.c_str(), &value->addr) == 1;
-	for (int i = 0; i < 8; i++) {
-		uint8_t tmp = value->addr[i];
-		value->addr[i] = value->addr[15-i];
-		value->addr[15-i] = tmp;
-	}
-	return result;
+	return ip.ParseIp6Addr(s);
 }

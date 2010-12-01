@@ -1,11 +1,8 @@
-- jednotny zpusob, jak reportovat stavy resource (tisk resource->getId())
+- prefetch a postfetch v Perlu
 
-- disable libunbound cache (resp. konfigurace cesty)
+- disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
 
 - upravit resourceinfo, aby fungoval pro websiteresource
-
-- upravit fetch a resolvedns, aby fungovaly s libovolnym resource
-	- mozna jen resolvedns(?), fetch potrebuje primo modifikovatelny string
 
 - items: jen korektne zpracovane resources, ne vsechny -- predelat
 - jmena metod na velka pismena (krome getteru/setteru)
@@ -71,6 +68,7 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - cistici modul
 
 DONE
+- odstranit url-list z webresource, naopak pridat pocet presmerovani
 - modul pro zpracovani robots.txt (wr + wsr, vypln ve wsr)
 - dodelat testy, pocitat s lokalnim web serverem (v Perlu)
 - lokalni dns server (v Perlu) pouzit pro test dns a dns + perl

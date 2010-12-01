@@ -62,6 +62,44 @@ void WebResource::SaveHeaders() {
 	header_map_dirty = false;
 }
 
+void WebResource::LoadIpAddr() {
+	uint32_t a = r.ip4_addr();
+	if (a != 0) {
+		addr.setIp4Addr(r.ip4_addr());
+	} else {
+		uint64_t a1 = r.ip6_addr_1();
+		uint64_t a2 = r.ip6_addr_2();
+		if (a1 != 0 || a2 != 0) {
+			addr.setIp6Addr(a1, true);
+			addr.setIp6Addr(a2, false);
+		} else {
+			addr.setEmpty();
+		}
+	}
+}
+
+void WebResource::SaveIpAddr() {
+	if (addr.isIp4Addr()) {
+		if (!addr.isEmpty()) {
+			r.set_ip4_addr(addr.getIp4Addr());
+		} else {
+			r.clear_ip4_addr();
+		}
+		r.clear_ip6_addr_1();
+		r.clear_ip6_addr_2();
+	
+	} else {
+		if (!addr.isEmpty()) {
+			r.set_ip6_addr_1(addr.getIp6Addr(true));
+			r.set_ip6_addr_2(addr.getIp6Addr(false));
+		} else {
+			r.clear_ip6_addr_1();
+			r.clear_ip6_addr_2();
+		}
+		r.clear_ip4_addr();
+	}
+}
+
 void WebResource::setHeaderValue(const std::string &name, const std::string &value) {
 	if (!header_map_ready)
 		LoadHeaders();
@@ -84,25 +122,6 @@ void WebResource::clearHeaderFields() {
 	headers.clear();
 }
 
-void WebResource::setExtractedUrls(const vector<string> &extracted_urls) {
-	r.clear_extracted_urls();
-	for (vector<string>::const_iterator iter = extracted_urls.begin(); iter != extracted_urls.end(); ++iter) {
-		r.add_extracted_urls(*iter);
-	}
-}
-
-vector<string> *WebResource::getExtractedUrls() {
-	vector<string> *result = new vector<string>();
-	for (int i = 0; i < r.extracted_urls_size(); i++) {
-		result->push_back(r.extracted_urls(i));
-	}
-	return result;
-}
-
-void WebResource::clearExtractedUrls() {
-	r.clear_extracted_urls();
-}
-
 string WebResource::toString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
@@ -118,14 +137,8 @@ string WebResource::toString(Object::LogLevel logLevel) {
 	s += buf;
 	snprintf(buf, sizeof(buf), ", time: %ld, mime: %s, size: %d", this->getTime(), this->getMimeType().c_str(), this->getContent().length());
 	s += buf;
-	char *a = ip4Addr2Str(this->getIp4Addr());
-	snprintf(buf, sizeof(buf), ", ip4: %s", a);
-	free(a);
-	s += buf;
-	a = ip6Addr2Str(this->getIp6Addr());
-	snprintf(buf, sizeof(buf), ", ip6: %s", a);
-	free(a);
-	s += buf;
+	s += ", ip: ";
+	s += addr.toString();
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
 		s += buf;
@@ -145,15 +158,6 @@ string WebResource::toString(Object::LogLevel logLevel) {
 			s += *iter;
 			s += ": ";
 			s += value;
-		}
-	}
-	delete v;
-	v = this->getExtractedUrls();
-	if (v->size() > 0) {
-		s += "\nurls:";
-		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			s += "\n";
-			s += *iter;
 		}
 	}
 	delete v;
@@ -201,16 +205,11 @@ ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 		get_u.s2 = &WebResource::getHeaderValue;
 		set_u.s2 = &WebResource::setHeaderValue;
 		clear_u.c = &WebResource::clearHeaderFields;
-	} else if (name == "ip4Addr") {
-		type = IP4;
-		get_u.a4 = &WebResource::getIp4Addr;
-		set_u.a4 = &WebResource::setIp4Addr;
-		clear_u.c = &WebResource::clearIp4Addr;
-	} else if (name == "ip6Addr") {
-		type = IP6;
-		get_u.a6 = &WebResource::getIp6Addr;
-		set_u.a6 = &WebResource::setIp6Addr;
-		clear_u.c = &WebResource::clearIp6Addr;
+	} else if (name == "ipAddr") {
+		type = IP;
+		get_u.ip = &WebResource::getIpAddr;
+		set_u.ip = &WebResource::setIpAddr;
+		clear_u.c = &WebResource::clearIpAddr;
 	} else if (name == "ipAddrExpire") {
 		type = LONG;
 		get_u.l = &WebResource::getIpAddrExpire;

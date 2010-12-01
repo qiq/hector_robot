@@ -107,7 +107,7 @@ sub ProcessSimple() {
 	my $url = $resource->getUrl();
 	if (not defined $url) {
 		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL");
-		$resource->setStatusDeleted();
+		$resource->setFlag($Resource::DELETED);
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);

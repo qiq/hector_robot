@@ -16,6 +16,8 @@ sub new {
 		'items' => 0,
 		'robotName' => 'hector',
 		'wildcards' => 1,
+		'TTL' => 86400,			# default: one day
+		'negativeTTL' => 86400,		# default: one day
 	};
 	bless($self, $class);
 	return $self;
@@ -131,25 +133,28 @@ sub ProcessSimple() {
 
 	if ($resource->getTypeStr() ne 'WebResource') {
 		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setStatusDeleted();
+		$resource->setFlag($Resource::DELETED);
 		return $resource;
 	}
 		
 	my $mime = $resource->getMimeType();
 	if ($mime eq '') {
 		$self->{'_object'}->log_debug($resource->toStringShort()." Missing robots.txt mime type (".$resource->getUrlHost().")");
-		$resource->setStatusDeleted();
+		$resource->setStatus(1);
+		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
 		return $resource;
 	}
 	if ($resource->getMimeType() ne "text/plain") {
 		$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$resource->getMimeType()." (".$resource->getUrlHost().")");
-		$resource->setStatusDeleted();
+		$resource->setStatus(1);
+		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
 		return $resource;
 	}
 	my $content = $resource->getContent();
 	if (length($content) > 10000) {
 		$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->getUrlHost().")");
-		$resource->setStatusDeleted();
+		$resource->setStatus(1);
+		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
 		return $resource;
 	}
 	my ($allow, $disallow) = $self->ParseRobots($content);
@@ -157,7 +162,7 @@ sub ProcessSimple() {
 	return $resource if ($wsr->getTypeStr() ne 'WebSiteResource');
 	$wsr->setAllowUrls($allow);
 	$wsr->setDisallowUrls($disallow);
-	$wsr->setRobotsExpire(time()+86400);	# one day
+	$wsr->setRobotsExpire(time()+$self->{'TTL'});
 	$self->{'items'}++;
 	return $resource;
 }

@@ -12,7 +12,6 @@ extern "C" {
 }
 #include "DnsResolver.h"
 #include "ProcessingEngine.h"
-#include "TestResource.h"
 
 using namespace std;
 
@@ -36,6 +35,8 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	values->addSetter("forwardServer", &DnsResolver::setForwardServer);
 	values->addGetter("forwardPort", &DnsResolver::getForwardPort);
 	values->addSetter("forwardPort", &DnsResolver::setForwardPort);
+	values->addGetter("negativeTTL", &DnsResolver::getNegativeTTL);
+	values->addSetter("negativeTTL", &DnsResolver::setNegativeTTL);
 }
 
 DnsResolver::~DnsResolver() {
@@ -83,14 +84,22 @@ void DnsResolver::setForwardPort(const char *name, const char *value) {
 	forwardPort = str2long(value);
 }
 
+char *DnsResolver::getNegativeTTL(const char *name) {
+	return int2str(negativeTTL);
+}
+
+void DnsResolver::setNegativeTTL(const char *name, const char *value) {
+	negativeTTL = str2int(value);
+}
+
 // called by libunbound when resource address is resolved
 void CompletedCallback(void *data, int error, struct ub_result *result) {
 	DnsResourceInfo *ri = (DnsResourceInfo*)data;
 	if (error == 0) {
 		if (result->havedata && result->len[0] == 4) {
-			ip4_addr_t addr;
-			addr.addr = ntohl(((struct in_addr*)result->data[0])->s_addr);
-			ri->current->setIp4Addr(addr);
+			IpAddr ip;
+			ip.setIp4Addr(((struct in_addr*)result->data[0])->s_addr);
+			ri->current->setIpAddr(ip);
 			// we want TTL, so that we have to parse the packet again (ugh!)
 			ldns_pkt *pkt;
 			if (ldns_wire2pkt(&pkt, (const uint8_t *)result->answer_packet, result->answer_len) == LDNS_STATUS_OK) {
@@ -125,7 +134,7 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 	}
 
 	if (error != 0) {
-		ri->current->setIp4Addr(ip4_addr_empty);
+		ri->current->setIpAddr(IpAddr::emptyIpAddr);
 		ri->current->setStatus(1);
 	}
 	ri->parent->FinishResolution(ri);
@@ -144,6 +153,14 @@ void DnsResolver::StartResolution(WebResource *wr) {
 }
 
 void DnsResolver::FinishResolution(DnsResourceInfo *ri) {
+	// fix for invalid result: we have an access to negativeTTL now
+	if (ri->current->getStatus() != 0) {
+		struct timeval currentTime;
+		gettimeofday(&currentTime, NULL);
+		ObjectLockRead();
+		ri->current->setIpAddrExpire(currentTime.tv_sec + negativeTTL);
+		ObjectUnlock();
+	}
 	outputResources->push(ri->current);
 	ObjectLockWrite();
 	items++;

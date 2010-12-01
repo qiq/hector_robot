@@ -15,7 +15,7 @@ message WebResource {
 
 	repeated string header_names = 10;	// response header field names
 	repeated string header_values = 11;	// response header field values
-	repeated string extracted_urls = 12;	// URLs extracted from the resource
+	optional int32 redirect_count = 12;	// number of redirects
 	optional fixed32 ip4_addr = 13;		// IPv4 address (result of DNS query)
 	optional fixed64 ip6_addr_1 = 14;	// IPv6 address, part 1
 	optional fixed64 ip6_addr_2 = 15;	// IPv6 address, part 2

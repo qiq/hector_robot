@@ -5,11 +5,12 @@ import "Scheme.proto";
 option optimize_for = SPEED;
 
 message WebSitePath {
-	// TODO: fix
-	optional string path = 1;		// path, in memory it is stored in the jarray
-	optional fixed32 cksum = 2;		// crc32 checksum
-	optional fixed32 status = 3;		// status of the item
-	optional fixed32 last_update = 4;	// something
+	optional string path = 1;			// path, in memory it is stored in the jarray
+	optional fixed32 status = 2;			// status of the item (+ error count in MSB)
+	optional fixed32 last_status_update = 3;	// status last changed
+	optional fixed32 cksum = 4;			// checksum
+	optional fixed32 last_modified = 5;		// content last changed
+	optional fixed32 modified_history = 6;		// 4x1B period of modification (2^n minutes)
 }
 
 message WebSiteResource {
@@ -24,7 +25,7 @@ message WebSiteResource {
 	optional fixed64 ip6_addr_2 = 8;	// IPv6 address, part 2
 	optional fixed32 ip_addr_expire = 9;	// IP address DNS mapping expire time
 
-	repeated string allow_urls = 10;		// list of allowed URLs
+	repeated string allow_urls = 10;	// list of allowed URLs
 	repeated string disallow_urls = 11;	// list of disallowed URLs
 	optional fixed32 robots_expire = 12;	// when robots.txt will expire
 
