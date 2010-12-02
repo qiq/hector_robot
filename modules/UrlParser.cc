@@ -47,17 +47,22 @@ Resource *UrlParser::ProcessSimple(Resource *resource) {
 	WebResource *wr = static_cast<WebResource*>(resource);
 	GURL *gurl = new GURL(wr->getUrl());
 	if (gurl->SchemeIs("http"))
-		wr->setUrlScheme(SCHEME_HTTP);
+		wr->setUrlScheme(HTTP);
 	else if (gurl->SchemeIs("https"))
-		wr->setUrlScheme(SCHEME_HTTPS);
+		wr->setUrlScheme(HTTPS);
 	else
-		wr->setUrlScheme(SCHEME_NONE);
-	wr->setUrlUsername(gurl->username().c_str());
-	wr->setUrlPassword(gurl->password().c_str());
-	wr->setUrlHost(gurl->host().c_str());
+		wr->setUrlScheme(NONE);
+	wr->setUrlUsername(gurl->username());
+	wr->setUrlPassword(gurl->password());
+	wr->setUrlHost(gurl->host());
 	wr->setUrlPort(gurl->EffectiveIntPort());
-	wr->setUrlPath(gurl->path().c_str());
-	wr->setUrlQuery(gurl->query().c_str());
+	string p = gurl->path();
+	string q = gurl->query();
+	if (!q.empty()) {
+		p += "?";
+		p += q;
+	}
+	wr->setUrlPath(p);
 	delete gurl;
 	ObjectLockWrite();
 	items++;

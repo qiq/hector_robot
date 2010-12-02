@@ -59,15 +59,15 @@ Resource *UrlComposer::ProcessSimple(Resource *resource) {
 	string s;
 	int defaultPort;
 	switch (wr->getUrlScheme()) {
-	case SCHEME_HTTP:
+	case HTTP:
 		s = "http";
 		defaultPort = 80;
 		break;
-	case SCHEME_HTTPS:
+	case HTTPS:
 		s = "https";
 		defaultPort = 443;
 		break;
-	case SCHEME_NONE:
+	case NONE:
 	default:
 		return resource;
 	}
@@ -85,10 +85,6 @@ Resource *UrlComposer::ProcessSimple(Resource *resource) {
 		s += buffer;
 	}
 	s += wr->getUrlPath();
-	if (wr->getUrlQuery() != "") {
-		s += "?";
-		s += wr->getUrlQuery();
-	}
 	wr->setUrl(s.c_str());
 
 	ObjectLockRead();
@@ -101,7 +97,6 @@ Resource *UrlComposer::ProcessSimple(Resource *resource) {
 		wr->clearUrlHost();
 		wr->clearUrlPort();
 		wr->clearUrlPath();
-		wr->clearUrlQuery();
 	}
 	ObjectLockWrite();
 	items++;
