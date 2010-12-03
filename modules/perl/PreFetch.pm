@@ -1,6 +1,6 @@
 # items: number of resources created
 
-package RobotsFilter;
+package PreFetch;
 
 use warnings;
 use strict;
@@ -14,7 +14,6 @@ sub new {
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'items' => 0,
-		'wildcards' => 1,
 	};
 	bless($self, $class);
 	return $self;
@@ -93,45 +92,14 @@ sub ProcessSimple() {
 		return $resource;
 	}
 
-	my $path = $resource->getUrlPath();
-	my $allowed = 0;
-	my $au = $wsr->getAllowUrls();
-	for (my $i = 0; $i < $au->size(); $i++) {
-		my $prefix= $au->get($i);
-		if ($self->{'wildcards'}) {
-			if ($path =~ /$prefix/) {
-				$allowed = 1;
-				last;
-			}
-		} else {
-			if (substr($path, length($prefix)) == $prefix) {
-				$allowed = 1;
-				last;
-			}
-		}
+	# check that path is ready to be fetched (not disabled, etc)
+	if (not $wsr->PathReadyToFetch($resource->getUrlPath())) {
+		$self->{'_object'}->log_debug($resource->toStringShort()." Disabled");
+		$resource->setFlag($Hector::Resource::DELETED);
+		return $resource;
 	}
-	if (not $allowed) {
-		my $disallowed = 0;
-		my $du = $wsr->getDisallowUrls();
-		for (my $i = 0; $i < $du->size(); $i++) {
-			my $prefix= $du->get($i);
-			if ($self->{'wildcards'}) {
-				if ($path =~ /$prefix/) {
-					$disallowed = 1;
-					last;
-				}
-			} else {
-				if (substr($path, length($prefix)) == $prefix) {
-					$disallowed = 1;
-					last;
-				}
-			}
-		}
-		if ($disallowed) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy: ".$resource->getUrl());
-			$resource->setFlag($Hector::Resource::DELETED);
-		}
-	}
+	my $ip = $wsr->getIpAddr();
+	$resource->setIpAddr($ip);
 	
 	$self->{'items'}++;
 	return $resource;

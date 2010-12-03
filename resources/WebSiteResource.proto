@@ -6,11 +6,12 @@ option optimize_for = SPEED;
 
 message WebSitePath {
 	optional string path = 1;			// path, in memory it is stored in the jarray
-	optional fixed32 status = 2;			// status of the item (+ error count in MSB)
-	optional fixed32 last_status_update = 3;	// status last changed
-	optional fixed32 cksum = 4;			// checksum
-	optional fixed32 last_modified = 5;		// content last changed
-	optional fixed32 modified_history = 6;		// 4x1B period of modification (2^n minutes)
+	optional uint32 path_status = 2;		// status of the item
+	optional fixed32 last_path_status_update = 3;	// status last changed
+	optional int32 error_count = 4;			// error count
+	optional fixed32 cksum = 5;			// checksum
+	optional fixed32 last_modified = 6;		// content last changed
+	optional fixed32 modified_history = 7;		// 4x1B period of modification (2^n minutes)
 }
 
 message WebSiteResource {

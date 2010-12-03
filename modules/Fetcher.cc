@@ -283,7 +283,6 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		if (name == "Content-Size") {
 			ri->contentLength = atol(s.c_str());
 		} else if (name == "Content-Type") {
-			ri->current->setMimeType(s);
 			if (!s.compare(0, 9, "text/html") || !s.compare(0, 10, "text/plain"))
 				ri->contentIsText = true;
 		}
@@ -313,7 +312,7 @@ void Fetcher::QueueResource(WebResource *wr) {
 	curlInfo.resources++;
 	if (ri->current || curlInfo.currentTime <= ri->time + wait) {
 		ri->waiting.push_back(wr);
-		if (ri->waiting.size() == 1) {
+		if (!ri->current) {	// just waiting for timeout (not currently being processed)
 			curlInfo.resourceInfoHeap.push_back(ri);
 			push_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
 		}
@@ -482,7 +481,13 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 			outputResources->push(inputResources->front());
 		} else {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
-			QueueResource(wr);
+			IpAddr &ip = wr->getIpAddr();
+			if (!ip.isEmpty()) {
+				QueueResource(wr);
+			} else {
+				wr->setStatus(1);
+				outputResources->push(wr);
+			}
 		}
 		inputResources->pop();
 	}

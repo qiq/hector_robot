@@ -133,36 +133,35 @@ sub ProcessSimple() {
 
 	if ($resource->getTypeStr() ne 'WebResource') {
 		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setFlag($Resource::DELETED);
+		$resource->setFlag($Hector::Resource::DELETED);
+		return $resource;
+	}
+	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
+	if ($wsr->getTypeStr() ne 'WebSiteResource') {
+		$self->{'_object'}->log_error($resource->toStringShort()." No attaxhed WSR: ".$wsr->getTypeStr());
+		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 		
-	my $mime = $resource->getMimeType();
+	my $mime = $resource->getHeaderValue("Content-Type");
 	if ($mime eq '') {
 		$self->{'_object'}->log_debug($resource->toStringShort()." Missing robots.txt mime type (".$resource->getUrlHost().")");
-		$resource->setStatus(1);
-		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
+		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
 		return $resource;
 	}
-	if ($resource->getMimeType() ne "text/plain") {
-		$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$resource->getMimeType()." (".$resource->getUrlHost().")");
-		$resource->setStatus(1);
-		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
+	if ($mime !~ /^text\/plain/) {
+		$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$mime." (".$resource->getUrlHost().")");
+		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
 		return $resource;
 	}
 	my $content = $resource->getContent();
 	if (length($content) > 10000) {
 		$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->getUrlHost().")");
-		$resource->setStatus(1);
-		$resource->setRobotsExpire(time() + $self->{'negativeTTL'});
+		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
 		return $resource;
 	}
 	my ($allow, $disallow) = $self->ParseRobots($content);
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
-	return $resource if ($wsr->getTypeStr() ne 'WebSiteResource');
-	$wsr->setAllowUrls($allow);
-	$wsr->setDisallowUrls($disallow);
-	$wsr->setRobotsExpire(time()+$self->{'TTL'});
+	$wsr->setRobots($allow, $disallow, time()+$self->{'TTL'});
 	$self->{'items'}++;
 	return $resource;
 }

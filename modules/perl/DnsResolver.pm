@@ -92,10 +92,15 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
+	if ($resource->getTypeStr() ne 'WebSiteResource' and $resource->getTypeStr() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
+		$resource->setFlag($Hector::Resource::DELETED);
+		return $resource;
+	}
 	my $host = $resource->getUrlHost();
 	if (not defined $host) {
 		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL host");
-		$resource->setFlag($Resource::DELETED);
+		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
@@ -115,7 +120,7 @@ sub ProcessSimple() {
 				my $ip = Hector::IpAddr->new();
 				$ip->ParseIp4Addr($rr->address);
 				$resource->setIpAddr($ip);
-				$resource->setIpAddrExpire(time() + $rr->ttl);
+				$resource->setIpAddrExpire(time() + $rr->ttl) if ($resource->getTypeStr() eq 'WebSiteResource');
 				$resource->setStatus(0);
 				last;
 			}
@@ -123,7 +128,7 @@ sub ProcessSimple() {
 			$self->{'_object'}->log_debug($resource->toStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
 			my $ip = Hector::IpAddr->new();
 			$resource->setIpAddr($ip);
-			$resource->setIpAddrExpire(time() + $self->{'negativeTTL'});
+			$resource->setIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->getTypeStr() eq 'WebSiteResource');
 			$resource->setStatus(1);
 		}
 	}

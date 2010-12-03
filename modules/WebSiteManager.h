@@ -103,6 +103,7 @@ private:
 	// we do not process the same WSR more than once at the same time, so
 	// we keep info about what WebSiteResources we are working on
 	std::tr1::unordered_map<WebSiteResource*, WebResource*> processingResources;
+	int processingResourcesCount;
 
 	WebSiteResource *getWebSiteResource(WebResource *wr);
 	void StartProcessing(WebResource *wr, WebSiteResource *wsr, bool robotsOnly);

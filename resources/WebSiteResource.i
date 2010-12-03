@@ -32,6 +32,16 @@ public:
         std::string toString(Object::LogLevel = Object::INFO);
 
         // WebSiteResource-specific
+        // preferred way: locks WSR and sets everything at once
+        void setUrl(int urlScheme, const std::string &urlHost, int urlPort);
+        void getUrl(int &urlScheme, std::string &urlHost, int &urlPort);
+        void setIpAddrExpire(IpAddr &addr, long time);
+        void getIpAddrExpire(IpAddr &addr, long &time);
+        void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
+        void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
+        bool PathReadyToFetch(const char *path);
+
+        // change on-item methods
         void setUrlScheme(int urlScheme);
         int getUrlScheme();
         void clearUrlScheme();
@@ -47,7 +57,6 @@ public:
         void setIpAddrExpire(long time);
         long getIpAddrExpire();
         void clearIpAddrExpire();
-
         void setAllowUrls(const std::vector<std::string> &allow_urls);
         std::vector<std::string> *getAllowUrls();
         void clearAllowUrls();

@@ -15,14 +15,13 @@ test4: Create WebResources, parse urls, resolve DNS and dump result
 				<modules>
 					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
 						<param name="urlList">
-<![CDATA[						http://www.test.com/foo/bar
+<![CDATA[						http://www.test.com/foo/bar?a=b#c
 							http://www.test.org/
 							http://google.com/
 							http://www.nicnevime.cz:443/
 							https://www.vimeovine.cz/ ]]>
 						</param>
 					</Module>
-					<Module id="M_parseurl" lib="UrlParser.la"/>
 					<Module id="M_dump1" lib="Dump.la"/>
 					<Module id="M_dns" lib="DnsResolver.la">
 						<param name="forwardServer" value="127.0.0.1"/>

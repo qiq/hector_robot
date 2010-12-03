@@ -19,16 +19,16 @@ test6: Create WebResources, parse urls, resolve DNS and download a web page, the
 							https://www.vimeovine.cz/ ]]>
 						</param>
 					</Module>
-					<Module id="M_parseurl" lib="UrlParser.la"/>
 					<Module id="M_dump1" lib="Dump.la"/>
 					<Module id="M_dns" lib="DnsResolver.la">
 						<param name="forwardServer" value="127.0.0.1"/>
 						<param name="forwardPort" value="5354"/>
 					</Module>
+					<Module id="M_dump2" lib="Dump.la"/>
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 					</Module>
-					<Module id="M_dump2" lib="Dump.la"/>
+					<Module id="M_dump3" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>

@@ -1,5 +1,6 @@
 /**
  * DnsResolver: translate DNS name to IP address
+ * Supports WebResource and WebSiteResource
  */
 
 #ifndef _MODULES_RESOLVE_DNS_H_
@@ -14,13 +15,13 @@ extern "C" {
 #include "common.h"
 #include "Module.h"
 #include "ObjectValues.h"
-#include "WebResource.h"
+#include "Resource.h"
 
 class DnsResolver;
 
 typedef struct DnsResourceInfo_ {
 	int id;			// unbound request id
-	WebResource *current;	// currently processed Resource
+	Resource *current;	// currently processed Resource
 	DnsResolver *parent;	// parent
 } DnsResourceInfo;
 
@@ -34,8 +35,8 @@ public:
 	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
 	int ProcessingResources();
 
-	void StartResolution(WebResource *wr);
-	void FinishResolution(DnsResourceInfo *ri);
+	void StartResolution(Resource *reesource);
+	void FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4, uint32_t ipAddrExpire);
 private:
 	int items;		// ObjectLock, items processed
 	int maxRequests;	// initOnly, number of concurrent requests

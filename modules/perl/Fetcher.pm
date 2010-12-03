@@ -107,7 +107,7 @@ sub ProcessSimple() {
 	my $url = $resource->getUrl();
 	if (not defined $url) {
 		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL");
-		$resource->setFlag($Resource::DELETED);
+		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
@@ -118,10 +118,11 @@ sub ProcessSimple() {
 	}
 	$resource->setHeaderFields(\@names, \@values);
 	if ($response->is_success) {
-		$resource->setMimeType($response->header('Content-Type'));
 		$resource->setContent($response->decoded_content);
+		$resource->setStatus(0);
 	} else {
 		$resource->setContent('');
+		$resource->setStatus(1);
 	}
 	$self->{'items'}++;
 	return $resource;

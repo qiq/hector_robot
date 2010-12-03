@@ -24,10 +24,6 @@ Resource *WebSiteResource::Clone() {
 	return new WebSiteResource(*this);
 }
 
-int WebSiteResource::getSize() {
-	return 1; //FIXME
-}
-
 void WebSiteResource::LoadIpAddr() {
 	uint32_t a = r.ip4_addr();
 	if (a != 0) {
@@ -70,11 +66,12 @@ bool WebSiteResource::ProtobufToJarray() {
 	for (int i = 0; i < r.paths_size(); i++) {
 		const ::hector::resources::WebSitePath &p = r.paths(i);
 		WebSitePath *wsp = pool.alloc();
-		wsp->status = p.status();
-		wsp->lastStatusUpdate = p.last_status_update();
-		wsp->cksum = p.cksum();
-		wsp->lastModified = p.last_modified();
-		wsp->modifiedHistory = p.modified_history();
+		wsp->setPathStatus((WebSitePath::PathStatus)p.path_status());
+		wsp->setLastPathStatusUpdate(p.last_path_status_update());
+		wsp->setErrorCount(p.error_count());
+		wsp->setCksum(p.cksum());
+		wsp->setLastModified(p.last_modified());
+		wsp->setModifiedHistory(p.modified_history());
 		// JSLI(PValue, paths, paths->path())
 		const char *path = p.path().c_str();
 		PWord_t PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
@@ -99,25 +96,73 @@ void WebSiteResource::JarrayToProtobuf() {
 		// add to protocol-buffers
 		::hector::resources::WebSitePath *p = r.add_paths();
 		p->set_path((char*)path);
-		p->set_status(wsp->status);
-		p->set_last_status_update(wsp->lastStatusUpdate);
-		p->set_cksum(wsp->cksum);
-		p->set_last_modified(wsp->lastModified);
-		p->set_modified_history(wsp->modifiedHistory);
+		p->set_path_status(wsp->getPathStatus());
+		p->set_last_path_status_update(wsp->getLastPathStatusUpdate());
+		p->set_error_count(wsp->getErrorCount());
+		p->set_cksum(wsp->getCksum());
+		p->set_last_modified(wsp->getLastModified());
+		p->set_modified_history(wsp->getModifiedHistory());
 		// JSLN(PValue, paths, path);	// get next string
 		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
 	}
+}
+
+/*
+WebSitePath *WebSiteResource::createPathInfo(const char *path) {
+	PWord_t PValue;
+	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
+	if (PValue)
+		return (WebSitePath*)PValue;
+	WebSitePath *wsp = pool.alloc();
+	PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
+	if (PValue == PJERR) {
+		LOG4CXX_ERROR(logger, "Malloc failed");
+		return false;
+	}
+	*PValue = (Word_t)wsp;
+	return wsp;
+}*/
+
+WebSitePath *WebSiteResource::getPathInfo(const char *path, bool create) {
+	PWord_t PValue;
+	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
+	if (!PValue) {
+		if (!create)
+			return NULL;
+		WebSitePath *wsp = pool.alloc();
+		wsp->setPathStatus(WebSitePath::NEW_LINK);
+		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
+		if (PValue == PJERR) {
+			LOG4CXX_ERROR(logger, "Malloc failed");
+			NULL;
+		}
+		*PValue = (Word_t)wsp;
+	}
+	return (WebSitePath*)*PValue;
+}
+
+vector<string> *WebSiteResource::getPathList() {
+	vector<string> *result = new vector<string>();
+
+	uint8_t path[MAX_PATH_SIZE];
+	path[0] = '\0';
+	PWord_t PValue;
+	// JSLF(PValue, paths, path);		// get first string
+	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
+	while (PValue) {
+		result->push_back((char*)path);
+		// JSLN(PValue, paths, path);	// get next string
+		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
+	}
+	return result;
 }
 
 string WebSiteResource::toString(Object::LogLevel logLevel) {
 	string s;
 
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[WSR %d %d] ", this->getId(), this->getStatus());
+	snprintf(buf, sizeof(buf), "[WSR %d %d] (%s %s:%d), ip: ", this->getId(), this->getStatus(), Scheme_Name((Scheme)this->getUrlScheme()).c_str(), this->getUrlHost().c_str(), this->getUrlPort());
 	s = buf;
-	snprintf(buf, sizeof(buf), " (%s %s:%d)", Scheme_Name((Scheme)this->getUrlScheme()).c_str(), this->getUrlHost().c_str(), this->getUrlPort());
-	s += buf;
-	s += ", ip: ";
 	s += addr.toString();
 	if (this->getIpAddrExpire()) {
 		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->getIpAddrExpire());
@@ -127,10 +172,9 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 		snprintf(buf, sizeof(buf), ", robots expire: %ld", this->getRobotsExpire());
 		s += buf;
 	}
-	s += "\n";
 	vector<string> *v = this->getAllowUrls();
 	if (v->size() > 0) {
-		s += "Allow:\n";
+		s += "\nAllow:";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			if (first)
@@ -139,12 +183,11 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 				s += ", ";
 			s += *iter;
 		}
-		s += "\n";
 	}
 	delete v;
 	v = this->getDisallowUrls();
 	if (v->size() > 0) {
-		s += "Disallow:\n";
+		s += "\nDisallow:";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			if (first)
@@ -153,16 +196,17 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 				s += ", ";
 			s += *iter;
 		}
-		s += "\n";
 	}
 	delete v;
 	v = this->getPathList();
 	if (v->size() > 0) {
-		s += "Paths:\n";
+		s += "\nPaths:";
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			const WebSitePath *wsp = getPathInfo(iter->c_str());
-			snprintf(buf, sizeof(buf), " %s: %d %d %d %d %d\n", iter->c_str(), wsp->status, wsp->lastStatusUpdate, wsp->cksum, wsp->lastModified, wsp->modifiedHistory);
-			s += buf;
+			WebSitePath *wsp = getPathInfo(iter->c_str(), false);
+			if (wsp) {
+				snprintf(buf, sizeof(buf), "\n %s: %d %d %d %d %x", iter->c_str(), wsp->getPathStatus(), wsp->getLastPathStatusUpdate(), wsp->getCksum(), wsp->getLastModified(), wsp->getModifiedHistory());
+				s += buf;
+			}
 		}
 	}
 	delete v;

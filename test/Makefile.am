@@ -8,9 +8,9 @@ TESTS += test1.sh
 EXTRA_DIST += test1.sh test1-config.xml test1.log.correct test1.data.url
 CLEANFILES += test1.log.test
 
-TESTS += test2.sh
-EXTRA_DIST += test2.sh test2-config.xml test2.log.correct
-CLEANFILES += test2.log.test
+#TESTS += test2.sh
+#EXTRA_DIST += test2.sh test2-config.xml test2.log.correct
+#CLEANFILES += test2.log.test
 
 TESTS += test3.sh
 EXTRA_DIST += test3.sh test3-config.xml test3.log.correct

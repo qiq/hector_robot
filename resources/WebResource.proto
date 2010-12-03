@@ -9,24 +9,19 @@ message WebResource {
 	required int32 status = 2;		// status to be used by filters
 
 	optional string url = 3;		// complete URL
-	optional fixed32 time = 4;	 	// last check
-	optional string mime_type = 5;		// resource MIME type
-	optional string content = 6;		// content of a resource
-
-	repeated string header_names = 10;	// response header field names
-	repeated string header_values = 11;	// response header field values
-	optional int32 redirect_count = 12;	// number of redirects
-	optional fixed32 ip4_addr = 13;		// IPv4 address (result of DNS query)
-	optional fixed64 ip6_addr_1 = 14;	// IPv6 address, part 1
-	optional fixed64 ip6_addr_2 = 15;	// IPv6 address, part 2
-	optional fixed32 ip_addr_expire = 16;	// IP address DNS mapping expire time
+	optional fixed32 ip4_addr = 4;		// IPv4 address
+	optional fixed64 ip6_addr_1 = 5;	// IPv6 address, part 1
+	optional fixed64 ip6_addr_2 = 6;	// IPv6 address, part 2
+	repeated string header_names = 7;	// response header field names
+	repeated string header_values = 8;	// response header field values
+	optional int32 redirect_count = 9;	// number of redirects
+	optional string content = 10;		// content of a resource
 
 	// parsed url
-	optional Scheme url_scheme = 30;	// parts of URL
-	optional string url_username = 31;
-	optional string url_password = 32;
-	optional string url_host = 33;
-	optional uint32 url_port = 34;
-	optional string url_path = 35;
-	optional string url_query = 36;
+//	optional Scheme url_scheme = 30;	// parts of URL
+//	optional string url_username = 31;
+//	optional string url_password = 32;
+//	optional string url_host = 33;
+//	optional uint32 url_port = 34;
+//	optional string url_path = 35;
 }

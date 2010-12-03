@@ -32,15 +32,10 @@ public:
         void setUrl(const std::string &url);
         const std::string &getUrl();
         void clearUrl();
-        void setTime(long time);
-        long getTime();
-        void clearTime();
-        void setMimeType(const std::string &mimeType);
-        const std::string &getMimeType();
-        void clearMimeType();
-        void setContent(const std::string &content);
-        const std::string &getContent();
-        void clearContent();
+        void ComposeUrl();
+        void setIpAddr(IpAddr &addr);
+        IpAddr &getIpAddr();
+        void clearIpAddr();
         void setHeaderFields(const std::vector<std::string> &header_names, const std::vector<std::string> &header_values);
         std::vector<std::string> *getHeaderNames();
         void setHeaderValue(const std::string &name, const std::string &value);
@@ -49,12 +44,9 @@ public:
         void setRedirectCount(int count);
         int getRedirectCount();
         void clearRedirectCount();
-        void setIpAddr(IpAddr &addr);
-        IpAddr &getIpAddr();
-        void clearIpAddr();
-        void setIpAddrExpire(long time);
-        long getIpAddrExpire();
-        void clearIpAddrExpire();
+        void setContent(const std::string &content);
+        const std::string &getContent();
+        void clearContent();
 
         void setUrlScheme(int urlScheme);
         int getUrlScheme();
@@ -74,9 +66,6 @@ public:
         void setUrlPath(const std::string &urlPath);
         const std::string &getUrlPath();
         void clearUrlPath();
-        void setUrlQuery(const std::string &urlQuery);
-        const std::string &getUrlQuery();
-        void clearUrlQuery();
 };
 
 %inline %{

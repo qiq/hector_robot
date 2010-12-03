@@ -21,6 +21,15 @@
 
 class WebResource : public ProtobufResource {
 public:
+	typedef struct ParsedUrl_ {
+		Scheme		scheme;
+		std::string	username;
+		std::string	password;
+		std::string	host;
+		int		port;
+		std::string	path;
+	} ParsedUrl;
+
 	WebResource();
 	WebResource(const WebResource &wr);
 	~WebResource();
@@ -51,16 +60,10 @@ public:
 	void setUrl(const std::string &url);
 	const std::string &getUrl();
 	void clearUrl();
-	void setTime(long time);
-	long getTime();
-	void clearTime();
-	void setMimeType(const std::string &mimeType);
-	const std::string &getMimeType();
-	void clearMimeType();
-	void setContent(const std::string &content);
-	const std::string &getContent();
-	std::string *getContentMutable();
-	void clearContent();
+	void ComposeUrl();		// construct URL from Url parts
+	void setIpAddr(IpAddr &addr);
+	IpAddr &getIpAddr();
+	void clearIpAddr();
 	void setHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values);
 	std::vector<std::string> *getHeaderNames();
 	void setHeaderValue(const std::string &name, const std::string &value);
@@ -69,12 +72,10 @@ public:
 	void setRedirectCount(int count);
 	int getRedirectCount();
 	void clearRedirectCount();
-	void setIpAddr(IpAddr &addr);
-	IpAddr &getIpAddr();
-	void clearIpAddr();
-	void setIpAddrExpire(long time);
-	long getIpAddrExpire();
-	void clearIpAddrExpire();
+	void setContent(const std::string &content);
+	const std::string &getContent();
+	std::string *getContentMutable();
+	void clearContent();
 
 	// Url parts
         void setUrlScheme(int urlScheme);
@@ -95,9 +96,6 @@ public:
         void setUrlPath(const std::string &urlPath);
         const std::string &getUrlPath();
 	void clearUrlPath();
-        void setUrlQuery(const std::string &urlQuery);
-	const std::string &getUrlQuery();
-	void clearUrlQuery();
 
 	static const int typeId = 10;
 
@@ -105,15 +103,21 @@ protected:
 	// saved properties
 	hector::resources::WebResource r;
 
-	bool header_map_ready;
-	bool header_map_dirty;
 	std::tr1::unordered_map<std::string, std::string> headers;
+	int header_map_ready:1;
+	int header_map_dirty:1;
 	void LoadHeaders();
 	void SaveHeaders();
 
 	IpAddr addr;
 	void LoadIpAddr();
 	void SaveIpAddr();
+
+	ParsedUrl url;
+	int parsed_url_ready:1;
+	int parsed_url_dirty:1;	
+	void LoadParsedUrl();
+	void SaveParsedUrl();
 
 	static log4cxx::LoggerPtr logger;
 };
@@ -138,9 +142,16 @@ inline const char *WebResource::getModuleStr() {
 	return "HectorRobot";
 }
 
+inline int WebResource::getSize() {
+	const std::string &c = r.content();
+	return c.length();
+}
+
 inline std::string *WebResource::Serialize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	if (parsed_url_dirty)
+		SaveParsedUrl();
 	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
@@ -148,8 +159,10 @@ inline std::string *WebResource::Serialize() {
 }
 
 inline bool WebResource::Deserialize(const char *data, int size) {
-	header_map_ready = false;
-	header_map_dirty = false;
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
 	bool result = MessageDeserialize(&r, data, size);
 	// we keep id
 	setStatus(r.status());
@@ -160,6 +173,8 @@ inline bool WebResource::Deserialize(const char *data, int size) {
 inline int WebResource::getSerializedSize() {
 	if (header_map_dirty)
 		SaveHeaders();
+	if (parsed_url_dirty)
+		SaveParsedUrl();
 	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
@@ -169,6 +184,8 @@ inline int WebResource::getSerializedSize() {
 inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
 	if (header_map_dirty)
 		SaveHeaders();
+	if (parsed_url_dirty)
+		SaveParsedUrl();
 	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
@@ -176,13 +193,15 @@ inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *o
 }
 
 inline bool WebResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
-	// Headers and IpAddr, r.id and r.status were set in getSerializedSize() already
+	// Headers, ParsedUrl, IpAddr, r.id and r.status were set in getSerializedSize() already
 	return MessageSerializeWithCachedSizes(&r, output);
 }
 
 inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
-	header_map_ready = false;
-	header_map_dirty = false;
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
 	bool result = MessageDeserialize(&r, input, size);
 	// we keep id
 	setStatus(r.status());
@@ -191,39 +210,49 @@ inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *
 }
 
 inline void WebResource::setUrl(const std::string &url) {
+	parsed_url_ready = 0;
 	r.set_url(url);
 }
 
 inline const std::string &WebResource::getUrl() {
+	if (parsed_url_dirty)
+		SaveParsedUrl();
 	return r.url();
 }
 
 inline void WebResource::clearUrl() {
+	parsed_url_ready = 0;
 	r.clear_url();
 }
 
-inline void WebResource::setTime(long time) {
-	r.set_time(time);
+// construct URL from Url parts
+inline void WebResource::ComposeUrl() {
+	if (parsed_url_dirty)
+		SaveParsedUrl();
 }
 
-inline long WebResource::getTime() {
-	return (long)r.time();
+inline void WebResource::setIpAddr(IpAddr &addr) {
+	this->addr = addr;
 }
 
-inline void WebResource::clearTime() {
-	r.clear_time();
+inline IpAddr &WebResource::getIpAddr() {
+	return addr;
 }
 
-inline void WebResource::setMimeType(const std::string &mimeType) {
-	r.set_mime_type(mimeType);
+inline void WebResource::clearIpAddr() {
+	addr.setEmpty();
 }
 
-inline const std::string &WebResource::getMimeType() {
-	return r.mime_type();
+inline void WebResource::setRedirectCount(int count) {
+	r.set_redirect_count(count);
 }
 
-inline void WebResource::clearMimeType() {
-	r.clear_mime_type();
+inline int WebResource::getRedirectCount() {
+	return r.redirect_count();
+}
+
+inline void WebResource::clearRedirectCount() {
+	r.clear_redirect_count();
 }
 
 inline void WebResource::setContent(const std::string &content) {
@@ -241,124 +270,119 @@ inline std::string *WebResource::getContentMutable() {
 inline void WebResource::clearContent() {
 	r.clear_content();
 }
-inline void WebResource::setRedirectCount(int count) {
-	r.set_redirect_count(count);
-}
-
-inline int WebResource::getRedirectCount() {
-	return r.redirect_count();
-}
-
-inline void WebResource::clearRedirectCount() {
-	r.clear_redirect_count();
-}
-
-inline void WebResource::setIpAddr(IpAddr &addr) {
-	this->addr = addr;
-}
-
-inline IpAddr &WebResource::getIpAddr() {
-	return addr;
-}
-
-inline void WebResource::clearIpAddr() {
-	addr.setEmpty();
-}
-
-inline void WebResource::setIpAddrExpire(long time) {
-	r.set_ip_addr_expire(time);
-}
-
-inline long WebResource::getIpAddrExpire() {
-	return (long)r.ip_addr_expire();
-}
-
-inline void WebResource::clearIpAddrExpire() {
-	r.clear_ip_addr_expire();
-}
 
 inline void WebResource::setUrlScheme(int urlScheme) {
-	r.set_url_scheme((Scheme)urlScheme);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.scheme = (Scheme)urlScheme;
 }
 
 inline int WebResource::getUrlScheme() {
-	return (int)r.url_scheme();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return (int)url.scheme;
 }
 
 inline void WebResource::clearUrlScheme() {
-	r.clear_url_scheme();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.scheme = NONE;
 }
 
 inline void WebResource::setUrlUsername(const std::string &urlUsername) {
-	r.set_url_username(urlUsername);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.username = urlUsername;
 }
 
 inline const std::string &WebResource::getUrlUsername() {
-	return r.url_username();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return url.username;
 }
 
 inline void WebResource::clearUrlUsername() {
-	r.clear_url_username();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.username.clear();
 }
 
 inline void WebResource::setUrlPassword(const std::string &urlPassword) {
-	r.set_url_password(urlPassword);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.password = urlPassword;
 }
 
 inline const std::string &WebResource::getUrlPassword() {
-	return r.url_password();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return url.password;
 }
 
 inline void WebResource::clearUrlPassword() {
-	r.clear_url_password();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.password.clear();
 }
 
 inline void WebResource::setUrlHost(const std::string &urlHost) {
-	r.set_url_host(urlHost);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.host = urlHost;
 }
 
 inline const std::string &WebResource::getUrlHost() {
-	return r.url_host();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return url.host;
 }
 
 inline void WebResource::clearUrlHost() {
-	r.clear_url_host();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.host.clear();
 }
 
 inline void WebResource::setUrlPort(int urlPort) {
-	r.set_url_port(urlPort);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.port = urlPort;
 }
 
 inline int WebResource::getUrlPort() {
-	return r.url_port();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return url.port;
 }
 
 inline void WebResource::clearUrlPort() {
-	r.clear_url_port();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.port = 0;
 }
 
 inline void WebResource::setUrlPath(const std::string &urlPath) {
-	r.set_url_path(urlPath);
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	parsed_url_dirty = 1;
+	url.path = urlPath;
 }
 
 inline const std::string &WebResource::getUrlPath() {
-	return r.url_path();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	return url.path;
 }
 
 inline void WebResource::clearUrlPath() {
-	r.clear_url_path();
-}
-
-inline void WebResource::setUrlQuery(const std::string &urlQuery) {
-	r.set_url_query(urlQuery);
-}
-
-inline const std::string &WebResource::getUrlQuery() {
-	return r.url_query();
-}
-
-inline void WebResource::clearUrlQuery() {
-	r.clear_url_query();
+	if (!parsed_url_ready)
+		LoadParsedUrl();
+	url.path.clear();
 }
 
 #endif

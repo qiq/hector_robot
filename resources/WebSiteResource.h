@@ -33,19 +33,9 @@
 #include "ResourceFieldInfo.h"
 #include "RWLock.h"
 #include "WebSiteResource.pb.h"
+#include "WebSitePath.h"
 
 #define MAX_PATH_SIZE 2048
-
-typedef struct WebSitePath_ {
-	uint32_t status;		// status(3B) + error count(1B): OK,
-					// error (maybe more error types),
-					// disabled (too many errors occrued),
-					// redirect permanent
-	uint32_t lastStatusUpdate;	// when status was updated
-	uint32_t cksum;			// checksum, to see whether page was changed or not
-	uint32_t lastModified;		// when page was last changed
-	uint32_t modifiedHistory;	// 4x1B period of modification (2^n minutes)
-} WebSitePath;
 
 class WebSiteResource : public ProtobufResource {
 public:
@@ -86,8 +76,18 @@ public:
 	std::string toString(Object::LogLevel = Object::INFO);
 
 	// WebSiteResource-specific
-        void setUrlScheme(int urlScheme);
-        int getUrlScheme();
+	// preferred way: locks WSR and sets everything at once
+	void setUrl(int urlScheme, const std::string &urlHost, int urlPort);
+	void getUrl(int &urlScheme, std::string &urlHost, int &urlPort);
+	void setIpAddrExpire(IpAddr &addr, long time);
+	void getIpAddrExpire(IpAddr &addr, long &time);
+	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
+	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
+	bool PathReadyToFetch(const char *path);
+
+	// change on-item methods
+	void setUrlScheme(int urlScheme);
+	int getUrlScheme();
 	void clearUrlScheme();
 	void setUrlHost(const std::string &urlHost);
 	const std::string &getUrlHost();
@@ -101,7 +101,6 @@ public:
 	void setIpAddrExpire(long time);
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
-
 	void setAllowUrls(const std::vector<std::string> &allow_urls);
 	std::vector<std::string> *getAllowUrls();
 	void clearAllowUrls();
@@ -111,11 +110,6 @@ public:
 	void setRobotsExpire(long time);
 	long getRobotsExpire();
 	void clearRobotsExpire();
-
-	// path info get/set
-	bool setPathInfo(const char *path, const WebSitePath *info);
-	const WebSitePath *getPathInfo(const char *path);
-	std::vector<std::string> *getPathList();
 
 	static const int typeId = 11;
 
@@ -137,6 +131,10 @@ protected:
 	// helper methods to convert from Judy array to protobuf representation and vice-versa
 	bool ProtobufToJarray();
 	void JarrayToProtobuf();
+
+	// path info get/set
+	WebSitePath *getPathInfo(const char *path, bool create);
+	std::vector<std::string> *getPathList();
 
 	static log4cxx::LoggerPtr logger;
 };
@@ -172,6 +170,10 @@ inline const char *WebSiteResource::getTypeStrShort() {
 
 inline const char *WebSiteResource::getModuleStr() {
 	return "HectorRobot";
+}
+
+inline int WebSiteResource::getSize() {
+	return 1; //FIXME
 }
 
 inline int WebSiteResource::getId() {
@@ -279,16 +281,89 @@ inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStre
 	return result;
 }
 
-inline void WebSiteResource::setUrlScheme(int urlScheme) {
+inline void WebSiteResource::setUrl(int urlScheme, const std::string &urlHost, int urlPort) {
+	lock.LockWrite();
 	r.set_url_scheme((Scheme)urlScheme);
+	r.set_url_host(urlHost);
+	r.set_url_port(urlPort);
+	lock.Unlock();
+}
+
+inline void WebSiteResource::getUrl(int &urlScheme, std::string &urlHost, int &urlPort) {
+	lock.LockRead();
+	urlScheme = (int)r.url_scheme();
+	urlHost = r.url_host();
+	urlPort = r.url_port();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setIpAddrExpire(IpAddr &addr, long time) {
+	lock.LockWrite();
+	this->addr = addr;
+	r.set_ip_addr_expire(time);
+	lock.Unlock();
+}
+
+inline void WebSiteResource::getIpAddrExpire(IpAddr &addr, long &time) {
+	lock.LockRead();
+	addr = this->addr;
+	time = (long)r.ip_addr_expire();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time) {
+	lock.LockWrite();
+	r.clear_allow_urls();
+	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
+		r.add_allow_urls(*iter);
+	}
+	r.clear_disallow_urls();
+	for (std::vector<std::string>::const_iterator iter = disallow_urls.begin(); iter != disallow_urls.end(); ++iter) {
+		r.add_disallow_urls(*iter);
+	}
+	r.set_robots_expire(time);
+	lock.Unlock();
+}
+
+inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time) {
+	lock.LockRead();
+	for (int i = 0; i < r.allow_urls_size(); i++) {
+		allow_urls.push_back(r.allow_urls(i));
+	}
+	for (int i = 0; i < r.disallow_urls_size(); i++) {
+		disallow_urls.push_back(r.disallow_urls(i));
+	}
+	time = (long)r.robots_expire();
+	lock.Unlock();
+}
+
+inline bool WebSiteResource::PathReadyToFetch(const char *path) {
+	lock.LockRead();
+	WebSitePath *wsp = getPathInfo(path, true);
+	bool result = false;
+	if (wsp)
+		result = wsp->ReadyToFetch();
+	lock.Unlock();
+	return result;
+}
+
+inline void WebSiteResource::setUrlScheme(int urlScheme) {
+	lock.LockWrite();
+	r.set_url_scheme((Scheme)urlScheme);
+	lock.Unlock();
 }
 
 inline int WebSiteResource::getUrlScheme() {
-	return (int)r.url_scheme();
+	lock.LockRead();
+	int result = (int)r.url_scheme();
+	lock.Unlock();
+	return result;
 }
 
 inline void WebSiteResource::clearUrlScheme() {
+	lock.LockWrite();
 	r.clear_url_scheme();
+	lock.Unlock();
 }
 
 inline void WebSiteResource::setUrlHost(const std::string &urlHost) {
@@ -311,15 +386,22 @@ inline void WebSiteResource::clearUrlHost() {
 }
 
 inline void WebSiteResource::setUrlPort(int urlPort) {
+	lock.LockWrite();
 	r.set_url_port(urlPort);
+	lock.Unlock();
 }
 
 inline int WebSiteResource::getUrlPort() {
-	return r.url_port();
+	lock.LockRead();
+	int result = r.url_port();
+	lock.Unlock();
+	return result;
 }
 
 inline void WebSiteResource::clearUrlPort() {
+	lock.LockWrite();
 	r.clear_url_port();
+	lock.Unlock();
 }
 
 inline void WebSiteResource::setIpAddr(IpAddr &addr) {
@@ -329,9 +411,8 @@ inline void WebSiteResource::setIpAddr(IpAddr &addr) {
 }
 
 inline IpAddr WebSiteResource::getIpAddr() {
-	IpAddr a;
 	lock.LockRead();
-	a = addr;
+	IpAddr a = addr;
 	lock.Unlock();
 	return a;
 }
@@ -361,6 +442,56 @@ inline void WebSiteResource::clearIpAddrExpire() {
 	lock.Unlock();
 }
 
+inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_urls) {
+	lock.LockWrite();
+	r.clear_allow_urls();
+	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
+		r.add_allow_urls(*iter);
+	}
+	lock.Unlock();
+}
+
+inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
+	std::vector<std::string> *result = new std::vector<std::string>();
+	lock.LockRead();
+	for (int i = 0; i < r.allow_urls_size(); i++) {
+		result->push_back(r.allow_urls(i));
+	}
+	lock.Unlock();
+	return result;
+}
+
+inline void WebSiteResource::clearAllowUrls() {
+	lock.LockWrite();
+	r.clear_allow_urls();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &disallow_urls) {
+	lock.LockWrite();
+	r.clear_disallow_urls();
+	for (std::vector<std::string>::const_iterator iter = disallow_urls.begin(); iter != disallow_urls.end(); ++iter) {
+		r.add_disallow_urls(*iter);
+	}
+	lock.Unlock();
+}
+
+inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
+	std::vector<std::string> *result = new std::vector<std::string>();
+	lock.LockRead();
+	for (int i = 0; i < r.disallow_urls_size(); i++) {
+		result->push_back(r.disallow_urls(i));
+	}
+	lock.Unlock();
+	return result;
+}
+
+inline void WebSiteResource::clearDisallowUrls() {
+	lock.LockWrite();
+	r.clear_disallow_urls();
+	lock.Unlock();
+}
+
 inline void WebSiteResource::setRobotsExpire(long time) {
 	lock.LockWrite();
 	r.set_robots_expire(time);
@@ -378,91 +509,6 @@ inline void WebSiteResource::clearRobotsExpire() {
 	lock.LockWrite();
 	r.clear_robots_expire();
 	lock.Unlock();
-}
-
-inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_urls) {
-	r.clear_allow_urls();
-	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
-		r.add_allow_urls(*iter);
-	}
-}
-
-inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
-	std::vector<std::string> *result = new std::vector<std::string>();
-	for (int i = 0; i < r.allow_urls_size(); i++) {
-		result->push_back(r.allow_urls(i));
-	}
-	return result;
-}
-
-inline void WebSiteResource::clearAllowUrls() {
-	r.clear_allow_urls();
-}
-
-inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &disallow_urls) {
-	r.clear_disallow_urls();
-	for (std::vector<std::string>::const_iterator iter = disallow_urls.begin(); iter != disallow_urls.end(); ++iter) {
-		r.add_disallow_urls(*iter);
-	}
-}
-
-inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
-	std::vector<std::string> *result = new std::vector<std::string>();
-	for (int i = 0; i < r.disallow_urls_size(); i++) {
-		result->push_back(r.disallow_urls(i));
-	}
-	return result;
-}
-
-inline void WebSiteResource::clearDisallowUrls() {
-	r.clear_disallow_urls();
-}
-
-inline bool WebSiteResource::setPathInfo(const char *path, const WebSitePath *info) {
-	lock.LockWrite();
-	PWord_t PValue;
-	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
-	if (PValue) {
-		WebSitePath *wsp = (WebSitePath*)PValue;
-		*wsp = *info;
-	} else {
-		WebSitePath *wsp = pool.alloc();
-		*wsp = *info;
-		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
-		if (PValue == PJERR) {
-			LOG4CXX_ERROR(logger, "Malloc failed");
-			lock.Unlock();
-			return false;
-		}
-		*PValue = (Word_t)wsp;
-	}
-	lock.Unlock();
-	return true;
-}
-
-inline const WebSitePath *WebSiteResource::getPathInfo(const char *path) {
-	lock.LockRead();
-	PWord_t PValue;
-	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
-	WebSitePath *result = PValue ? (WebSitePath*)PValue : NULL;
-	lock.Unlock();
-	return result;
-}
-
-inline std::vector<std::string> *WebSiteResource::getPathList() {
-	std::vector<std::string> *result = new std::vector<std::string>();
-
-	uint8_t path[MAX_PATH_SIZE];
-	path[0] = '\0';
-	PWord_t PValue;
-	// JSLF(PValue, paths, path);		// get first string
-	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
-	while (PValue) {
-		result->push_back((char*)path);
-		// JSLN(PValue, paths, path);	// get next string
-		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
-	}
-	return result;
 }
 
 #endif

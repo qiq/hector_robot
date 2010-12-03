@@ -12,6 +12,8 @@ extern "C" {
 }
 #include "DnsResolver.h"
 #include "ProcessingEngine.h"
+#include "WebResource.h"
+#include "WebSiteResource.h"
 
 using namespace std;
 
@@ -95,11 +97,12 @@ void DnsResolver::setNegativeTTL(const char *name, const char *value) {
 // called by libunbound when resource address is resolved
 void CompletedCallback(void *data, int error, struct ub_result *result) {
 	DnsResourceInfo *ri = (DnsResourceInfo*)data;
+	int status = 1;
+	uint32_t ip4 = 0;
+	uint32_t ipAddrExpire = 0;
 	if (error == 0) {
 		if (result->havedata && result->len[0] == 4) {
-			IpAddr ip;
-			ip.setIp4Addr(((struct in_addr*)result->data[0])->s_addr);
-			ri->current->setIpAddr(ip);
+			ip4 = ((struct in_addr*)result->data[0])->s_addr;
 			// we want TTL, so that we have to parse the packet again (ugh!)
 			ldns_pkt *pkt;
 			if (ldns_wire2pkt(&pkt, (const uint8_t *)result->answer_packet, result->answer_len) == LDNS_STATUS_OK) {
@@ -107,25 +110,30 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 				if (answer->_rr_count >= 1) {
 					struct timeval currentTime;
 					gettimeofday(&currentTime, NULL);
-					ri->current->setIpAddrExpire(currentTime.tv_sec + answer->_rrs[0]->_ttl);
-					ri->current->setStatus(0);
+					status = 0;
+					ipAddrExpire = currentTime.tv_sec + answer->_rrs[0]->_ttl;
 				} else {
 					LOG_INFO_R(ri->parent, ri->current, "Error parsing packet data.");
-					error = 1;
 				}
 				ldns_pkt_free(pkt);
 			} else {
 				LOG_INFO_R(ri->parent, ri->current, "Error parsing packet data.");
-				error = 1;
 			}
 		} else {
-			error = 1;
-			if (result->rcode == 0) {
-				LOG_DEBUG_R(ri->parent, ri->current, "No IP address " << ri->current->getUrlHost());
-			} else if (result->nxdomain) {
-				LOG_DEBUG_R(ri->parent, ri->current, "NXDOMAIN " << ri->current->getUrlHost());
+			const char *host;
+			if (ri->current->getTypeId() == WebResource::typeId) {
+				WebResource *wr = static_cast<WebResource*>(ri->current);
+				host = wr->getUrlHost().c_str();
 			} else {
-				LOG_INFO_R(ri->parent, ri->current, "Query failed " << ri->current->getUrlHost() << ": " << ub_strerror(result->rcode));
+				WebSiteResource *wsr = static_cast<WebSiteResource*>(ri->current);
+				host = wsr->getUrlHost().c_str();
+			}
+			if (result->rcode == 0) {
+				LOG_DEBUG_R(ri->parent, ri->current, "No IP address " << host);
+			} else if (result->nxdomain) {
+				LOG_DEBUG_R(ri->parent, ri->current, "NXDOMAIN " << host);
+			} else {
+				LOG_INFO_R(ri->parent, ri->current, "Query failed " << host << ": " << ub_strerror(result->rcode));
 			}
 		}
 		ub_resolve_free(result);
@@ -133,18 +141,22 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 		LOG_INFO_R(ri->parent, ri->current, "Resolve error (" << ub_strerror(error) << ")");
 	}
 
-	if (error != 0) {
-		ri->current->setIpAddr(IpAddr::emptyIpAddr);
-		ri->current->setStatus(1);
-	}
-	ri->parent->FinishResolution(ri);
+	ri->parent->FinishResolution(ri, status, ip4, ipAddrExpire);
 }
 
-void DnsResolver::StartResolution(WebResource *wr) {
+void DnsResolver::StartResolution(Resource *resource) {
 	DnsResourceInfo *ri = unused.back();
 	unused.pop_back();
-	ri->current = wr;
-	int result = ub_resolve_async(ctx, (char*)wr->getUrlHost().c_str(), 1, 1, (void*)ri, &CompletedCallback, &ri->id);
+	ri->current = resource;
+	const char *host = NULL;
+	if (resource->getTypeId() == WebResource::typeId) {
+		WebResource *wr = static_cast<WebResource*>(resource);
+		host = wr->getUrlHost().c_str();
+	} else {
+		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
+		host = wsr->getUrlHost().c_str();
+	}
+	int result = ub_resolve_async(ctx, (char*)host, 1, 1, (void*)ri, &CompletedCallback, &ri->id);
 	if (result != 0) {
 		LOG_ERROR(this, "Cannot start asynchronous DNS lookup: " << result);
 		return;
@@ -152,14 +164,25 @@ void DnsResolver::StartResolution(WebResource *wr) {
 	running[ri->id] = ri;
 }
 
-void DnsResolver::FinishResolution(DnsResourceInfo *ri) {
-	// fix for invalid result: we have an access to negativeTTL now
-	if (ri->current->getStatus() != 0) {
+void DnsResolver::FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4, uint32_t ipAddrExpire) {
+	if (status == 1) {
+		ip4 = 0;
 		struct timeval currentTime;
 		gettimeofday(&currentTime, NULL);
 		ObjectLockRead();
-		ri->current->setIpAddrExpire(currentTime.tv_sec + negativeTTL);
+		ipAddrExpire = currentTime.tv_sec + negativeTTL;
 		ObjectUnlock();
+	}
+	ri->current->setStatus(status);
+	IpAddr ip;
+	ip.setIp4Addr(ip4);
+	if (ri->current->getTypeId() == WebResource::typeId) {
+		WebResource *wr = static_cast<WebResource*>(ri->current);
+		wr->setIpAddr(ip);
+		// WebResource has no ipAddrExpire
+	} else {
+		WebSiteResource *wsr = static_cast<WebSiteResource*>(ri->current);
+		wsr->setIpAddrExpire(ip, ipAddrExpire);
 	}
 	outputResources->push(ri->current);
 	ObjectLockWrite();
@@ -221,11 +244,11 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 	this->outputResources = outputResources;
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && running.size() < maxRequests) {
-		if (inputResources->front()->getTypeId() != WebResource::typeId) {
+		Resource *r = inputResources->front();
+		if (r->getTypeId() != WebSiteResource::typeId && r->getTypeId() != WebResource::typeId) {
 			outputResources->push(inputResources->front());
 		} else {
-			WebResource *wr = static_cast<WebResource*>(inputResources->front());
-			StartResolution(wr);
+			StartResolution(r);
 		}
 		inputResources->pop();
 	}

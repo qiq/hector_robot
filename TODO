@@ -1,4 +1,7 @@
-- prefetch a postfetch v Perlu
+- a WebSiteResource
+	- aby relativne bezpecne umoznoval update path
+- updatovat cas TTL/NegativeTTL v TODO: post-fetch (OK?: robotsparser)
+	- postfetch v Perlu
 
 - disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
 
@@ -6,10 +9,6 @@
 
 - items: jen korektne zpracovane resources, ne vsechny -- predelat
 - jmena metod na velka pismena (krome getteru/setteru)
-
-- webresource: pridat
-	- pocet presmerovani (male cislo)
-	- cil presmerovani
 
 - website manager
 	- OK nacitat a ukladat websiteresources
@@ -32,7 +31,6 @@
 	 - robotsLastUpdate: posledni obnova robots.txt
 	 - deniedPaths: seznam zakazanych path (z robots.txt)
 
-- ve zpracovani robots.txt je potreba nastaveni jmena, to bude parametr
 - detekce opakujicich se retezcu v URL (staci jeden asi, neco jako /iso/test/iso)
 	- to bude specialni filtr, zatim asi v perlu, co bude kontrolovat adresy
 
@@ -50,10 +48,13 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 
 - upravit filter: zmenit na filter + modify
 
-- fetch -- poradny test, napr. pres localhost a apache na chroustalku.
 - testy pro ruzne moduly
 	- (Perl i C++)
 
+- reorder modul
+- cistici modul
+
+DONE
 - OTESTOVAT: resolver module v C++
   	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
 	- bude pouzivat libunbound -- standardni operace, ale s pouzitim libev
@@ -61,13 +62,10 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 	- multi module
 - OTESTOVAT: stahovaci modul
 	v C++ pomoci curl (a libevent/libev)
-
-- vyzkouset stahnout stranku
-
-- reorder modul
-- cistici modul
-
-DONE
+- odstranit UrlParser a UrlComposer
+- ve zpracovani robots.txt je potreba nastaveni jmena, to bude parametr
+- zmena WebResource - aby umel parsovat a skladat url
+- zrusit time pro web resource, bude se to pamatovat ve WSR
 - odstranit url-list z webresource, naopak pridat pocet presmerovani
 - modul pro zpracovani robots.txt (wr + wsr, vypln ve wsr)
 - dodelat testy, pocitat s lokalnim web serverem (v Perlu)

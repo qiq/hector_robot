@@ -23,28 +23,11 @@ CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
-	WebSiteResource *wsr = static_cast<WebSiteResource*>(src);
-	WebResource *wr;
-	if (unused.size() > 0) {
-		wr = unused.back();
-		unused.pop_back();
-	} else {
-		wr = new WebResource();
-	}
-	wr->setUrlHost(wsr->getUrlHost());
-	wr->setAttachedResource(src);
-	return wr;
+	return src;
 }
 
 Resource *CallDns::FinishResource(Resource *tmp) {
-	WebResource *wr = static_cast<WebResource*>(tmp);
-	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp->getAttachedResource());
-	wr->clearAttachedResource();
-	unused.push_back(wr);
-
-	wsr->setIpAddr(wr->getIpAddr());
-	wsr->setIpAddrExpire(wr->getIpAddrExpire());
-	return wsr;
+	return tmp;
 }
 
 CallRobots::CallRobots(int maxRequests) : CallProcessingEngine(maxRequests) {
@@ -100,6 +83,8 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	values->addSetter("save", &WebSiteManager::setSave);
 
 	pool = new MemoryPool<WebSiteResource>(10*1024);
+
+	processingResourcesCount = 0;
 }
 
 WebSiteManager::~WebSiteManager() {
@@ -216,9 +201,7 @@ WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
 		return iter->second;
 	// create, if not found
 	WebSiteResource *wsr = pool->alloc();
-	wsr->setUrlScheme(wr->getUrlScheme());
-	wsr->setUrlHost(wr->getUrlHost());
-	wsr->setUrlPort(wr->getUrlPort());
+	wsr->setUrl(wr->getUrlScheme(), wr->getUrlHost(), wr->getUrlPort());
 	sites[wsr] = wsr;
 	return wsr;
 }
@@ -229,6 +212,7 @@ void WebSiteManager::StartProcessing(WebResource *wr, WebSiteResource *wsr, bool
 	if (iter == processingResources.end()) {
 		wr->setAttachedResource(wsr);
 		processingResources[wsr] = wr;
+		processingResourcesCount++;
 		if (!robotsOnly)
 			callDnsInput.push(wsr);
 		else
@@ -237,6 +221,7 @@ void WebSiteManager::StartProcessing(WebResource *wr, WebSiteResource *wsr, bool
 		// chain waiting web-resources
 		wr->setAttachedResource(iter->second);
 		processingResources[wsr] = wr;
+		processingResourcesCount++;
 	}
 }
 
@@ -247,11 +232,13 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 	Resource *next = wr->getAttachedResource();
 	wr->setAttachedResource(wsr);
 	outputResources->push(wr);
+	processingResourcesCount--;
 	while (next != static_cast<Resource*>(iter->first)) {
 		WebResource *wr = static_cast<WebResource*>(next);
 		next = wr->getAttachedResource();
 		wr->setAttachedResource(wsr);
 		outputResources->push(wr);
+		processingResourcesCount--;
 	}
 	processingResources.erase(wsr);
 }
@@ -331,8 +318,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	int max = maxRequests;
 	int tick = timeTick/2;
 	ObjectUnlock();
-	int resources = callDnsInput.size() + callDns->ProcessingResources() + callDnsOutput.size() + callRobotsInput.size() + callRobots->ProcessingResources() + callRobotsOutput.size();
-	while (inputResources->size() > 0 && resources < maxRequests) {
+	while (inputResources->size() > 0 && processingResourcesCount < maxRequests) {
 		if (inputResources->front()->getTypeId() == WebResource::typeId) {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
 			// get domain info
@@ -355,7 +341,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	while (callDnsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
 		callDnsOutput.pop();
-		if (wsr->getRobotsExpire() < currentTime)
+		IpAddr ip = wsr->getIpAddr();
+		if (!ip.isEmpty() && wsr->getRobotsExpire() < currentTime)
 			callRobotsInput.push(wsr);
 		else
 			FinishProcessing(wsr, outputResources);
@@ -374,7 +361,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 }
 
 int WebSiteManager::ProcessingResources() {
-	return callDnsInput.size() + callDns->ProcessingResources() + callDnsOutput.size() + callRobotsInput.size() + callRobots->ProcessingResources() + callRobotsOutput.size();
+	return processingResourcesCount;
 }
 
 bool WebSiteManager::SaveCheckpointSync(const char *path) {
