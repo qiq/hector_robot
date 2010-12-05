@@ -33,6 +33,15 @@ while (my $c = $d->accept) {
 			$c->send_crlf;
 			$c->print("User-agent: *\r\nDisallow: /*bar.html\$\n");
 			$c->force_last_request();
+		} elsif ($r->method eq 'GET' and $r->url->path eq "/redirect.html") {
+			$c->send_basic_header(301);
+			print $c "Content-Type: text/plain";
+			$c->send_crlf;
+			print $c "Location: ".$d->url."foo.html";
+			$c->send_crlf;
+			$c->send_crlf;
+			$c->print("See other page\n");
+			$c->force_last_request();
 		} else {
 			$c->send_error(RC_FORBIDDEN)
 		}

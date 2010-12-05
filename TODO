@@ -1,5 +1,10 @@
-- a WebSiteResource
-	- aby relativne bezpecne umoznoval update path
+- proc pada v curl a hlavne proc znova nacita info pro localhost pri redirectu
+
+- proc se nastavuje -1 jako status pri deleted???
+
+- aby se nastavil last_seen ve WebResource pri ukladani v scheduleru (a asi nuloval pocet redirectu :))
+	- aby se nuloval pocet redirectu po nacteni WebResource
+
 - updatovat cas TTL/NegativeTTL v TODO: post-fetch (OK?: robotsparser)
 	- postfetch v Perlu
 

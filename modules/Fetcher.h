@@ -1,6 +1,8 @@
 /**
  * Fetcher object (html page) using HTTP.
  * Uses CURL in non-blocking mode and libev.
+ * Should not drop resources, because resource path may be locked.
+ * Sets X-Status value with HTTP Status-Line.
  */
 
 #ifndef _MODULES_FETCH_H_

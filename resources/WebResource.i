@@ -47,6 +47,9 @@ public:
         void setContent(const std::string &content);
         const std::string &getContent();
         void clearContent();
+        void setLastSeen(long time);
+        long getLastSeen();
+        void clearLastSeen();
 
         void setUrlScheme(int urlScheme);
         int getUrlScheme();

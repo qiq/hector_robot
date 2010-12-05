@@ -279,7 +279,8 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		while (s.at(pos+i) == ' ')
 			i++;
 		s.erase(0, pos+i);
-		ri->current->setHeaderValue(name.c_str(), s.c_str());
+		if (name != "X-Status")		// we do not want malicious server to overwrite the status :)
+			ri->current->setHeaderValue(name.c_str(), s.c_str());
 		if (name == "Content-Size") {
 			ri->contentLength = atol(s.c_str());
 		} else if (name == "Content-Type") {
@@ -346,6 +347,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 		outputResources->push(wr);
 		return;
 	}
+	wr->clearHeaderFields();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[index];
 	ri->current = wr;
 	ri->content = wr->getContentMutable();
@@ -380,6 +382,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	ri->current->setStatus(result);
+	ri->current->setLastSeen(curlInfo.currentTime);
 	outputResources->push(ri->current);
 	ObjectLockWrite();
 	++items;

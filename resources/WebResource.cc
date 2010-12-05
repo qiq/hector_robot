@@ -204,6 +204,8 @@ string WebResource::toString(Object::LogLevel logLevel) {
 	s += buf;
 	s += ", ip: ";
 	s += addr.toString();
+	snprintf(buf, sizeof(buf), ", last seen: %ld", this->getLastSeen());
+	s += buf;
 	if (header_map_dirty)
 		SaveHeaders();
 	vector<string> *v = this->getHeaderNames();

@@ -16,12 +16,5 @@ message WebResource {
 	repeated string header_values = 8;	// response header field values
 	optional int32 redirect_count = 9;	// number of redirects
 	optional string content = 10;		// content of a resource
-
-	// parsed url
-//	optional Scheme url_scheme = 30;	// parts of URL
-//	optional string url_username = 31;
-//	optional string url_password = 32;
-//	optional string url_host = 33;
-//	optional uint32 url_port = 34;
-//	optional string url_path = 35;
+	optional fixed32 last_seen = 11;	// last touched this WR
 }

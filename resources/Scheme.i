@@ -1,5 +1,5 @@
 %{
-#include "Scheme.h"
+#include "Scheme.pb.h"
 %}
 
 // keep synchronized with Scheme.proto

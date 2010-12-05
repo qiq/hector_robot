@@ -83,7 +83,10 @@ public:
 	void getIpAddrExpire(IpAddr &addr, long &time);
 	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
 	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-	bool PathReadyToFetch(const char *path);
+	bool PathReadyToFetch(const char *path, long lastSeen);
+	bool PathUpdateError(const char *path, long currentTime, int maxCount);
+	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
+	bool PathUpdateOK(const char *path, long currentTime, long cksum);
 
 	// change on-item methods
 	void setUrlScheme(int urlScheme);
@@ -337,13 +340,72 @@ inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std
 	lock.Unlock();
 }
 
-inline bool WebSiteResource::PathReadyToFetch(const char *path) {
-	lock.LockRead();
+// test whether path is ready to be fetched
+inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastSeen) {
+	lock.LockWrite();
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
-	if (wsp)
-		result = wsp->ReadyToFetch();
+	if (wsp) {
+		if ((wsp->getPathStatus() == WebSitePath::OK || wsp->getPathStatus() == WebSitePath::NEW_LINK)
+			&& (!lastSeen || wsp->getLastPathStatusUpdate() <= lastSeen)
+			&& !wsp->getRefreshing()) {
+			wsp->setRefreshing(true);
+			result = true;
+		}
+	}
 	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::PathUpdateError(const char *path, long currentTime, int maxCount) {
+	lock.LockWrite();
+	WebSitePath *wsp = getPathInfo(path, true);
+	bool result = false;
+	if (wsp) {
+		int c = wsp->getErrorCount()+1;
+		if (c < maxCount) {
+			wsp->setPathStatus(WebSitePath::ERROR);
+			result = true;
+		} else {
+			wsp->setPathStatus(WebSitePath::DISABLED);
+		}
+		wsp->setLastPathStatusUpdate(currentTime);
+		wsp->setErrorCount(c);
+		wsp->setRefreshing(false);
+	}
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent) {
+	lock.LockWrite();
+	WebSitePath *wsp = getPathInfo(path, true);
+	bool result = false;
+	if (wsp) {
+		if (redirectPermanent)
+			wsp->setPathStatus(WebSitePath::REDIRECT);
+		else
+			wsp->setPathStatus(WebSitePath::OK);
+		wsp->setErrorCount(0);
+		wsp->setLastPathStatusUpdate(currentTime);
+		wsp->setRefreshing(false);
+		result = true;
+	}
+	return result;
+}
+
+inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, long cksum) {
+	lock.LockWrite();
+	WebSitePath *wsp = getPathInfo(path, true);
+	bool result = false;
+	if (wsp) {
+		// TODO wsp->Modified(cksum);
+		wsp->setPathStatus(WebSitePath::OK);
+		wsp->setErrorCount(0);
+		wsp->setLastPathStatusUpdate(currentTime);
+		wsp->setRefreshing(false);
+		result = true;
+	}
 	return result;
 }
 

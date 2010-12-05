@@ -92,8 +92,8 @@ sub ProcessSimple() {
 		return $resource;
 	}
 
-	# check that path is ready to be fetched (not disabled, etc)
-	if (not $wsr->PathReadyToFetch($resource->getUrlPath())) {
+	# check that path is ready to be fetched (not disabled, etc) and lock it
+	if (not $wsr->PathReadyToFetch($resource->getUrlPath(), $resource->getLastSeen())) {
 		$self->{'_object'}->log_debug($resource->toStringShort()." Disabled");
 		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;

@@ -23,10 +23,7 @@ public:
 	~WebSitePath() {};
 
 	// high-level API
-	bool ReadyToFetch();
-	void UpdateError();
-	bool UpdateRedirect();
-	bool UpdateOK();
+	void Refresh(uint32_t cksum);
 	int NextRefresh();
 
 	// low-level API
@@ -36,6 +33,8 @@ public:
 	uint32_t getLastPathStatusUpdate() const;
 	void setErrorCount(int count);
 	int getErrorCount() const;
+	void setRefreshing(bool refreshing);
+	bool getRefreshing() const;
 	void setCksum(uint32_t);
 	uint32_t getCksum() const;
 	void setLastModified(uint32_t);
@@ -44,7 +43,7 @@ public:
 	uint32_t getModifiedHistory() const;
 
 private:
-	uint32_t pathStatus;		// status(3B) + error count(1B)
+	uint32_t pathStatus;		// status(2B) + inRefresh(1B) + error count(1B)
 	uint32_t lastPathStatusUpdate;	// when status was updated
 	uint32_t cksum;			// checksum, to see whether page was changed or not
 	uint32_t lastModified;		// when page was last changed
@@ -52,19 +51,11 @@ private:
 };
 
 inline void WebSitePath::setPathStatus(PathStatus pathStatus) {
-	this->pathStatus = (this->pathStatus & 0xFF000000) | pathStatus;
+	this->pathStatus = (this->pathStatus & 0xFFFF0000) | pathStatus;
 }
 
 inline WebSitePath::PathStatus WebSitePath::getPathStatus() const {
-	return (PathStatus)(pathStatus & 0x00FFFFFF);
-}
-
-inline void WebSitePath::setErrorCount(int count) {
-	pathStatus = (pathStatus & 0x00FFFFFF) | ((count & 0xFF) << 24);
-}
-
-inline int WebSitePath::getErrorCount() const {
-	return pathStatus >> 24;
+	return (PathStatus)(pathStatus & 0x0000FFFF);
 }
 
 inline void WebSitePath::setLastPathStatusUpdate(uint32_t time) {
@@ -73,6 +64,25 @@ inline void WebSitePath::setLastPathStatusUpdate(uint32_t time) {
 
 inline uint32_t WebSitePath::getLastPathStatusUpdate() const {
 	return lastPathStatusUpdate;
+}
+
+inline void WebSitePath::setErrorCount(int count) {
+	pathStatus = (pathStatus & 0x0000FFFF) | ((count & 0xFF) << 24);
+}
+
+inline int WebSitePath::getErrorCount() const {
+	return pathStatus >> 24;
+}
+
+inline void WebSitePath::setRefreshing(bool refreshing) {
+	if (refreshing)
+		pathStatus |= 0x00010000;
+	else
+		pathStatus &= 0x00FF0000;
+}
+
+inline bool WebSitePath::getRefreshing() const {
+	return (pathStatus & 0x00FF0000);
 }
 
 inline void WebSitePath::setCksum(uint32_t cksum) {

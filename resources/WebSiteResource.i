@@ -39,7 +39,10 @@ public:
         void getIpAddrExpire(IpAddr &addr, long &time);
         void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
         void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-        bool PathReadyToFetch(const char *path);
+        bool PathReadyToFetch(const char *path, long lastSeen);
+        bool PathUpdateError(const char *path, long currentTime, int maxCount);
+        bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
+        bool PathUpdateOK(const char *path, long currentTime, long cksum);
 
         // change on-item methods
         void setUrlScheme(int urlScheme);
