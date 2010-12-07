@@ -62,6 +62,7 @@ Fetcher::~Fetcher() {
 			curl_slist_free_all(ri->headers);
 	}
 	curl_multi_cleanup(curlInfo.multi);
+	ev_loop_destroy(curlInfo.loop);
 	free(userAgent);
 	free(from);
 
@@ -136,7 +137,7 @@ void CheckCompleted(CurlInfo *ci);
 void TimeTickCallback(EV_P_ struct ev_timer *t, int revents) {
 	CurlInfo *ci = (CurlInfo*)t->data;
 
-	ev_unloop(ci->loop, EVUNLOOP_ONE);
+	ev_unloop(ci->loop, EVUNLOOP_ALL);
 }
 
 // called by libev when something happens with some Curl socket
@@ -311,7 +312,7 @@ void Fetcher::QueueResource(WebResource *wr) {
 
 	// busy: just append to the bucket
 	curlInfo.resources++;
-	if (ri->current || curlInfo.currentTime <= ri->time + wait) {
+	if (ri->current || curlInfo.currentTime < ri->time + wait) {
 		ri->waiting.push_back(wr);
 		if (!ri->current) {	// just waiting for timeout (not currently being processed)
 			curlInfo.resourceInfoHeap.push_back(ri);
@@ -382,7 +383,6 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	ri->current->setStatus(result);
-	ri->current->setLastSeen(curlInfo.currentTime);
 	outputResources->push(ri->current);
 	ObjectLockWrite();
 	++items;
@@ -415,7 +415,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	}
 
 	curlInfo.parent = this;
-	curlInfo.loop = ev_default_loop(0);
+	curlInfo.loop = ev_loop_new(0);
 	ev_timer_init(&curlInfo.curlTimer, TimerCallback, 0., 0.);
 	curlInfo.curlTimer.data = &curlInfo;
 	curlInfo.multi = curl_multi_init();

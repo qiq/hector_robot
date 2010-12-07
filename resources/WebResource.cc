@@ -204,7 +204,7 @@ string WebResource::toString(Object::LogLevel logLevel) {
 	s += buf;
 	s += ", ip: ";
 	s += addr.toString();
-	snprintf(buf, sizeof(buf), ", last seen: %ld", this->getLastSeen());
+	snprintf(buf, sizeof(buf), ", last scheduled: %ld", this->getLastScheduled());
 	s += buf;
 	if (header_map_dirty)
 		SaveHeaders();

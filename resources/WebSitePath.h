@@ -78,7 +78,7 @@ inline void WebSitePath::setRefreshing(bool refreshing) {
 	if (refreshing)
 		pathStatus |= 0x00010000;
 	else
-		pathStatus &= 0x00FF0000;
+		pathStatus &= 0xFF00FFFF;
 }
 
 inline bool WebSitePath::getRefreshing() const {

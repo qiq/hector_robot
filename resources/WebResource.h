@@ -75,9 +75,9 @@ public:
 	const std::string &getContent();
 	std::string *getContentMutable();
 	void clearContent();
-	void setLastSeen(long time);
-	long getLastSeen();
-	void clearLastSeen();
+	void setLastScheduled(long time);
+	long getLastScheduled();
+	void clearLastScheduled();
 
 	// Url parts
         void setUrlScheme(int urlScheme);
@@ -273,16 +273,16 @@ inline void WebResource::clearContent() {
 	r.clear_content();
 }
 
-inline void WebResource::setLastSeen(long time) {
-	r.set_last_seen(time);
+inline void WebResource::setLastScheduled(long time) {
+	r.set_last_scheduled(time);
 }
 
-inline long WebResource::getLastSeen() {
-	return (long)r.last_seen();
+inline long WebResource::getLastScheduled() {
+	return (long)r.last_scheduled();
 }
 
-inline void WebResource::clearLastSeen() {
-	r.clear_last_seen();
+inline void WebResource::clearLastScheduled() {
+	r.clear_last_scheduled();
 }
 
 inline void WebResource::setUrlScheme(int urlScheme) {

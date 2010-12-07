@@ -19,7 +19,7 @@ my $d = HTTP::Daemon->new(
 while (my $c = $d->accept) {
 	while (my $r = $c->get_request) {
 		#print $r->url->path."\n";
-		if ($r->method eq 'GET' and $r->url->path eq "/foo.html") {
+		if ($r->method eq 'GET' and ($r->url->path eq "/foo.html" || $r->url->path eq "/boo.html")) {
 			$c->send_basic_header(200);
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
@@ -37,7 +37,16 @@ while (my $c = $d->accept) {
 			$c->send_basic_header(301);
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
-			print $c "Location: ".$d->url."foo.html";
+			print $c "Location: ".$d->url."redirect2.html";
+			$c->send_crlf;
+			$c->send_crlf;
+			$c->print("See other page\n");
+			$c->force_last_request();
+		} elsif ($r->method eq 'GET' and $r->url->path eq "/redirect2.html") {
+			$c->send_basic_header(302);
+			print $c "Content-Type: text/plain";
+			$c->send_crlf;
+			print $c "Location: ".$d->url."boo.html";
 			$c->send_crlf;
 			$c->send_crlf;
 			$c->print("See other page\n");

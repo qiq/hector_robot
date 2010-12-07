@@ -83,7 +83,7 @@ public:
 	void getIpAddrExpire(IpAddr &addr, long &time);
 	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
 	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-	bool PathReadyToFetch(const char *path, long lastSeen);
+	bool PathReadyToFetch(const char *path, long lastScheduled);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
 	bool PathUpdateOK(const char *path, long currentTime, long cksum);
@@ -341,13 +341,13 @@ inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std
 }
 
 // test whether path is ready to be fetched
-inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastSeen) {
+inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastScheduled) {
 	lock.LockWrite();
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
 		if ((wsp->getPathStatus() == WebSitePath::OK || wsp->getPathStatus() == WebSitePath::NEW_LINK)
-			&& (!lastSeen || wsp->getLastPathStatusUpdate() <= lastSeen)
+			&& (!lastScheduled || wsp->getLastPathStatusUpdate() <= lastScheduled)
 			&& !wsp->getRefreshing()) {
 			wsp->setRefreshing(true);
 			result = true;

@@ -11,7 +11,7 @@ test7:
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>test.log.props</logConfig>
+		<logConfig>test7.log.props</logConfig>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_load">
 				<threads>1</threads>
@@ -45,7 +45,7 @@ test7:
 					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
 					<Module id="M_dump2" lib="Dump.la"/>
 					<Module id="M_fetch" lib="Fetcher.la">
-						<param name="timeTick" value="1000000"/>
+						<param name="timeTick" value="100000"/>
 						<param name="minServerRelax" value="1"/>
 					</Module>
 					<Module id="M_dump3" lib="Dump.la"/>
@@ -98,7 +98,7 @@ test7:
 				<modules>
 					<Module id="M_dump_robots1" lib="Dump.la"/>
 					<Module id="M_fetch_robots" lib="Fetcher.la">
-						<param name="timeTick" value="1000000"/>
+						<param name="timeTick" value="100000"/>
 						<param name="minServerRelax" value="1"/>
 					</Module>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">

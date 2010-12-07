@@ -1,4 +1,5 @@
 # items: number of resources created
+# redirect resources are marked with status == 1
 
 package PostFetch;
 
@@ -102,32 +103,37 @@ sub ProcessSimple() {
 		# get status code
 		my $status = $resource->getHeaderValue("X-Status");
 		if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
-			$self->{'_object'}->log_error($wsr->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
+			$self->{'_object'}->log_error($resource->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
 			my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
 			$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
 		} else {
-			$self->{'_object'}->log_debug($wsr->toStringShort().' Status: '.$status.' '.$resource->getUrl());
+			$self->{'_object'}->log_debug($resource->toStringShort().' Status: '.$status.' '.$resource->getUrl());
 			if ($status >= 100 and $status < 300) {
 				# 1xx, 2xx: OK
 				# TODO: count checksum
 				my $cksum = 0;
 				$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $cksum);
+				$resource->setStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
 				my $location = $resource->getHeaderValue("Location");
 				if (not defined $location) {
-					$self->{'_object'}->log_error($wsr->toStringShort()." Redirect with no location: ".$resource->getUrl());
+					$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
 					my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
 					$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
 				} else {
 					$resource->setUrl($location);
-					if ($resource->getRedirectCount() > $self->{'maxRedirects'}) {
-						$self->{'_object'}->log_error($wsr->toStringShort()." Too many redirects: ".$resource->getUrl());
+					my $redirects = $resource->getRedirectCount();
+					if ($redirects > $self->{'maxRedirects'}) {
+						$self->{'_object'}->log_error($resource->toStringShort()." Too many redirects: ".$resource->getUrl());
 						my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
 						$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+					} else {
+						# correct redirects
+						$resource->setRedirectCount($redirects+1);
+						$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $status == 301);
+						$resource->setStatus(1);	# mark resource, so that we can filter redirection later
 					}
-					$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $status == 301);
-					$resource->setStatus(1);	# mark resource, so that we can filter redirection later
 				}
 			} else {
 				# 4xx, 5xx: client or server error
@@ -137,7 +143,7 @@ sub ProcessSimple() {
 		}
 	} else {
 		# error fetching object
-		$self->{'_object'}->log_error($wsr->toStringShort()." Cannot fetch object: ".$resource->getUrl());
+		$self->{'_object'}->log_error($resource->toStringShort()." Cannot fetch object: ".$resource->getUrl());
 		my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
 		$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
 	}
