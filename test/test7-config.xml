@@ -63,6 +63,7 @@ test7:
 					<queue/>
 				</input>
 				<modules>
+					<Module id="M_extract" lib="UrlExtractor.la"/>
 					<Module id="M_dump5" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>

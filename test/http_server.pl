@@ -24,7 +24,7 @@ while (my $c = $d->accept) {
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
 			$c->send_crlf;
-			$c->print("bar bar bar BAR!\n");
+			$c->print("<html><head/><body><a href=\"bar\">bar bar BAR</a>!</body></html>\n");
 			$c->force_last_request();
 		} elsif ($r->method eq 'GET' and $r->url->path eq "/robots.txt") {
 			$c->send_basic_header(200);

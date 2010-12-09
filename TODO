@@ -1,15 +1,19 @@
+- resoruce factories??? mozna docela dobry napad
+
+- http://www.searchtools.com/robots/robot-checklist.html
+- meta refresh -- podpora (asi jen extrakce url)
+
 - scheduler
+	- 
 - url extractor
+	- napsat test
+
 - aby se nastavil last_scheduled ve WebResource pri ukladani v scheduleru (a asi nuloval pocet redirectu :))
 	- aby se nuloval pocet redirectu po nacteni WebResourceA
-
-- updatovat cas TTL/NegativeTTL v TODO: post-fetch (OK?: robotsparser)
-	- postfetch v Perlu
 
 - disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
 
 - upravit resourceinfo, aby fungoval pro websiteresource
-
 - items: jen korektne zpracovane resources, ne vsechny -- predelat
 - jmena metod na velka pismena (krome getteru/setteru)
 
@@ -58,6 +62,10 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - cistici modul
 
 DONE
+- url extractor
+	- skladani url (base, zaklad z wr)
+	- dodelat do wr ResolveUrl, kopie s pomoci base
+	- generovani novych wr
 - OTESTOVAT: resolver module v C++
   	http://www.catonmat.net/blog/asynchronous-dns-resolution#comments
 	- bude pouzivat libunbound -- standardni operace, ale s pouzitim libev
