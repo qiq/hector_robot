@@ -1,4 +1,4 @@
-AM_CXXFLAGS = @LOG4CXX_CFLAGS@ @PERL_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@ -I$(top_srcdir)/resources
+AM_CXXFLAGS = @LOG4CXX_CFLAGS@ @PERL_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@ -I $(top_srcdir)/lib -I$(top_srcdir)/resources
 AM_LDFLAGS = @LOG4CXX_LIBS@ @PERL_LDFLAGS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@ -module -avoid-version
 AM_LIBTOOLFLAGS = --tag=disable-static
 
@@ -13,7 +13,7 @@ perl_LTLIBRARIES = HectorRobot.la
 
 BUILT_SOURCES += HectorRobot_wrap.cc HectorRobot.pm
 HectorRobot_wrap.cc HectorRobot.pm: $(top_srcdir)/HectorRobot.i
-	$(SWIG) -I$(top_srcdir) -I$(top_srcdir)/resources @HECTOR_CORE_CFLAGS@ -c++ -perl -o HectorRobot_wrap.cc $<
+	$(SWIG) -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/resources @HECTOR_CORE_CFLAGS@ -c++ -perl -o HectorRobot_wrap.cc $<
 
 HectorRobot_la_SOURCES = \
 	HectorRobot_wrap.cc

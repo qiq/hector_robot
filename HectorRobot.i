@@ -16,3 +16,4 @@ class TestProtobufResource;
 %import Hector.i
 %include WebResource.i
 %include WebSiteResource.i
+%include robot_common.i

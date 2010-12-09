@@ -86,7 +86,7 @@ public:
 	bool PathReadyToFetch(const char *path, long lastScheduled);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
-	bool PathUpdateOK(const char *path, long currentTime, long cksum);
+	bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
 
 	// change on-item methods
 	void setUrlScheme(int urlScheme);
@@ -394,12 +394,16 @@ inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTi
 	return result;
 }
 
-inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, long cksum) {
+inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, long size, long cksum) {
 	lock.LockWrite();
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		// TODO wsp->Modified(cksum);
+		if (wsp->getSize() != size || wsp->getCksum() != cksum) {
+			wsp->setSize(size);
+			wsp->setCksum(cksum);
+			wsp->setLastModified(currentTime);
+		}
 		wsp->setPathStatus(WebSitePath::OK);
 		wsp->setErrorCount(0);
 		wsp->setLastPathStatusUpdate(currentTime);

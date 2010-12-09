@@ -3,6 +3,7 @@
 
 #include <config.h>
 
+#include <math.h>
 #include <functional>
 #include <string>
 #include <log4cxx/logger.h>
@@ -23,7 +24,6 @@ public:
 	~WebSitePath() {};
 
 	// high-level API
-	void Refresh(uint32_t cksum);
 	int NextRefresh();
 
 	// low-level API
@@ -35,6 +35,8 @@ public:
 	int getErrorCount() const;
 	void setRefreshing(bool refreshing);
 	bool getRefreshing() const;
+	void setSize(uint32_t);
+	uint32_t getSize() const;
 	void setCksum(uint32_t);
 	uint32_t getCksum() const;
 	void setLastModified(uint32_t);
@@ -45,6 +47,7 @@ public:
 private:
 	uint32_t pathStatus;		// status(2B) + inRefresh(1B) + error count(1B)
 	uint32_t lastPathStatusUpdate;	// when status was updated
+	uint32_t size;			// size, to see whether page was changed or not
 	uint32_t cksum;			// checksum, to see whether page was changed or not
 	uint32_t lastModified;		// when page was last changed
 	uint32_t modifiedHistory;	// 4x1B period of modification (2^n minutes)
@@ -85,6 +88,14 @@ inline bool WebSitePath::getRefreshing() const {
 	return (pathStatus & 0x00FF0000);
 }
 
+inline void WebSitePath::setSize(uint32_t size) {
+	this->size = size;
+}
+
+inline uint32_t WebSitePath::getSize() const {
+	return size;
+}
+
 inline void WebSitePath::setCksum(uint32_t cksum) {
 	this->cksum = cksum;
 }
@@ -94,8 +105,16 @@ inline uint32_t WebSitePath::getCksum() const {
 }
 
 inline void WebSitePath::setLastModified(uint32_t time) {
-	lastModified = (uint32_t)time;
-	// TODO: set modifiedHistory
+	if (lastModified != time) {
+		int l = floor(log((float)time-lastModified)/log(1.5));
+		if (l < 16)
+			l = 16;
+		if (l > 41)
+			l = 41;
+		modifiedHistory <<= 8;
+		modifiedHistory |= (l & 0xFF);
+	}
+	lastModified = time;
 }
 
 inline uint32_t WebSitePath::getLastModified() const {

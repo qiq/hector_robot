@@ -42,7 +42,7 @@ public:
         bool PathReadyToFetch(const char *path, long lastScheduled);
         bool PathUpdateError(const char *path, long currentTime, int maxCount);
         bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
-        bool PathUpdateOK(const char *path, long currentTime, long cksum);
+        bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
 
         // change on-item methods
         void setUrlScheme(int urlScheme);

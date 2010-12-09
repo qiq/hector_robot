@@ -1,15 +1,19 @@
-- resoruce factories??? mozna docela dobry napad
+- resoruce factories??? mozna docela dobry napad, aby se pouzivaly porad
+	- akorat je potreba mazat resources ne pres delete, ale pomoci funkce,
+	  ktera je vrati zpet. To by nemel byt problem, protoze se maze jen v Process()
 
 - http://www.searchtools.com/robots/robot-checklist.html
-- meta refresh -- podpora (asi jen extrakce url)
 
 - scheduler
-	- 
+	- nejdriv vzit obsah a spocitat hash
+	- napsat
+
 - url extractor
 	- napsat test
+	- otestovat meta refresh
 
 - aby se nastavil last_scheduled ve WebResource pri ukladani v scheduleru (a asi nuloval pocet redirectu :))
-	- aby se nuloval pocet redirectu po nacteni WebResourceA
+	- aby se nuloval pocet redirectu po nacteni WebResource
 
 - disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
 
@@ -62,6 +66,7 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - cistici modul
 
 DONE
+- meta refresh -- podpora (asi jen extrakce url)
 - url extractor
 	- skladani url (base, zaklad z wr)
 	- dodelat do wr ResolveUrl, kopie s pomoci base

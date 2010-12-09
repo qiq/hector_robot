@@ -145,8 +145,7 @@ inline const char *WebResource::getModuleStr() {
 }
 
 inline int WebResource::getSize() {
-	const std::string &c = r.content();
-	return c.length();
+	return r.content().length();
 }
 
 inline std::string *WebResource::Serialize() {
@@ -213,7 +212,12 @@ inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *
 
 inline void WebResource::setUrl(const std::string &url) {
 	parsed_url_ready = 0;
-	r.set_url(url);
+	// ignore anchor part
+	size_t offset = url.find('#');
+	if (offset != std::string::npos)
+		r.set_url(url.substr(0, offset));
+	else
+		r.set_url(url);
 }
 
 inline const std::string &WebResource::getUrl() {

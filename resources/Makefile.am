@@ -1,4 +1,4 @@
-AM_CXXFLAGS = @LOG4CXX_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@
+AM_CXXFLAGS = @LOG4CXX_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_CFLAGS@ -I$(top_srcdir)/lib
 AM_LDFLAGS = @LOG4CXX_LIBS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@
 AM_LIBTOOLFLAGS = --tag=disable-static
 
@@ -24,7 +24,7 @@ EXTRA_DIST += Scheme.proto Scheme.i
 CLEANFILES += Scheme.pb.h Scheme.pb.cc
 
 libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
-libWebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib -I$(top_srcdir)/lib/googleurl
+libWebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 libWebResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 libWebResource_la_LIBADD = libScheme.la $(top_builddir)/lib/libgoogleurl.la
 

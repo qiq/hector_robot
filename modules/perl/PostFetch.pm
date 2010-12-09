@@ -110,9 +110,11 @@ sub ProcessSimple() {
 			$self->{'_object'}->log_debug($resource->toStringShort().' Status: '.$status.' '.$resource->getUrl());
 			if ($status >= 100 and $status < 300) {
 				# 1xx, 2xx: OK
-				# TODO: count checksum
+				my $content = $resource->getContent();
+				my $size = length($content);
 				my $cksum = 0;
-				$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $cksum);
+				$cksum = CountCksum($content, $size) if ($size == $wsp->getSize());
+				$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $size, $cksum);
 				$resource->setStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
