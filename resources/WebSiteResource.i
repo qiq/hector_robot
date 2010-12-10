@@ -43,6 +43,7 @@ public:
         bool PathUpdateError(const char *path, long currentTime, int maxCount);
         bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
         bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
+        long PathNextModification(const char *path);
 
         // change on-item methods
         void setUrlScheme(int urlScheme);

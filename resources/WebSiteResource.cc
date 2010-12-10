@@ -71,7 +71,7 @@ bool WebSiteResource::ProtobufToJarray() {
 		wsp->setErrorCount(p.error_count());
 		wsp->setCksum(p.cksum());
 		wsp->setLastModified(p.last_modified());
-		wsp->setModifiedHistory(p.modified_history());
+		wsp->setModificationHistory(p.modification_history());
 		// JSLI(PValue, paths, paths->path())
 		const char *path = p.path().c_str();
 		PWord_t PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
@@ -101,7 +101,7 @@ void WebSiteResource::JarrayToProtobuf() {
 		p->set_error_count(wsp->getErrorCount());
 		p->set_cksum(wsp->getCksum());
 		p->set_last_modified(wsp->getLastModified());
-		p->set_modified_history(wsp->getModifiedHistory());
+		p->set_modification_history(wsp->getModificationHistory());
 		// JSLN(PValue, paths, path);	// get next string
 		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
 	}
@@ -204,7 +204,7 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			WebSitePath *wsp = getPathInfo(iter->c_str(), false);
 			if (wsp) {
-				snprintf(buf, sizeof(buf), "\n %s: %d %d %d %d %x", iter->c_str(), wsp->getPathStatus(), wsp->getLastPathStatusUpdate(), wsp->getCksum(), wsp->getLastModified(), wsp->getModifiedHistory());
+				snprintf(buf, sizeof(buf), "\n %s: %d %d %d %d %x", iter->c_str(), wsp->getPathStatus(), wsp->getLastPathStatusUpdate(), wsp->getCksum(), wsp->getLastModified(), wsp->getModificationHistory());
 				s += buf;
 			}
 		}

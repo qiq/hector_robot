@@ -12,9 +12,7 @@
 #include <sys/socket.h>
 #include <curl/curl.h>
 #include <ev.h>
-#include <limits>
 #include "Fetcher.h"
-#include "TestResource.h"
 
 using namespace std;
 

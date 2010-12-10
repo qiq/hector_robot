@@ -11,7 +11,7 @@ message WebSitePath {
 	optional int32 error_count = 4;			// error count
 	optional fixed32 cksum = 5;			// checksum
 	optional fixed32 last_modified = 6;		// content last changed
-	optional fixed32 modified_history = 7;		// 4x1B period of modification (2^n minutes)
+	optional fixed32 modification_history = 7;	// 4x1B period of modification (2^n minutes)
 }
 
 message WebSiteResource {

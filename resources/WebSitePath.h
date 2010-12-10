@@ -20,7 +20,7 @@ public:
 		DISABLED = 5,		// n consecutive errors
 	};
 
-	WebSitePath(): pathStatus(NONE), lastPathStatusUpdate(0), cksum(0), lastModified(0), modifiedHistory(0) {};
+	WebSitePath(): pathStatus(NONE), lastPathStatusUpdate(0), cksum(0), lastModified(0), modificationHistory(0) {};
 	~WebSitePath() {};
 
 	// high-level API
@@ -41,8 +41,8 @@ public:
 	uint32_t getCksum() const;
 	void setLastModified(uint32_t);
 	uint32_t getLastModified() const;
-	void setModifiedHistory(uint32_t history);
-	uint32_t getModifiedHistory() const;
+	void setModificationHistory(uint32_t history);
+	uint32_t getModificationHistory() const;
 
 private:
 	uint32_t pathStatus;		// status(2B) + inRefresh(1B) + error count(1B)
@@ -50,7 +50,7 @@ private:
 	uint32_t size;			// size, to see whether page was changed or not
 	uint32_t cksum;			// checksum, to see whether page was changed or not
 	uint32_t lastModified;		// when page was last changed
-	uint32_t modifiedHistory;	// 4x1B period of modification (2^n minutes)
+	uint32_t modificationHistory;	// 4x1B period of modification (2^n minutes)
 };
 
 inline void WebSitePath::setPathStatus(PathStatus pathStatus) {
@@ -105,15 +105,6 @@ inline uint32_t WebSitePath::getCksum() const {
 }
 
 inline void WebSitePath::setLastModified(uint32_t time) {
-	if (lastModified != time) {
-		int l = floor(log((float)time-lastModified)/log(1.5));
-		if (l < 16)
-			l = 16;
-		if (l > 41)
-			l = 41;
-		modifiedHistory <<= 8;
-		modifiedHistory |= (l & 0xFF);
-	}
 	lastModified = time;
 }
 
@@ -121,12 +112,12 @@ inline uint32_t WebSitePath::getLastModified() const {
 	return lastModified;
 }
 
-inline void WebSitePath::setModifiedHistory(uint32_t history) {
-	this->modifiedHistory = history;
+inline void WebSitePath::setModificationHistory(uint32_t history) {
+	this->modificationHistory = history;
 }
 
-inline uint32_t WebSitePath::getModifiedHistory() const {
-	return modifiedHistory;
+inline uint32_t WebSitePath::getModificationHistory() const {
+	return modificationHistory;
 }
 
 #endif

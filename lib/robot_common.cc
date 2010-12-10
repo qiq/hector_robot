@@ -129,3 +129,21 @@ bool parseIp6(string *data, IpAddr &ip) {
 	}
 	return ip.ParseIp6Addr(s);
 }
+
+char* itoa(int value, char* str) {
+	static char digits[] = "0123456789";
+	int i = 0;
+	do {
+		str[i++] = digits[value % 10];
+		value /= 10;
+	} while (value);
+	str[i--] = '\0';
+	int j = 0;
+	char tmp;
+	while (j < i) {
+		tmp = str[j];
+		str[j] = str[i];
+		str[i] = tmp;
+	}
+	return str;
+}

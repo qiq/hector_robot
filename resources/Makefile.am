@@ -41,7 +41,7 @@ EXTRA_DIST += WebResource.i WebResource.proto
 CLEANFILES += WebResource.pb.h WebResource.pb.cc
 ALIASES += WebResource.la
 
-libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc WebSitePath.h WebSitePath.cc
+libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc WebSitePath.h
 libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 libWebSiteResource_la_LIBADD = libScheme.la -lJudy
 

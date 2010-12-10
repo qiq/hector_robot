@@ -35,6 +35,7 @@
 #include "WebSiteResource.pb.h"
 #include "WebSitePath.h"
 
+#define DEFAULT_MODIFICATION_HISTORY 16
 #define MAX_PATH_SIZE 2048
 
 class WebSiteResource : public ProtobufResource {
@@ -87,6 +88,7 @@ public:
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
 	bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
+	long PathNextModification(const char *path);
 
 	// change on-item methods
 	void setUrlScheme(int urlScheme);
@@ -391,6 +393,7 @@ inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTi
 		wsp->setRefreshing(false);
 		result = true;
 	}
+	lock.Unlock();
 	return result;
 }
 
@@ -402,7 +405,18 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 		if (wsp->getSize() != size || wsp->getCksum() != cksum) {
 			wsp->setSize(size);
 			wsp->setCksum(cksum);
-			wsp->setLastModified(currentTime);
+			uint32_t lastModified = wsp->getLastModified();
+			if (lastModified != currentTime) {
+				wsp->setLastModified(currentTime);
+				int l = floor(log((float)currentTime-lastModified)/log(1.5));
+				if (l < 16)
+					l = 16;
+				if (l > 41)
+					l = 41;
+				uint32_t history = wsp->getModificationHistory();
+				history = (history << 8) | (l & 0xFF);
+				wsp->setModificationHistory(history);
+			}
 		}
 		wsp->setPathStatus(WebSitePath::OK);
 		wsp->setErrorCount(0);
@@ -410,6 +424,31 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 		wsp->setRefreshing(false);
 		result = true;
 	}
+	lock.Unlock();
+	return result;
+}
+
+inline long WebSiteResource::PathNextModification(const char *path) {
+	lock.LockRead();
+	WebSitePath *wsp = getPathInfo(path, true);
+	long result = 0;
+	if (wsp) {
+		uint32_t history = wsp->getModificationHistory();
+		int a = history >> 24;
+		if (!a)
+			a = DEFAULT_MODIFICATION_HISTORY;
+		int b = (history >> 16) & 0xFF;
+		if (!b)
+			b = DEFAULT_MODIFICATION_HISTORY;
+		int c = (history >> 8) & 0xFF;
+		if (!c)
+			c = DEFAULT_MODIFICATION_HISTORY;
+		int d = history & 0xFF;
+		if (!d)
+			d = DEFAULT_MODIFICATION_HISTORY;
+		result = floor(exp(((a + b*2 + c*3 + d*4)/10)*log(1.5)));
+	}
+	lock.Unlock();
 	return result;
 }
 

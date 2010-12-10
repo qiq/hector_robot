@@ -24,6 +24,10 @@ bool parseLong(std::string *data, long *value);
 bool parseIp4(std::string *data, IpAddr *value);
 bool parseIp6(std::string *data, IpAddr *value);
 
+// convert integer to string (at least 11 bytes)
+char* itoa(int value, char* str);
+
+// count fast hash
 inline long CountCksum(const char *data, int size) {
 	return (long)SuperFastHash(data, size);
 }

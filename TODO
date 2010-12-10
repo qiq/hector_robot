@@ -1,19 +1,21 @@
 - resoruce factories??? mozna docela dobry napad, aby se pouzivaly porad
 	- akorat je potreba mazat resources ne pres delete, ale pomoci funkce,
 	  ktera je vrati zpet. To by nemel byt problem, protoze se maze jen v Process()
+	- akorat je potreba vzdycky resource smazat (udelat metodu clear())?
 
 - http://www.searchtools.com/robots/robot-checklist.html
 
 - scheduler
-	- nejdriv vzit obsah a spocitat hash
-	- napsat
+	- schovavat fd i stream pro protobuf
+	- udelat kopii wr, ulozit ji
+	- aby se nastavil last_scheduled ve WebResource pri ukladani v scheduleru (a nuloval pocet redirectu :))
+	- vytvori kopii resource (jen url) a ulozi ji do daneho souboru
+	- otestovat
+
 
 - url extractor
 	- napsat test
 	- otestovat meta refresh
-
-- aby se nastavil last_scheduled ve WebResource pri ukladani v scheduleru (a asi nuloval pocet redirectu :))
-	- aby se nuloval pocet redirectu po nacteni WebResource
 
 - disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
 

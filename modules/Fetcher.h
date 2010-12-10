@@ -12,7 +12,6 @@
 
 #include <queue>
 #include <string>
-#include <tr1/unordered_map>
 #include <ev.h>
 #include <curl/curl.h>
 #include "common.h"
