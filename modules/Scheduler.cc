@@ -21,6 +21,12 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 }
 
 Scheduler::~Scheduler() {
+	// close all files
+	for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
+		iter->second->stream->Close();
+		delete iter->second;
+	}
+
 	delete values;
 }
 
@@ -70,11 +76,13 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return wr;
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(r);
 
-	int now = time(NULL)/1000;
+	uint32_t t = time(NULL);
+	int now = t/1000;
 	if (now > currentTime) {
 		// close all files
-		for (tr1::unordered_map<int, google::protobuf::io::FileOutputStream*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
-			iter->second->Close();
+		for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
+			iter->second->stream->Close();
+			delete iter->second;
 		}
 		currentTime = now;
 	}
@@ -82,8 +90,8 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 	int next = wsr->PathNextModification(wr->getUrlPath().c_str())/1000;
 
 	// is file already open?
-	tr1::unordered_map<int, google::protobuf::io::FileOutputStream*>::iterator iter = openFiles.find(now+next);
-	google::protobuf::io::FileOutputStream *stream;
+	tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.find(now+next);
+	OpenFile *of;
 	if (iter == openFiles.end()) {
 		// construct filename and open file
 		char filename[1024];
@@ -95,22 +103,25 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 			LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 			return wr;
 		}
-		stream = new google::protobuf::io::FileOutputStream(fd);
-		// FIXME: ukladat fd i stream
-		openFiles[now+next] = stream;
+		OpenFile *of = new OpenFile;
+		of->fd = fd;
+		of->stream = new google::protobuf::io::FileOutputStream(fd);
+		openFiles[now+next] = of;
 	} else {
-		stream = iter->second;
+		of = iter->second;
 	}
 
-	// FIXME: vytvor kopii (WR), jen url, redirect_count (ten je automaticky 0?), nastavit last_scheduled
+	WebResource *other;
+	other->setUrl(wr->getUrl());
+	other->setLastScheduled(t);
 	char buffer[5];
-	*(uint32_t*)buffer = (uint32_t)wr->getSerializedSize();
-	*(uint8_t*)(buffer+4) = WebSiteResource::typeId;
-	if (WriteBytes(fd, buffer, 5) != 5) {
+	*(uint32_t*)buffer = (uint32_t)other->getSerializedSize();
+	*(uint8_t*)(buffer+4) = WebResource::typeId;
+	if (WriteBytes(of->fd, buffer, 5) != 5) {
 		LOG_ERROR(this, "Error writing to file: " << strerror(errno));
-		return wr;
+		return resource;
 	}
-	wr->SerializeWithCachedSizes(stream);
+	other->SerializeWithCachedSizes(of->stream);
 
 	return resource;
 }

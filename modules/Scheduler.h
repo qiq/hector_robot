@@ -25,6 +25,11 @@ public:
 	Resource *ProcessSimple(Resource *resource);
 
 private:
+	struct OpenFile {
+		int fd;
+		google::protobuf::io::FileOutputStream* stream;
+	};
+
 	int items;		// ObjectLock, items processed
 	char * outputDir;	// ObjectLock, where to save resource files
 	ObjectValues<Scheduler> *values;
@@ -38,7 +43,7 @@ private:
 	std::vector<std::string> *listNamesSync();
 
 	uint32_t currentTime;
-	std::tr1::unordered_map<int, google::protobuf::io::FileOutputStream*> openFiles;
+	std::tr1::unordered_map<int, OpenFile*> openFiles;
 };
 
 inline Module::Type Scheduler::getType() {
