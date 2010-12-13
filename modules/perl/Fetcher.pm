@@ -1,4 +1,18 @@
-# items: number of resources created
+# Fetcher.pm, simple, perl
+# Fetch an object (html page) using HTTP. Should not drop resources, because
+# resource path may be locked. Sets X-Status value with HTTP Status-Line.
+# 
+# Dependencies: LWP::UserAgent
+# 
+# Parameters:
+# items			r/o	Total items processed
+# timeout			r/w	Download timeout
+# from			init	From: header field
+# userAgent		init	User-Agent: header field
+# 
+# Status:
+# 0	OK
+# 1	error
 
 package Fetcher;
 
@@ -106,8 +120,7 @@ sub ProcessSimple() {
 
 	my $url = $resource->getUrl();
 	if (not defined $url) {
-		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL");
-		$resource->setFlag($Hector::Resource::DELETED);
+		$self->{'_object'}->log_error($resource->toStringShort()." No URL found");
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
@@ -117,6 +130,7 @@ sub ProcessSimple() {
 		push(@values, "".$response->header($name));	# N.B.: force conversion to string
 	}
 	$resource->setHeaderFields(\@names, \@values);
+	$resource->setHeaderValue("X-Status", $response->status_line);
 	if ($response->is_success) {
 		$resource->setContent($response->decoded_content);
 		$resource->setStatus(0);

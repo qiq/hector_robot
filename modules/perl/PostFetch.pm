@@ -1,5 +1,17 @@
-# items: number of resources created
-# redirect resources are marked with status == 1
+# PostFetch.pm, simple, perl
+# Post-process result of Fetch module, unlock WSR and update WebSitePath
+# status. Redirect resources are marked with status == 1.
+# 
+# Dependencies: none
+# 
+# Parameters:
+# items			r/o	Total items processed
+# maxErrors		r/w	number of consecutive errors to cause resource to be disabled (default is 5)
+# maxRedirects		r/w	number of consecutive redirects to accept (default is 5)
+# 
+# Status:
+# 0	OK
+# 1	redirect
 
 package PostFetch;
 
@@ -113,7 +125,7 @@ sub ProcessSimple() {
 				my $content = $resource->getContent();
 				my $size = length($content);
 				my $cksum = 0;
-				$cksum = CountCksum($content, $size) if ($size == $wsp->getSize());
+				$cksum = CountCksum($content, $size) if ($size == $wsr->getSize());
 				$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $size, $cksum);
 				$resource->setStatus(0);
 			} elsif ($status >= 300 and $status < 400) {

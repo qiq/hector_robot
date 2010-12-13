@@ -1,4 +1,21 @@
-# items: number of resources created
+# RobotsParser.pm, simple, perl
+# Parses WR content as robots.txt file and fills robots info in attached WSR.
+# In case of errors in parsing, WSR Disallow/Allow lists are cleared and
+# refresh time is set to negativeTTL. Otherwise lists are filled and refresh
+# time is set to TTL.
+# 
+# Dependencies: none
+# 
+# Parameters:
+# items			r/o	Total items processed
+# robotName		r/w	Robot name to match in robots.txt file (default is hector)
+# wildcards		r/w	Whether to consider robots rules as wildcards
+# TTL			r/w	Time to keep result after successful processing (default is one day)
+# negativeTTL		r/w	Time to keep an info about error in processing
+#				(default is one day)
+# 
+# Status:
+# not changed (on error, WebResources are discarded)
 
 package RobotsParser;
 

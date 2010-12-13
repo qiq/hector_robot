@@ -1,4 +1,15 @@
-# items: number of resources created
+# PreFetch.pm, simple, perl
+# Pre-process WebResource before passing to the Fetch module, test that
+# WebSitePath is not locked, lock it and propagate IP address from WSR to WR.
+# If WR does not pass the test, it is discarded.
+# 
+# Dependencies: none
+# 
+# Parameters:
+# items			r/o	Total items processed
+# 
+# Status:
+# not changed (on error, WebResources are discarded)
 
 package PreFetch;
 

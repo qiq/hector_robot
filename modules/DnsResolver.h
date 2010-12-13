@@ -1,7 +1,17 @@
 /**
- * DnsResolver: translate DNS name to IP address
- * Supports WebResource and WebSiteResource
- */
+DnsResolver.la, multi, native
+Translate DNS name to IP address, supports WebResource and WebSiteResource.
+
+Dependencies: libunbound
+
+Parameters:
+items		r/o	Total items processed
+maxRequests	init	Number of concurrent requests
+timeTick	r/w	Max time to spend in ProcessMulti()
+forwardServer	init	DNS server to use
+forwardPort	init	Port number of the DNS server
+negativeTTL	r/w	Number of seconds to keep info about DNS failure/NXdomain
+*/
 
 #ifndef _MODULES_RESOLVE_DNS_H_
 #define _MODULES_RESOLVE_DNS_H_
@@ -45,15 +55,6 @@ private:
 	int forwardPort;	// initOnly, port number of the DNS server
 	int negativeTTL;	// ObjectLock, number of seconds to keep info about DNS failure/NXdomain
 
-	ObjectValues<DnsResolver> *values;
-
-	struct ub_ctx* ctx;	// unbound context
-	int fd;			// file descriptor we are waiting for read
-	std::vector<DnsResourceInfo*> unused;
-	std::tr1::unordered_map<int, DnsResourceInfo*> running;
-	std::queue<Resource*> *outputResources;
-	uint32_t currentTime;	// time of ProcessMulti() call
-
 	char *getItems(const char *name);
 	char *getMaxRequests(const char *name);
 	void setMaxRequests(const char *name, const char *value);
@@ -66,10 +67,19 @@ private:
 	char *getNegativeTTL(const char *name);
 	void setNegativeTTL(const char *name, const char *value);
 
+	ObjectValues<DnsResolver> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
+
+	struct ub_ctx* ctx;	// unbound context
+	int fd;			// file descriptor we are waiting for read
+	std::vector<DnsResourceInfo*> unused;
+	std::tr1::unordered_map<int, DnsResourceInfo*> running;
+	std::queue<Resource*> *outputResources;
+	uint32_t currentTime;	// time of ProcessMulti() call
+
 };
 
 inline Module::Type DnsResolver::getType() {

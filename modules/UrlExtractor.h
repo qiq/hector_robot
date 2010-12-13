@@ -1,6 +1,17 @@
 /**
- * Extract URLs from WebResource using flex.
- */
+UrlExtractor.la, multi, native
+Extract URLs from WebResource using flex.
+
+Dependencies: none
+
+Parameters:
+items		r/o	Total items processed
+newUrlStatus	r/w	Status to be set for new-url WebResources
+
+Status:
+original WR: untouched
+new WR: status is set according to newUrlStatus parameter. Default is 2.
+*/
 
 #ifndef _MODULES_URL_EXTRACTOR_H_
 #define _MODULES_URL_EXTRACTOR_H_
@@ -28,19 +39,20 @@ public:
 private:
 	int items;		// ObjectLock, items processed
 	int newUrlStatus;	// ObjectLock, status to be set for new-url WebResources
-	ObjectValues<UrlExtractor> *values;
+
 	char *getItems(const char *name);
 	char *getNewUrlStatus(const char *name);
 	void setNewUrlStatus(const char *name, const char *value);
 
-	// for flex
-	void *scanner;
-	scanner_state state;
-
+	ObjectValues<UrlExtractor> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
+
+	// for flex
+	void *scanner;
+	scanner_state state;
 };
 
 inline Module::Type UrlExtractor::getType() {

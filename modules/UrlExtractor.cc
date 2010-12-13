@@ -15,6 +15,7 @@ using namespace std;
 
 UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
+	newUrlStatus = 2;
 
 	values = new ObjectValues<UrlExtractor>(this);
 	values->addGetter("items", &UrlExtractor::getItems);

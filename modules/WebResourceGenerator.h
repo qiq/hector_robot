@@ -1,6 +1,17 @@
 /**
- * Generate WebResource with random content. Meant to be used as a test.
- */
+WebResourceGenerator.la, input, native
+Generate WebResource with random content. Mainly for testing purposes.
+
+Dependencies: none
+
+Parameters:
+items		r/o	Total items processed
+maxItems	init	Number of items to load
+idPrefix	r/w	Prefix to be used in WebResource URL
+
+Status:
+0 (WebResource default)
+*/
 
 #ifndef _WEB_RESOURCE_GENERATOR_H_
 #define _WEB_RESOURCE_GENERATOR_H_
@@ -21,13 +32,9 @@ public:
 	Resource *ProcessInput(bool sleep);
 
 private:
-	int typeId;		// not accessible outside module
-
 	int items;		// ObjectLock
 	int maxItems;		// initOnly
 	char *idPrefix;		// ObjectLock
-
-	ObjectValues<WebResourceGenerator> *values;
 
 	char *getItems(const char *name);
 	char *getMaxItems(const char *name);
@@ -35,10 +42,13 @@ private:
 	char *getIdPrefix(const char *name);
 	void setIdPrefix(const char *name, const char *value);
 
+	ObjectValues<WebResourceGenerator> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
+
+	int typeId;		// type of resource to generate (WebResource)
 };
 
 inline Module::Type WebResourceGenerator::getType() {

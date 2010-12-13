@@ -52,9 +52,9 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 Fetcher::~Fetcher() {
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
-		delete ri->current;
+		Resource::ReleaseResource(ri->current);
 		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
-			delete *iter;
+			Resource::ReleaseResource(*iter);
 		curl_easy_cleanup(ri->easy);
 		if (ri->headers)
 			curl_slist_free_all(ri->headers);
@@ -342,7 +342,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// set URL
 	const string &url = wr->getUrl();
 	if (url.empty()) {
-		LOG_ERROR_R(this, wr, "No url found");
+		LOG_ERROR_R(this, wr, "No URL found");
 		outputResources->push(wr);
 		return;
 	}
@@ -380,7 +380,12 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
-	ri->current->setStatus(result);
+	if (result == CURLE_OK) {
+		ri->current->setStatus(0);
+	} else {
+		LOG_DEBUG_R(this, ri->current, "Erorr fetching URL: " << result);
+		ri->current->setStatus(1);
+	}
 	outputResources->push(ri->current);
 	ObjectLockWrite();
 	++items;
@@ -486,6 +491,7 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 			if (!ip.isEmpty()) {
 				QueueResource(wr);
 			} else {
+				LOG_DEBUG_R(this, wr, "Empty ip address");
 				wr->setStatus(1);
 				outputResources->push(wr);
 			}

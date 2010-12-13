@@ -1,4 +1,13 @@
-# items: number of resources created
+# DnsResolver.pm, simple, perl
+# Translate DNS name to IP address, supports WebResource and WebSiteResource.
+# 
+# Dependencies: Net::DNS
+#
+# Parameters:
+# items		r/o	Total items processed
+# forwardServer	init	DNS server to use
+# forwardPort	init	Port number of the DNS server
+# negativeTTL	r/w	Number of seconds to keep info about DNS failure/NXdomain
 
 package DnsResolver;
 

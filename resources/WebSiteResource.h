@@ -131,7 +131,7 @@ protected:
 	void LoadIpAddr();
 	void SaveIpAddr();
 
-	static MemoryPool<WebSitePath> pool;
+	static MemoryPool<WebSitePath, true> pool;
 
 	// helper methods to convert from Judy array to protobuf representation and vice-versa
 	bool ProtobufToJarray();

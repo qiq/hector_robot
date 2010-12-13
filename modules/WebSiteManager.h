@@ -1,8 +1,33 @@
 /**
- * WebSiteManager: takes care of all WebSiteResource items. It is able to call
- * two other processing engines: DNS resolver and robots.txt fetch + parse in
- * order to fill WebSiteResource.
- */
+WebSiteManager.la, multi, native
+Takes care of all WebSiteResource items: keeps them in memory, loads and saves
+them. It may call two other processing engines: DNS resolver and robots.txt
+fetcher + parser. These two are used to fill WebSiteResource.
+
+Dependencies: none
+
+Parameters:
+items			r/o	Total items processed
+maxRequests		init	Number of concurrent requests
+timeTick		r/w	Max time to spend in ProcessMulti()
+dnsEngine		init	ProcessingEngine to call for DNS resolution
+robotsEngine		init	ProcessingEngine to call for robots.txt refresh
+load			r/w	Save WebSiteResources to the file
+save			r/w	Load WebSiteResources from the file
+
+Status:
+- input:
+0 (?):	Plain input WR, WSR should be attached, DNS and robots should be
+	filled correctly in WSR. Also used for outside incoming new-link WRs
+	(TODO).
+2:	Attach WSR, but do not perform DNS and robots resolution. Used for
+	new-link WRs.
+- output:
+0:	DNS and robots filled OK
+1:	Error in DNS or robots resolution
+2:	WSR without DNS and robots.txt attached (new-link WR)
+//3:	Output new-link to the supervisor (TODO)
+*/
 
 #ifndef _MODULES_WEB_SITE_MANAGER_H_
 #define _MODULES_WEB_SITE_MANAGER_H_
@@ -62,13 +87,12 @@ public:
 
 private:
 	// properties
-	int items;		// ObjectLock
-	int maxRequests;	// ObjectLock, number of concurrent requests
+	int items;		// ObjectLock, ro
+	int maxRequests;	// initOnly, number of concurrent requests
 	int timeTick;		// ObjectLock
 	char *dnsEngine;	// read-only
 	char *robotsEngine;	// read-only
 
-	ObjectValues<WebSiteManager> *values;
 	char *getItems(const char *name);
 	char *getMaxRequests(const char *name);
 	void setMaxRequests(const char *name, const char *value);
@@ -83,12 +107,13 @@ private:
 	char *getSave(const char *name);
 	void setSave(const char *name, const char *value);
 
+	ObjectValues<WebSiteManager> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
 
-	MemoryPool<WebSiteResource> *pool;
+	MemoryPool<WebSiteResource, true> *pool;
 	std::tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal> sites;
 	WebSiteResource key;
 

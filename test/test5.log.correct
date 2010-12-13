@@ -1,2 +1,2 @@
-[WR 0 0] url: http://127.0.0.1:8012/foo.html (HTTP 127.0.0.1:8012 /foo.html), size: 0, ip: 0.0.0.0
-[WR 0 0] url: http://127.0.0.1:8012/foo.html (HTTP 127.0.0.1:8012 /foo.html), size: 17, ip: 0.0.0.0
+[WR 0 0] url: http://127.0.0.1:8012/foo.html (HTTP 127.0.0.1:8012 /foo.html), size: 0, ip: 0.0.0.0, last scheduled: 0
+[WR 0 0] url: http://127.0.0.1:8012/foo.html (HTTP 127.0.0.1:8012 /foo.html), size: 64, ip: 0.0.0.0, last scheduled: 0

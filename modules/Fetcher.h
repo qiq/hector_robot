@@ -1,9 +1,25 @@
 /**
- * Fetcher object (html page) using HTTP.
- * Uses CURL in non-blocking mode and libev.
- * Should not drop resources, because resource path may be locked.
- * Sets X-Status value with HTTP Status-Line.
- */
+Fetcher.la, multi, native
+Fetch an object (html page) using HTTP, uses CURL in non-blocking mode and libev.
+Should not drop resources, because resource path may be locked. Sets X-Status
+value with HTTP Status-Line.
+
+Dependencies: libcurl, libev
+
+Parameters:
+items			r/o	Total items processed
+minServerRelax		r/w	Time between access to the same IP address
+timeout			r/w	Download timeout
+from			init	From: header field
+userAgent		init	User-Agent: header field
+maxRequests		init	Number of concurrent requests
+maxContentLength	r/w	Maximum length of the content to download
+timeTick		r/w	Max time to spend in ProcessMulti()
+
+Status:
+0	OK
+1	error
+*/
 
 #ifndef _MODULES_FETCH_H_
 #define _MODULES_FETCH_H_
@@ -84,10 +100,6 @@ private:
 	long maxContentLength;	// ObjectLock, maximum length of the content to download
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 
-	ObjectValues<Fetcher> *values;
-
-	std::queue<Resource*> *outputResources;
-
 	char *getItems(const char *name);
 	char *getMinServerRelax(const char *name);
 	void setMinServerRelax(const char *name, const char *value);
@@ -104,10 +116,14 @@ private:
 	char *getTimeTick(const char *name);
 	void setTimeTick(const char *name, const char *value);
 
+	ObjectValues<Fetcher> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
+
+	std::queue<Resource*> *outputResources;
+
 };
 
 inline Module::Type Fetcher::getType() {

@@ -18,6 +18,8 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 	values->addGetter("items", &Scheduler::getItems);
 	values->addGetter("outputDir", &Scheduler::getOutputDir);
 	values->addSetter("outputDir", &Scheduler::setOutputDir);
+
+	currentTime = 0;
 }
 
 Scheduler::~Scheduler() {
@@ -111,7 +113,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		of = iter->second;
 	}
 
-	WebResource *other;
+	WebResource *other = new WebResource();
 	other->setUrl(wr->getUrl());
 	other->setLastScheduled(t);
 	char buffer[5];
@@ -122,6 +124,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return resource;
 	}
 	other->SerializeWithCachedSizes(of->stream);
+	delete other;
 
 	return resource;
 }

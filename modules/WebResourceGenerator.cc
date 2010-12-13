@@ -73,8 +73,8 @@ Resource *WebResourceGenerator::ProcessInput(bool sleep) {
 	ObjectUnlock();
 	if (maxItems && it >= maxItems)
 		return NULL;
-	// we can use just new WebResource(), we use Resources::CreateResource() for demo purpose
-	WebResource *wr = static_cast<WebResource*>(Resource::CreateResource(typeId));
+	// we can use just new WebResource(), we use Resources::AcquireResource() for demo purpose
+	WebResource *wr = static_cast<WebResource*>(Resource::AcquireResource(typeId));
 	wr->setId(getThreadIndex()*10000+items);
 	char s[1024];
 	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items);

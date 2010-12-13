@@ -1,6 +1,15 @@
-# items: number of resources created
-# urlList: list of URL (text or CDATA section)
-# urlFile: file with list of URL
+# WebResourceCreator.pm, input, perl
+# Create WRs according to the list of url got in the config or in the file.
+# 
+# Dependencies: none
+# 
+# Parameters:
+# items			r/o	Total items processed
+# urlList		init	List of URLs (text or CDATA section)
+# urlFile		init	File with list of URLs
+# 
+# Status:
+# 0 (default of WR)
 
 package WebResourceCreator;
 

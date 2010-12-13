@@ -69,10 +69,10 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 
 	values = new ObjectValues<WebSiteManager>(this);
 	values->addGetter("items", &WebSiteManager::getItems);
+	values->addGetter("maxRequests", &WebSiteManager::getMaxRequests);
+	values->addSetter("maxRequests", &WebSiteManager::setMaxRequests, true);
 	values->addGetter("timeTick", &WebSiteManager::getTimeTick);
 	values->addSetter("timeTick", &WebSiteManager::setTimeTick);
-	values->addGetter("maxRequests", &WebSiteManager::getMaxRequests);
-	values->addSetter("maxRequests", &WebSiteManager::setMaxRequests);
 	values->addGetter("dnsEngine", &WebSiteManager::getDnsEngine);
 	values->addSetter("dnsEngine", &WebSiteManager::setDnsEngine);
 	values->addGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
@@ -82,7 +82,7 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	values->addGetter("save", &WebSiteManager::getSave);
 	values->addSetter("save", &WebSiteManager::setSave);
 
-	pool = new MemoryPool<WebSiteResource>(10*1024);
+	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
 	processingResourcesCount = 0;
 }
@@ -200,7 +200,7 @@ WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
 	if (iter != sites.end())
 		return iter->second;
 	// create, if not found
-	WebSiteResource *wsr = pool->alloc();
+	WebSiteResource *wsr = pool->Alloc();
 	wsr->setUrl(wr->getUrlScheme(), wr->getUrlHost(), wr->getUrlPort());
 	sites[wsr] = wsr;
 	return wsr;
@@ -267,7 +267,7 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 			result = false;
 			break;
 		}
-		WebSiteResource *wsr = pool->alloc();
+		WebSiteResource *wsr = pool->Alloc();
 		if (!wsr->Deserialize(stream, *(uint32_t*)buffer)) {
 			result = false;
 			break;

@@ -1,6 +1,17 @@
 /**
- * Extract URLs from WebResource using flex.
- */
+Scheduler.la, simple, native
+Schedule next refresh of a resource. It uses time quantization of 1000 seconds
+(00:16:40). Files are named after the absolute time of processing.
+
+Dependencies: protobuf
+
+Parameters:
+items		r/o	Total items processed
+outputDir	r/w	Where to save files to.
+
+Status:
+untouched
+*/
 
 #ifndef _MODULES_SCHEDULER_H_
 #define _MODULES_SCHEDULER_H_
@@ -25,22 +36,23 @@ public:
 	Resource *ProcessSimple(Resource *resource);
 
 private:
-	struct OpenFile {
-		int fd;
-		google::protobuf::io::FileOutputStream* stream;
-	};
-
 	int items;		// ObjectLock, items processed
-	char * outputDir;	// ObjectLock, where to save resource files
-	ObjectValues<Scheduler> *values;
+	char *outputDir;	// ObjectLock, where to save resource files
+
 	char *getItems(const char *name);
 	char *getOutputDir(const char *name);
 	void setOutputDir(const char *name, const char *value);
 
+	ObjectValues<Scheduler> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
+
+	struct OpenFile {
+		int fd;
+		google::protobuf::io::FileOutputStream* stream;
+	};
 
 	uint32_t currentTime;
 	std::tr1::unordered_map<int, OpenFile*> openFiles;

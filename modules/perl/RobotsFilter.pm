@@ -1,4 +1,15 @@
-# items: number of resources created
+# RobotsFilter.pm, simple, perl
+# Test whether current WR is not disabled by a rule in robots.txt file.
+# Optionally supports wildcard matching rules.
+# 
+# Dependencies: none
+# 
+# Parameters:
+# items			r/o	Total items processed
+# wildcards		r/w	Whether to consider robots rules as wildcards
+# 
+# Status:
+# not changed (on error, WebResources are discarded)
 
 package RobotsFilter;
 

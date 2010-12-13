@@ -5,7 +5,7 @@
 using namespace std;
 
 log4cxx::LoggerPtr WebSiteResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebSiteResource"));
-MemoryPool<WebSitePath> WebSiteResource::pool(1024);
+MemoryPool<WebSitePath, true> WebSiteResource::pool(1024);
 
 WebSiteResource::WebSiteResource() {
 	paths = NULL;
@@ -65,7 +65,7 @@ void WebSiteResource::SaveIpAddr() {
 bool WebSiteResource::ProtobufToJarray() {
 	for (int i = 0; i < r.paths_size(); i++) {
 		const ::hector::resources::WebSitePath &p = r.paths(i);
-		WebSitePath *wsp = pool.alloc();
+		WebSitePath *wsp = pool.Alloc();
 		wsp->setPathStatus((WebSitePath::PathStatus)p.path_status());
 		wsp->setLastPathStatusUpdate(p.last_path_status_update());
 		wsp->setErrorCount(p.error_count());
@@ -129,7 +129,7 @@ WebSitePath *WebSiteResource::getPathInfo(const char *path, bool create) {
 	if (!PValue) {
 		if (!create)
 			return NULL;
-		WebSitePath *wsp = pool.alloc();
+		WebSitePath *wsp = pool.Alloc();
 		wsp->setPathStatus(WebSitePath::NEW_LINK);
 		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
 		if (PValue == PJERR) {
