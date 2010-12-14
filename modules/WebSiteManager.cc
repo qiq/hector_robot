@@ -231,6 +231,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 	WebResource *wr = static_cast<WebResource*>(iter->second);
 	Resource *next = wr->getAttachedResource();
 	wr->setAttachedResource(wsr);
+	wr->setStatus(0);
 	outputResources->push(wr);
 	processingResourcesCount--;
 	while (next != static_cast<Resource*>(iter->first)) {
@@ -323,12 +324,19 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
 			// get domain info
 			WebSiteResource *wsr = getWebSiteResource(wr);
-			if (wsr->getIpAddrExpire() < currentTime || wsr->getRobotsExpire() < currentTime) {
-				StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= currentTime);
-			} else {
-				// no problem with the wsr, just attach it to wr
+			// status == 2 -> do not refresh IP address or robots.txt
+			if (wr->getStatus() == 2) {
 				wr->setAttachedResource(wsr);
 				outputResources->push(wr);
+			} else {
+				if (wsr->getIpAddrExpire() < currentTime || wsr->getRobotsExpire() < currentTime) {
+					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= currentTime);
+				} else {
+					// no problem with the WSR, just attach it to WR
+					wr->setAttachedResource(wsr);
+					wr->setStatus(0);
+					outputResources->push(wr);
+				}
 			}
 		} else {
 			outputResources->push(inputResources->front());

@@ -23,9 +23,9 @@ Status:
 2:	Attach WSR, but do not perform DNS and robots resolution. Used for
 	new-link WRs.
 - output:
-0:	DNS and robots filled OK
-1:	Error in DNS or robots resolution
-2:	WSR without DNS and robots.txt attached (new-link WR)
+0:	WSR attached, DNS and robots filled
+1:	Error in DNS or robots resolution, currently not used
+2:	WSR attached, no DNS and robots.txt resolution performed
 //3:	Output new-link to the supervisor (TODO)
 */
 
