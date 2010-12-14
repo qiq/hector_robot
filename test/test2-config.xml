@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test2: Create WebResources, parse urls, dump them and compose them again.
+test2: Create WebResources, parse urls, resolve DNS and dump result
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -15,16 +15,18 @@ test2: Create WebResources, parse urls, dump them and compose them again.
 				<modules>
 					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
 						<param name="urlList">
-<![CDATA[						http://qiq:abc@localhost/path?q=a#2
-							http://qiq:abc@localhost:8080/path?q=a#2
-							http://google.com/path?q=a#2
+<![CDATA[						http://www.test.com/foo/bar?a=b#c
+							http://www.test.org/
+							http://google.com/
 							http://www.nicnevime.cz:443/
 							https://www.vimeovine.cz/ ]]>
 						</param>
 					</Module>
-					<Module id="M_parseurl" lib="UrlParser.la"/>
 					<Module id="M_dump1" lib="Dump.la"/>
-					<Module id="M_composeurl" lib="UrlComposer.la"/>
+					<Module id="M_dns" lib="DnsResolver.pm" type="perl">
+						<param name="forwardServer" value="127.0.0.1"/>
+						<param name="forwardPort" value="5354"/>
+					</Module>
 					<Module id="M_dump2" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>

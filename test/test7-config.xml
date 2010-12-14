@@ -11,7 +11,7 @@ test7:
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>test7.log.props</logConfig>
+		<logConfig>test.log.props</logConfig>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_load">
 				<threads>1</threads>
