@@ -51,7 +51,8 @@ private:
 
 	struct OpenFile {
 		int fd;
-		google::protobuf::io::FileOutputStream* stream;
+		google::protobuf::io::FileOutputStream* file;
+		google::protobuf::io::CodedOutputStream* stream;
 	};
 
 	uint32_t currentTime;

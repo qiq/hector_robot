@@ -18,14 +18,14 @@ Scheme.pb.cc Scheme.pb.h: Scheme.proto
 	$(PROTOC) Scheme.proto --cpp_out=.
 
 libScheme_la_SOURCES = Scheme.pb.h Scheme.pb.cc
-libScheme_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+libScheme_la_LDFLAGS = $(AM_LDFLAGS)
 
 EXTRA_DIST += Scheme.proto Scheme.i
 CLEANFILES += Scheme.pb.h Scheme.pb.cc
 
 libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
 libWebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-libWebResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+libWebResource_la_LDFLAGS = $(AM_LDFLAGS)
 libWebResource_la_LIBADD = libScheme.la $(top_builddir)/lib/libgoogleurl.la
 
 BUILT_SOURCES += WebResource.pb.h WebResource.pb.cc
@@ -42,7 +42,7 @@ CLEANFILES += WebResource.pb.h WebResource.pb.cc
 ALIASES += WebResource.la
 
 libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc WebSitePath.h
-libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS)
 libWebSiteResource_la_LIBADD = libScheme.la -lJudy
 
 BUILT_SOURCES += WebSiteResource.pb.h WebSiteResource.pb.cc

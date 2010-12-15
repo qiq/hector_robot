@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test7:
-	- pre-run: load website resources
-	- run: create WebResources, pass them through WebSiteManager to obtain IP address and robots.txt info.
-	- post-run: save website resources
+test6: Create WebResource, pass them through WebSiteManager to obtain IP
+address and robots info.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -13,7 +11,7 @@ test7:
 		<serverPort>1100</serverPort>
 		<logConfig>test.log.props</logConfig>
 		<ProcessingEngine id="PE_test">
-			<Processor id="P_load">
+			<Processor id="P_main">
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
@@ -25,46 +23,11 @@ test7:
 						</param>
 					</Module>
 					<Module id="M_dump1" lib="Dump.la"/>
-				</modules>
-				<output>
-					<nextProcessor ref="P_main"/>
-				</output>
-			</Processor>
-			<Processor id="P_main">
-				<threads>1</threads>
-				<input>
-					<queue/>			<!-- default queue -->
-					<queue priority="100"/>		<!-- redirect queue -->
-				</input>
-				<modules>
 					<Module id="M_wsm" lib="WebSiteManager.la">
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
-					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
-					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
 					<Module id="M_dump2" lib="Dump.la"/>
-					<Module id="M_fetch" lib="Fetcher.la">
-						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="1"/>
-					</Module>
-					<Module id="M_dump3" lib="Dump.la"/>
-					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
-					<Module id="M_dump4" lib="Dump.la"/>
-				</modules>
-				<output>
-					<nextProcessor ref="P_main" filter="1" priority="100"/>
-					<nextProcessor ref="P_save"/>
-				</output>
-			</Processor>
-			<Processor id="P_save">
-				<threads>1</threads>
-				<input>
-					<queue/>
-				</input>
-				<modules>
-					<Module id="M_extract" lib="UrlExtractor.la"/>
-					<Module id="M_dump5" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>
@@ -75,13 +38,13 @@ test7:
 			<Processor id="P_dns">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_dump_dns1" lib="Dump.la"/>
+					<Module id="M_dns_dump1" lib="Dump.la"/>
 					<Module id="M_dns" lib="DnsResolver.la">
 						<param name="forwardServer" value="127.0.0.1"/>
 						<param name="forwardPort" value="5354"/>
 						<param name="negativeTTL" value="86400"/>
 					</Module>
-					<Module id="M_dump_dns2" lib="Dump.la"/>
+					<Module id="M_dns_dump2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>
@@ -97,16 +60,16 @@ test7:
 			<Processor id="P_robots">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_dump_robots1" lib="Dump.la"/>
-					<Module id="M_fetch_robots" lib="Fetcher.la">
+					<Module id="M_robots_dump1" lib="Dump.la"/>
+					<Module id="M_robots_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 						<param name="minServerRelax" value="1"/>
 					</Module>
-					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
+					<Module id="M_robots_parse" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>
 						<param name="negativeTTL" value="86400"/>
 					</Module>
-					<Module id="M_dump_robots2" lib="Dump.la"/>
+					<Module id="M_robots_dump2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>
@@ -114,6 +77,17 @@ test7:
                                 <output>
                                         <nextProcessor ref="PE_robots"/>
                                 </output>
+			</Processor>
+		</ProcessingEngine>
+
+		<ProcessingEngine id="PE_dump">
+			<Processor id="P_dump">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_dump_load" lib="Load.la"/>
+					<Module id="M_dump_dump" lib="Dump.la"/>
+					<Module id="M_dump_output" lib="TestOutput.la"/>
+				</modules>
 			</Processor>
 		</ProcessingEngine>
 	</Server>

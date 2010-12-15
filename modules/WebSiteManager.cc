@@ -250,33 +250,28 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
-	google::protobuf::io::FileInputStream *stream = new google::protobuf::io::FileInputStream(fd);
+	google::protobuf::io::FileInputStream *file = new google::protobuf::io::FileInputStream(fd);
+	google::protobuf::io::CodedInputStream *stream = new google::protobuf::io::CodedInputStream(file);
 
 	bool result = true;
-	char buffer[5];
 	while (1) {
-		int r = ReadBytes(fd, buffer, 5);
-		if (r < 0) {
-			LOG_ERROR(this, "Error reading from file: " << strerror(errno));
-			result = false;
-			break;
-		}
-		if (r == 0)	// finished
-			break;
-		if (r != 5) {
-			LOG_ERROR(this, "Error reading from file: " << strerror(errno));
-			result = false;
-			break;
-		}
 		WebSiteResource *wsr = pool->Alloc();
-		if (!wsr->Deserialize(stream, *(uint32_t*)buffer)) {
-			result = false;
+		char buffer[5];
+		result = stream->ReadRaw(buffer, 5);
+		if (!result)
 			break;
-		}
+		uint32_t size = *(uint32_t*)buffer;
+		uint8_t typeId = *(uint8_t*)(buffer+4);
+		google::protobuf::io::CodedInputStream::Limit l = stream->PushLimit(size);
+		result = wsr->Deserialize(stream);
+		stream->PopLimit(l);
+		if (!result)
+			break;
 		sites[wsr] = wsr;
 	}
-	if (stream)
-		stream->Close();
+	delete stream;
+	delete file;
+	close(fd);
 	return result;
 }
 
@@ -286,30 +281,20 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
-	google::protobuf::io::FileOutputStream *stream = new google::protobuf::io::FileOutputStream(fd);
+	google::protobuf::io::FileOutputStream *file = new google::protobuf::io::FileOutputStream(fd);
+	google::protobuf::io::CodedOutputStream *stream = new google::protobuf::io::CodedOutputStream(file);
 
 	bool result = true;
 	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
-		char buffer[5];
-		*(uint32_t*)buffer = (uint32_t)iter->second->getSerializedSize();
-		*(uint8_t*)(buffer+4) = WebSiteResource::typeId;
-		int r = WriteBytes(fd, buffer, 5);
-		if (r < 0) {
-			LOG_ERROR(this, "Error writing to file: " << strerror(errno));
+		if (!Resource::Serialize(iter->second, stream)) {
+			LOG_ERROR_R(this, iter->second, "Cannot serializei resource");
 			result = false;
 			break;
 		}
-		if (r == 0)	// finished
-			break;
-		if (r != 5) {
-			LOG_ERROR(this, "Error writing to file: " << strerror(errno));
-			result = false;
-			break;
-		}
-		iter->second->SerializeWithCachedSizes(stream);
 	}
-	if (stream)
-		stream->Close();
+	delete stream;
+	delete file;
+	close(fd);
 	return result;
 }
 

@@ -174,7 +174,7 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 	}
 	vector<string> *v = this->getAllowUrls();
 	if (v->size() > 0) {
-		s += "\nAllow:";
+		s += "\nAllow: ";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			if (first)
@@ -187,7 +187,7 @@ string WebSiteResource::toString(Object::LogLevel logLevel) {
 	delete v;
 	v = this->getDisallowUrls();
 	if (v->size() > 0) {
-		s += "\nDisallow:";
+		s += "\nDisallow: ";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 			if (first)

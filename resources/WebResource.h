@@ -36,11 +36,10 @@ public:
 	ProtobufResource *Clone();
 	// save and restore resource
 	std::string *Serialize();
+	int GetSerializedSize();
+	bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
 	bool Deserialize(const char *data, int size);
-	int getSerializedSize();
-	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
+	bool Deserialize(google::protobuf::io::CodedInputStream *input);
 	// get info about a resource field
 	ResourceFieldInfo *getFieldInfo(const char *name);
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
@@ -156,7 +155,28 @@ inline std::string *WebResource::Serialize() {
 	SaveIpAddr();
 	r.set_id(getId());
 	r.set_status(getStatus());
-	return MessageSerialize(&r);
+
+	std::string *result = new std::string();
+	r.SerializeToString(result);
+	return result;
+}
+
+inline int WebResource::GetSerializedSize() {
+	if (header_map_dirty)
+		SaveHeaders();
+	if (parsed_url_dirty)
+		SaveParsedUrl();
+	SaveIpAddr();
+	r.set_id(getId());
+	r.set_status(getStatus());
+
+	return r.ByteSize();
+}
+
+inline bool WebResource::SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output) {
+	// Headers, ParsedUrl, IpAddr, r.id and r.status were set in GetSerializedSize() already
+	r.SerializeWithCachedSizes(output);
+	return true;
 }
 
 inline bool WebResource::Deserialize(const char *data, int size) {
@@ -164,46 +184,23 @@ inline bool WebResource::Deserialize(const char *data, int size) {
 	header_map_dirty = 0;
 	parsed_url_ready = 0;
 	parsed_url_dirty = 0;
-	bool result = MessageDeserialize(&r, data, size);
+
+	bool result = r.ParseFromArray((void*)data, size);
+
 	// we keep id
 	setStatus(r.status());
 	LoadIpAddr();
 	return result;
 }
 
-inline int WebResource::getSerializedSize() {
-	if (header_map_dirty)
-		SaveHeaders();
-	if (parsed_url_dirty)
-		SaveParsedUrl();
-	SaveIpAddr();
-	r.set_id(getId());
-	r.set_status(getStatus());
-	return MessageGetSerializedSize(&r);
-}
-
-inline bool WebResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
-	if (header_map_dirty)
-		SaveHeaders();
-	if (parsed_url_dirty)
-		SaveParsedUrl();
-	SaveIpAddr();
-	r.set_id(getId());
-	r.set_status(getStatus());
-	return MessageSerialize(&r, output);
-}
-
-inline bool WebResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
-	// Headers, ParsedUrl, IpAddr, r.id and r.status were set in getSerializedSize() already
-	return MessageSerializeWithCachedSizes(&r, output);
-}
-
-inline bool WebResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
+inline bool WebResource::Deserialize(google::protobuf::io::CodedInputStream *input) {
 	header_map_ready = 0;
 	header_map_dirty = 0;
 	parsed_url_ready = 0;
 	parsed_url_dirty = 0;
-	bool result = MessageDeserialize(&r, input, size);
+
+	bool result = r.ParseFromCodedStream(input);
+
 	// we keep id
 	setStatus(r.status());
 	LoadIpAddr();

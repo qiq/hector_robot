@@ -47,11 +47,10 @@ public:
 	Resource *Clone();
 	// save and restore resource
 	std::string *Serialize();
+	int GetSerializedSize();
+	bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
 	bool Deserialize(const char *data, int size);
-	int getSerializedSize();
-	bool Serialize(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output);
-	bool Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size);
+	bool Deserialize(google::protobuf::io::CodedInputStream *input);
 	// get info about a resource field
 	ResourceFieldInfo *getFieldInfo(const char *name);
 	// type id of a resource (to be used by Resources::CreateResource(typeid))
@@ -231,55 +230,58 @@ inline std::string *WebSiteResource::Serialize() {
 	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
-	std::string *result = MessageSerialize(&r);
+	r.set_id(getId());
+	r.set_status(getStatus());
+
+	std::string *result = new std::string();
+	r.SerializeToString(result);
+
 	r.clear_paths();
 	lock.Unlock();
 	return result;
 }
 
+inline int WebSiteResource::GetSerializedSize() {
+	lock.LockRead();
+	SaveIpAddr();
+	// fill protocol-buffers space using JArray
+	JarrayToProtobuf();
+	r.set_id(getId());
+	r.set_status(getStatus());
+
+	int result = r.ByteSize();
+
+	lock.Unlock();
+	return result;
+}
+
+inline bool WebSiteResource::SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output) {
+	lock.LockRead();
+	// IpAddr is already saved, paths are filled
+
+	r.SerializeWithCachedSizes(output);
+
+	r.clear_paths();
+	lock.Unlock();
+	return true;
+}
+
 inline bool WebSiteResource::Deserialize(const char *data, int size) {
-	bool result = MessageDeserialize(&r, data, size);
+	bool result = r.ParseFromArray((void*)data, size);
+
+	// we keep id
+	setStatus(r.status());
 	ProtobufToJarray();
 	r.clear_paths();
 	LoadIpAddr();
 	return result;
 }
 
-inline int WebSiteResource::getSerializedSize() {
-	lock.LockRead();
-	SaveIpAddr();
-	// fill protocol-buffers space using JArray
-	JarrayToProtobuf();
-	int result = MessageGetSerializedSize(&r);
-	r.clear_paths();
-	lock.Unlock();
-	return result;
-}
+inline bool WebSiteResource::Deserialize(google::protobuf::io::CodedInputStream *input) {
+	bool result = r.ParseFromCodedStream(input);
 
-inline bool WebSiteResource::Serialize(google::protobuf::io::ZeroCopyOutputStream *output) {
-	lock.LockRead();
-	SaveIpAddr();
-	// fill protocol-buffers space using JArray
-	JarrayToProtobuf();
-	bool result = MessageSerialize(&r, output);
-	r.clear_paths();
-	lock.Unlock();
-	return result;
-}
-
-inline bool WebSiteResource::SerializeWithCachedSizes(google::protobuf::io::ZeroCopyOutputStream *output) {
-	lock.LockRead();
-	// IpAddr is already saved
-	// fill protocol-buffers space using JArray
-	JarrayToProtobuf();
-	bool result = MessageSerializeWithCachedSizes(&r, output);
-	r.clear_paths();
-	lock.Unlock();
-	return result;
-}
-
-inline bool WebSiteResource::Deserialize(google::protobuf::io::ZeroCopyInputStream *input, int size) {
-	bool result = MessageDeserialize(&r, input, size);
+	// we keep id
+	setStatus(r.status());
 	ProtobufToJarray();
 	r.clear_paths();
 	LoadIpAddr();

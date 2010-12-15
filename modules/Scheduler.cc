@@ -25,7 +25,10 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 Scheduler::~Scheduler() {
 	// close all files
 	for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
-		iter->second->stream->Close();
+		OpenFile *of = iter->second;
+		delete iter->second->stream;
+		delete iter->second->file;
+		close(iter->second->fd);
 		delete iter->second;
 	}
 
@@ -83,9 +86,13 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 	if (now > currentTime) {
 		// close all files
 		for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
-			iter->second->stream->Close();
+			OpenFile *of = iter->second;
+			delete iter->second->stream;
+			delete iter->second->file;
+			close(iter->second->fd);
 			delete iter->second;
 		}
+		openFiles.clear();
 		currentTime = now;
 	}
 	// next update should be in 'next' seconds
@@ -107,7 +114,8 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		}
 		OpenFile *of = new OpenFile;
 		of->fd = fd;
-		of->stream = new google::protobuf::io::FileOutputStream(fd);
+		of->file = new google::protobuf::io::FileOutputStream(of->fd);
+		of->stream = new google::protobuf::io::CodedOutputStream(of->file);
 		openFiles[now+next] = of;
 	} else {
 		of = iter->second;
@@ -116,14 +124,10 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 	WebResource *other = new WebResource();
 	other->setUrl(wr->getUrl());
 	other->setLastScheduled(t);
-	char buffer[5];
-	*(uint32_t*)buffer = (uint32_t)other->getSerializedSize();
-	*(uint8_t*)(buffer+4) = WebResource::typeId;
-	if (WriteBytes(of->fd, buffer, 5) != 5) {
-		LOG_ERROR(this, "Error writing to file: " << strerror(errno));
+	if (!Resource::Serialize(other, of->stream)) {
+		LOG_ERROR_R(this, resource, "Error serializing resource");
 		return resource;
 	}
-	other->SerializeWithCachedSizes(of->stream);
 	delete other;
 
 	return resource;
