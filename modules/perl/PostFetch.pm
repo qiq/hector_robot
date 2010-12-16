@@ -116,8 +116,8 @@ sub ProcessSimple() {
 		my $status = $resource->getHeaderValue("X-Status");
 		if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
 			$self->{'_object'}->log_error($resource->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
-			my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-			$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+			my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+			$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 		} else {
 			$self->{'_object'}->log_debug($resource->toStringShort().' Status: '.$status.' '.$resource->getUrl());
 			if ($status >= 100 and $status < 300) {
@@ -133,26 +133,26 @@ sub ProcessSimple() {
 				my $location = $resource->getHeaderValue("Location");
 				if (not defined $location) {
 					$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
-					my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-					$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+					my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+					$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 				} else {
 					$resource->setUrl($location);
 					my $redirects = $resource->getRedirectCount();
 					if ($redirects > $self->{'maxRedirects'}) {
 						$self->{'_object'}->log_error($resource->toStringShort()." Too many redirects: ".$resource->getUrl());
-						my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-						$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+						my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+						$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 					} else {
 						# correct redirects
 						$resource->setRedirectCount($redirects+1);
-						$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $status == 301);
+						$wsr->PathUpdateRedirect($resource->getUrlPath(), $currentTime, $status == 301);
 						$resource->setStatus(1);	# mark resource, so that we can filter redirection later
 					}
 				}
 			} else {
 				# 4xx, 5xx: client or server error
-				my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-				$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+				my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+				$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 			}
 		}
 	} else {
