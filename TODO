@@ -1,9 +1,9 @@
 testy:
 	wsm:
 		- zpracovani webresource -- vytvoreni wsr (+ save)	OK
-		- load + save
-	wsm + prefetch + fetch + postfetch (neco jako 7)
-		- vcetne redirectu
+		- load + save OK
+	wsm + prefetch + fetch + postfetch (neco jako 7)	
+		- vcetne redirectu					OK
 	scheduler
 		- (+ predchozi)
 	urlextractor
