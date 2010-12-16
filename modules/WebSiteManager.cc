@@ -258,8 +258,11 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 		WebSiteResource *wsr = pool->Alloc();
 		char buffer[5];
 		result = stream->ReadRaw(buffer, 5);
-		if (!result)
+		if (!result) {
+			// end-of-file
+			result = true;
 			break;
+		}
 		uint32_t size = *(uint32_t*)buffer;
 		uint8_t typeId = *(uint8_t*)(buffer+4);
 		google::protobuf::io::CodedInputStream::Limit l = stream->PushLimit(size);
