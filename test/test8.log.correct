@@ -1,0 +1,8 @@
+(HTTP www.test.com:8012), ip: 127.0.0.1
+Disallow: ^/.*bar\.html$
+(HTTP www.qest.com:8012), ip: 127.0.0.1
+Disallow: /foobarr\.html
+(HTTP www.qest.com:8012), ip: 127.0.0.1
+Disallow: /foobarr\.html
+(HTTP www.test.com:8012), ip: 127.0.0.1
+Disallow: ^/.*bar\.html$
