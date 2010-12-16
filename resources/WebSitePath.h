@@ -20,7 +20,7 @@ public:
 		DISABLED = 5,		// n consecutive errors
 	};
 
-	WebSitePath(): pathStatus(NONE), lastPathStatusUpdate(0), cksum(0), lastModified(0), modificationHistory(0) {};
+	WebSitePath(): pathStatus(NONE), lastPathStatusUpdate(0), size(0), cksum(0), lastModified(0), modificationHistory(0) {};
 	~WebSitePath() {};
 
 	// high-level API
