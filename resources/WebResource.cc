@@ -33,7 +33,7 @@ void WebResource::setHeaderFields(const std::vector<std::string> &names, const s
 	r.clear_header_names();
 	r.clear_header_values();
 	assert(names.size() == values.size());
-	for (int i = 0; i < names.size(); i++) {
+	for (int i = 0; i < (int)names.size(); i++) {
 		r.add_header_names(names[i]);
 		r.add_header_values(values[i]);
 	}
