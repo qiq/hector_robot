@@ -55,9 +55,6 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 }
 
 int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
-	ObjectLockRead();
-	int newStatus = newUrlStatus;
-	ObjectUnlock();
 	while (inputResources->size() > 0) {
 		if (inputResources->front()->getTypeId() != WebResource::typeId) {
 			outputResources->push(inputResources->front());
@@ -87,12 +84,8 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 						if (s)
 							*s = '\0';
 						GURL resolved = base->Resolve(text);
-						if (resolved.is_valid()) {
-							WebResource *tmp = new WebResource();
-							tmp->setUrl(resolved.spec());
-							tmp->setStatus(newStatus);
-							outputResources->push(tmp);
-						}
+						if (resolved.is_valid())
+							urls.insert(resolved.spec());
 					}
 					break;
 				default:
@@ -104,6 +97,17 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 		}
 		inputResources->pop();
 	}
+
+	ObjectLockRead();
+	int newStatus = newUrlStatus;
+	ObjectUnlock();
+	for (tr1::unordered_set<string>::iterator iter = urls.begin(); iter != urls.end(); ++iter) {
+		WebResource *tmp = new WebResource();
+		tmp->setUrl(*iter);
+		tmp->setStatus(newStatus);
+		outputResources->push(tmp);
+	}
+	urls.clear();
 
 	if (expectingResources)
 		*expectingResources = 1000;

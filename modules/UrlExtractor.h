@@ -20,7 +20,7 @@ new WR: status is set according to newUrlStatus parameter. Default is 2.
 
 #include <queue>
 #include <string>
-#include <tr1/unordered_map>
+#include <tr1/unordered_set>
 #include "common.h"
 #include "Module.h"
 #include "ObjectValues.h"
@@ -49,6 +49,7 @@ private:
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
 
+	std::tr1::unordered_set<std::string> urls;
 	// for flex
 	void *scanner;
 	scanner_state state;
