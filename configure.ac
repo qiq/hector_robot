@@ -67,7 +67,7 @@ AC_CHECK_FUNCS([dup2 gethostbyname inet_ntoa memset select setlocale socket sqrt
 # Misc
 dnl Check for debug options
 if test "x$use_debug" = "xyes"; then
-	CXXFLAGS="$CXXFLAGS -ggdb -O0"
+	CXXFLAGS="$CXXFLAGS -ggdb -O0 -Wall"
 else
 	CXXFLAGS="$CXXFLAGS -DNDEBUG"
 fi

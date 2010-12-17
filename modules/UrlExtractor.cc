@@ -54,7 +54,7 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	ObjectLockRead();
 	int newStatus = newUrlStatus;
 	ObjectUnlock();
@@ -105,10 +105,8 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 		inputResources->pop();
 	}
 
-	return 1000;
-}
-
-int UrlExtractor::ProcessingResources() {
+	if (expectingResources)
+		*expectingResources = 1000;
 	return 0;
 }
 

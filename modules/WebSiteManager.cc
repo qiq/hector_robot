@@ -265,11 +265,17 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 		}
 		uint32_t size = *(uint32_t*)buffer;
 		uint8_t typeId = *(uint8_t*)(buffer+4);
+		if (typeId != WebSiteResource::typeId) {
+			LOG_ERROR(this, "Invalid resource type: " << typeId);
+			break;
+		}
 		google::protobuf::io::CodedInputStream::Limit l = stream->PushLimit(size);
 		result = wsr->Deserialize(stream);
 		stream->PopLimit(l);
-		if (!result)
+		if (!result) {
+			LOG_ERROR(this, "Error reading resource");
 			break;
+		}
 		sites[wsr] = wsr;
 	}
 	delete stream;
@@ -301,10 +307,9 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 	return result;
 }
 
-int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	int currentTime = time(NULL);
 	ObjectLockRead();
-	int max = maxRequests;
 	int tick = timeTick/2;
 	ObjectUnlock();
 	while (inputResources->size() > 0 && processingResourcesCount < maxRequests) {
@@ -332,7 +337,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 		inputResources->pop();
 	}
 
-	int dnsN = callDns->Process(&callDnsInput, &callDnsOutput, tick);
+	int dnsN;
+	(void)callDns->Process(&callDnsInput, &callDnsOutput, &dnsN, tick);
 	dnsN -= callDnsInput.size();
 	while (callDnsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
@@ -344,7 +350,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 			FinishProcessing(wsr, outputResources);
 	}
 
-        int robotsN = callRobots->Process(&callRobotsInput, &callRobotsOutput, tick);
+	int robotsN;
+        (void)callRobots->Process(&callRobotsInput, &callRobotsOutput, &robotsN, tick);
 	robotsN -= callRobotsInput.size();
 	while (callRobotsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callRobotsOutput.front());
@@ -353,10 +360,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	}
 
 	int min = dnsN < robotsN ? dnsN : robotsN;
-	return min;
-}
-
-int WebSiteManager::ProcessingResources() {
+	if (expectingResources)
+		*expectingResources = min;
 	return processingResourcesCount;
 }
 

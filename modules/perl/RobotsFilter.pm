@@ -121,6 +121,7 @@ sub ProcessSimple() {
 			}
 		}
 	}
+	HectorRobot::DeleteVectorOfString($au);
 	if (not $allowed) {
 		my $disallowed = 0;
 		my $du = $wsr->getDisallowUrls();
@@ -138,6 +139,7 @@ sub ProcessSimple() {
 				}
 			}
 		}
+		HectorRobot::DeleteVectorOfString($du);
 		if ($disallowed) {
 			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy: ".$resource->getUrl());
 			$resource->setFlag($Hector::Resource::DELETED);

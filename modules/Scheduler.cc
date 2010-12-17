@@ -13,6 +13,7 @@ using namespace std;
 
 Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
+	outputDir = NULL;
 
 	values = new ObjectValues<Scheduler>(this);
 	values->addGetter("items", &Scheduler::getItems);
@@ -23,15 +24,7 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 }
 
 Scheduler::~Scheduler() {
-	// close all files
-	for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
-		OpenFile *of = iter->second;
-		delete iter->second->stream;
-		delete iter->second->file;
-		close(iter->second->fd);
-		delete iter->second;
-	}
-
+	CloseFiles();
 	delete values;
 }
 
@@ -54,6 +47,18 @@ void Scheduler::setOutputDir(const char *name, const char *value) {
 	} else {
 		outputDir = strdup(value);
 	}
+	CloseFiles();
+}
+
+void Scheduler::CloseFiles() {
+	// close all files
+	for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
+		delete iter->second->stream;
+		delete iter->second->file;
+		close(iter->second->fd);
+		delete iter->second;
+	}
+	openFiles.clear();
 }
 
 bool Scheduler::Init(vector<pair<string, string> > *params) {
@@ -82,17 +87,9 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(r);
 
 	uint32_t t = time(NULL);
-	int now = t/1000;
+	uint32_t now = t/1000;
 	if (now > currentTime) {
-		// close all files
-		for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
-			OpenFile *of = iter->second;
-			delete iter->second->stream;
-			delete iter->second->file;
-			close(iter->second->fd);
-			delete iter->second;
-		}
-		openFiles.clear();
+		CloseFiles();
 		currentTime = now;
 	}
 	// next update should be in 'next' seconds
@@ -112,7 +109,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 			LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 			return wr;
 		}
-		OpenFile *of = new OpenFile;
+		of = new OpenFile;
 		of->fd = fd;
 		of->file = new google::protobuf::io::FileOutputStream(of->fd);
 		of->stream = new google::protobuf::io::CodedOutputStream(of->file);

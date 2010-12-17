@@ -35,7 +35,7 @@
 #include "WebSiteResource.pb.h"
 #include "WebSitePath.h"
 
-#define DEFAULT_MODIFICATION_HISTORY 16
+#define DEFAULT_MODIFICATION_HISTORY 37
 #define MAX_PATH_SIZE 2048
 
 class WebSiteResource : public ProtobufResource {
@@ -351,7 +351,7 @@ inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastSchedul
 	bool result = false;
 	if (wsp) {
 		if ((wsp->getPathStatus() == WebSitePath::OK || wsp->getPathStatus() == WebSitePath::NEW_LINK)
-			&& (!lastScheduled || wsp->getLastPathStatusUpdate() <= lastScheduled)
+			&& (!lastScheduled || wsp->getLastPathStatusUpdate() <= (uint32_t)lastScheduled)
 			&& !wsp->getRefreshing()) {
 			wsp->setRefreshing(true);
 			result = true;
@@ -404,17 +404,22 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		if (wsp->getSize() != size || wsp->getCksum() != cksum) {
+		if (wsp->getSize() != (uint32_t)size || wsp->getCksum() != (uint32_t)cksum) {
 			wsp->setSize(size);
 			wsp->setCksum(cksum);
 			uint32_t lastModified = wsp->getLastModified();
-			if (lastModified != currentTime) {
+			if (lastModified != (uint32_t)currentTime) {
 				wsp->setLastModified(currentTime);
-				int l = floor(log((float)currentTime-lastModified)/log(1.5));
-				if (l < 16)
-					l = 16;
-				if (l > 41)
-					l = 41;
+				int l;
+				if (lastModified > 0) {
+					l = floor(log((double)currentTime-lastModified)/log(1.5));
+					if (l < 16)
+						l = 16;
+					if (l > 41)
+						l = 41;
+				} else {
+					l = DEFAULT_MODIFICATION_HISTORY;
+				}
 				uint32_t history = wsp->getModificationHistory();
 				history = (history << 8) | (l & 0xFF);
 				wsp->setModificationHistory(history);
@@ -448,7 +453,7 @@ inline long WebSiteResource::PathNextModification(const char *path) {
 		int d = history & 0xFF;
 		if (!d)
 			d = DEFAULT_MODIFICATION_HISTORY;
-		result = floor(exp(((a + b*2 + c*3 + d*4)/10)*log(1.5)));
+		result = floor(exp((double)((a + b*2 + c*3 + d*4)/10)*log(1.5)));
 	}
 	lock.Unlock();
 	return result;

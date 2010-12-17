@@ -66,7 +66,7 @@ typedef struct CurlInfo_ {
 	CURLM *multi;
 	int resources;		// number of resources currently in queue/processed
 	int stillRunning;	// running requests -- just communicating using curl
-	time_t currentTime;	// current time
+	uint32_t currentTime;	// current time
 
 	CurlResourceInfo *resourceInfo;
 	std::vector<CurlResourceInfo*> resourceInfoHeap;
@@ -81,8 +81,7 @@ public:
 	~Fetcher();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
-	int ProcessingResources();
+	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	CurlInfo curlInfo;
 	void QueueResource(WebResource *wr);

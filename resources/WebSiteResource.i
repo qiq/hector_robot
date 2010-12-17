@@ -75,4 +75,9 @@ public:
 WebSiteResource *ResourceToWebSiteResource(Resource *r) {
         return dynamic_cast<WebSiteResource*>(r);
 }
+
+void DeleteVectorOfString(std::vector<std::string> *v) {
+        delete v;
+}
+
 %}

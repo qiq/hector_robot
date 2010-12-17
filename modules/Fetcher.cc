@@ -77,6 +77,8 @@ char *Fetcher::getMinServerRelax(const char *name) {
 
 void Fetcher::setMinServerRelax(const char *name, const char *value) {
 	minServerRelax = str2int(value);
+	if (minServerRelax < 0)
+		minServerRelax = 0;
 }
 
 char *Fetcher::getTimeout(const char *name) {
@@ -119,6 +121,8 @@ char *Fetcher::getMaxContentLength(const char *name) {
 
 void Fetcher::setMaxContentLength(const char *name, const char *value) {
 	maxContentLength = str2long(value);
+	if (maxContentLength < 0)
+		maxContentLength = 0;
 }
 
 char *Fetcher::getTimeTick(const char *name) {
@@ -241,7 +245,7 @@ size_t WriteCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		}
 	}
 	// text object is too large? Trim!
-	if (ri->content->length() + realsize > ri->maxContentLength)
+	if (ri->content->length() + realsize > (uint32_t)ri->maxContentLength)
 		realsize -= (ri->content->length() + realsize - ri->maxContentLength);
 
 	// really append data
@@ -298,19 +302,19 @@ void Fetcher::QueueResource(WebResource *wr) {
 		ip_sum = ip.getIp4Addr();
 	} else {
 		uint64_t ip6 = ip.getIp6Addr(true);
-		ip_sum = ip6 & 0xFFFFFFFF + (ip6 >> 32) & 0xFFFFFFFF;
+		ip_sum = (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
 		ip6 = ip.getIp6Addr(false);
-		ip_sum += ip6 & 0xFFFFFFFF + (ip6 >> 32) & 0xFFFFFFFF;
+		ip_sum += (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
 	}
 	ObjectLockRead();
 	int hash = ip_sum % maxRequests;
-	int wait = minServerRelax;
+	uint32_t wait = minServerRelax;
 	ObjectUnlock();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[hash];
 
 	// busy: just append to the bucket
 	curlInfo.resources++;
-	if (ri->current || curlInfo.currentTime < ri->time + wait) {
+	if (ri->current || (curlInfo.currentTime < ri->time + wait)) {
 		ri->waiting.push_back(wr);
 		if (!ri->current) {	// just waiting for timeout (not currently being processed)
 			curlInfo.resourceInfoHeap.push_back(ri);
@@ -474,7 +478,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	curlInfo.currentTime = time(NULL);
 	this->outputResources = outputResources;
 
@@ -500,7 +504,10 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	}
 
 	if (curlInfo.resources == 0)
-		return maxRequests;
+	if (expectingResources) {
+		*expectingResources = maxRequests;
+		return 0;
+	}
 
 	// set timer for the timerTick
 	ObjectLockRead();
@@ -514,10 +521,8 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	ev_loop(curlInfo.loop, 0);
 
 	// finished resources are already appended to the outputResources queue
-	return maxRequests-curlInfo.resources;
-}
-
-int Fetcher::ProcessingResources() {
+	if (expectingResources)
+		*expectingResources = maxRequests-curlInfo.resources;
 	return curlInfo.resources;
 }
 

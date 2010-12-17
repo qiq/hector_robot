@@ -57,6 +57,8 @@ private:
 
 	uint32_t currentTime;
 	std::tr1::unordered_map<int, OpenFile*> openFiles;
+
+	void CloseFiles();
 };
 
 inline Module::Type Scheduler::getType() {

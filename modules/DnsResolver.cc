@@ -240,10 +240,10 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources) {
+int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	this->outputResources = outputResources;
 	// get input resources and start resolution for them
-	while (inputResources->size() > 0 && running.size() < maxRequests) {
+	while (inputResources->size() > 0 && (int)running.size() < maxRequests) {
 		Resource *r = inputResources->front();
 		if (r->getTypeId() != WebSiteResource::typeId && r->getTypeId() != WebResource::typeId) {
 			outputResources->push(inputResources->front());
@@ -253,8 +253,11 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 		inputResources->pop();
 	}
 
-	if (running.size() == 0)
-		return maxRequests;
+	if (running.size() == 0) {
+		if (expectingResources)
+			*expectingResources = maxRequests;
+		return 0;
+	}
 
 	struct timeval startTime;
 	gettimeofday(&startTime, NULL);
@@ -274,13 +277,17 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 		int retval = select(fd+1, &rfds, NULL, NULL, &tv);
 		if (retval < 0) {
 	                LOG_ERROR(this, "Error in select() = " << errno);
-	                return maxRequests-running.size();
+			if (expectingResources)
+				*expectingResources = maxRequests-running.size();
+			return running.size();
 	        } else if (FD_ISSET(fd, &rfds)) {
 			// process finished resources
 			int retval = ub_process(ctx);
 			if (retval != 0) {
 				LOG_ERROR(this, "Resolve error: " << ub_strerror(retval));
-				return maxRequests-running.size();
+				if (expectingResources)
+					*expectingResources = maxRequests-running.size();
+				return running.size();
 			}
 		}
 		gettimeofday(&currentTime, NULL);
@@ -288,10 +295,8 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 	}
 
 	// finished resources are already appended to the outputResources queue
-	return maxRequests-running.size();
-}
-
-int DnsResolver::ProcessingResources() {
+	if (expectingResources)
+		*expectingResources = maxRequests-running.size();
 	return running.size();
 }
 

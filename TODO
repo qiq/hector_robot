@@ -5,7 +5,7 @@ testy:
 	wsm + prefetch + fetch + postfetch (neco jako 7)	
 		- vcetne redirectu					OK
 	scheduler
-		- (+ predchozi)
+		- (+ predchozi)						OK
 	urlextractor
 		- (+ predchozi)
 		- otestovat meta refresh

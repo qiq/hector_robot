@@ -80,8 +80,7 @@ public:
 	~WebSiteManager();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources);
-	int ProcessingResources();
+	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 	bool SaveCheckpointSync(const char *path);
 	bool RestoreCheckpointSync(const char *path);
 
