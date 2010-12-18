@@ -24,7 +24,7 @@ pkill dns_server.pl
 pkill http_server.pl
 rm -rf test10.tmp
 
-grep "M_dump_dump" test.log|sed -e 's|.*: \[WR[^\]*\] ||'|sed -e 's|, last scheduled: [0-9]*||g'|sort >$id.log.test
+grep "M_dump_dump" test.log|sed -e 's|.*: \[WR[^\]*\] ||'|sed -e 's|, scheduled: [0-9]*||g'|sort >$id.log.test
 test_finish
 test_compare_result
 exit $?

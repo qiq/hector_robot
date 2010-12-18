@@ -24,7 +24,22 @@ while (my $c = $d->accept) {
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
 			$c->send_crlf;
-			$c->print("<html><head/><body><a href=\"bar\">bar bar BAR</a>!</body></html>\n");
+			my $data = "<html><head><meta http-equiv=\"refresh\" content=\"5;url=".$d->url."meta.html\"/></head>";
+			$data .= <<END;
+<body background="back.gif">
+<a href="bar">bar bar BAR</a>!
+<img alt="test" src="testa.html" width="1"/>bar bar BAR
+<img alt="test" src="testb.pdf"/>bar bar BAR
+<map>
+<area shape="rect" coords="0,0,1,1" href="t.html" alt="t"/>
+</map>
+<frameset>
+<frame src="frame.html"/>
+</frameset>
+<iframe src ="frame2.html" width="100%" height="300" />
+</body></html>
+END
+			$c->print($data);
 			$c->force_last_request();
 		} elsif ($r->method eq 'GET' and $r->url->path eq "/robots.txt") {
 			$c->send_basic_header(200);
@@ -43,6 +58,15 @@ while (my $c = $d->accept) {
 			$c->print("See other page\n");
 			$c->force_last_request();
 		} elsif ($r->method eq 'GET' and $r->url->path eq "/redirect2.html") {
+			$c->send_basic_header(302);
+			print $c "Content-Type: text/plain";
+			$c->send_crlf;
+			print $c "Location: ".$d->url."redirect3.html";
+			$c->send_crlf;
+			$c->send_crlf;
+			$c->print("See other page\n");
+			$c->force_last_request();
+		} elsif ($r->method eq 'GET' and $r->url->path eq "/redirect3.html") {
 			$c->send_basic_header(302);
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;

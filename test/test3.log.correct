@@ -1,10 +1,10 @@
-[WR 0 0] url: http://www.test.com/foo/bar?a=b (HTTP www.test.com:80 /foo/bar?a=b), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 0 0] url: http://www.test.com/foo/bar?a=b (HTTP www.test.com:80 /foo/bar?a=b), size: 0, ip: 127.0.0.1, last scheduled: 0
-[WR 1 0] url: http://www.test.org/ (HTTP www.test.org:80 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 1 0] url: http://www.test.org/ (HTTP www.test.org:80 /), size: 0, ip: 10.10.10.10, last scheduled: 0
-[WR 2 0] url: http://google.com/ (HTTP google.com:80 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 2 1] url: http://google.com/ (HTTP google.com:80 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 3 0] url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 3 1] url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 4 0] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, last scheduled: 0
-[WR 4 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, last scheduled: 0
+[WR 0 0] url: http://www.test.com/foo/bar?a=b (HTTP www.test.com:80 /foo/bar?a=b), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 0 0] url: http://www.test.com/foo/bar?a=b (HTTP www.test.com:80 /foo/bar?a=b), size: 0, ip: 127.0.0.1, scheduled: 0
+[WR 1 0] url: http://www.test.org/ (HTTP www.test.org:80 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 1 0] url: http://www.test.org/ (HTTP www.test.org:80 /), size: 0, ip: 10.10.10.10, scheduled: 0
+[WR 2 0] url: http://google.com/ (HTTP google.com:80 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 2 1] url: http://google.com/ (HTTP google.com:80 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 3 0] url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 3 1] url: http://www.nicnevime.cz:443/ (HTTP www.nicnevime.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 4 0] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[WR 4 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
