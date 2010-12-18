@@ -47,9 +47,9 @@ public:
         void setContent(const std::string &content);
         const std::string &getContent();
         void clearContent();
-        void setLastScheduled(long time);
-        long getLastScheduled();
-        void clearLastScheduled();
+        void setScheduled(long time);
+        long getScheduled();
+        void clearScheduled();
 
         void setUrlScheme(int urlScheme);
         int getUrlScheme();

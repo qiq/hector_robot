@@ -84,6 +84,7 @@ public:
 	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
 	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
 	bool PathReadyToFetch(const char *path, long lastScheduled);
+	bool PathNewLinkReady(const char *path, long currentTime);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
 	bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
@@ -354,6 +355,21 @@ inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastSchedul
 			&& (!lastScheduled || wsp->getLastPathStatusUpdate() <= (uint32_t)lastScheduled)
 			&& !wsp->getRefreshing()) {
 			wsp->setRefreshing(true);
+			result = true;
+		}
+	}
+	lock.Unlock();
+	return result;
+}
+
+// test whether the path is new and ready to be scheduled for a fetch
+inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime) {
+	lock.LockWrite();
+	WebSitePath *wsp = getPathInfo(path, true);
+	bool result = false;
+	if (wsp) {
+		if (wsp->getPathStatus() == WebSitePath::NEW_LINK && wsp->getLastPathStatusUpdate() == 0) {
+			wsp->setLastPathStatusUpdate(currentTime);
 			result = true;
 		}
 	}

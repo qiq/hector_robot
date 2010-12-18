@@ -120,7 +120,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 
 	WebResource *other = new WebResource();
 	other->setUrl(wr->getUrl());
-	other->setLastScheduled(t);
+	other->setScheduled(t);
 	if (!Resource::Serialize(other, of->stream)) {
 		LOG_ERROR_R(this, resource, "Error serializing resource");
 		return resource;

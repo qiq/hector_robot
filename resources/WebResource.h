@@ -74,9 +74,9 @@ public:
 	const std::string &getContent();
 	std::string *getContentMutable();
 	void clearContent();
-	void setLastScheduled(long time);
-	long getLastScheduled();
-	void clearLastScheduled();
+	void setScheduled(long time);
+	long getScheduled();
+	void clearScheduled();
 
 	// Url parts
         void setUrlScheme(int urlScheme);
@@ -274,16 +274,16 @@ inline void WebResource::clearContent() {
 	r.clear_content();
 }
 
-inline void WebResource::setLastScheduled(long time) {
-	r.set_last_scheduled(time);
+inline void WebResource::setScheduled(long time) {
+	r.set_scheduled(time);
 }
 
-inline long WebResource::getLastScheduled() {
-	return (long)r.last_scheduled();
+inline long WebResource::getScheduled() {
+	return (long)r.scheduled();
 }
 
-inline void WebResource::clearLastScheduled() {
-	r.clear_last_scheduled();
+inline void WebResource::clearScheduled() {
+	r.clear_scheduled();
 }
 
 inline void WebResource::setUrlScheme(int urlScheme) {
