@@ -107,22 +107,6 @@ void WebSiteResource::JarrayToProtobuf() {
 	}
 }
 
-/*
-WebSitePath *WebSiteResource::createPathInfo(const char *path) {
-	PWord_t PValue;
-	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
-	if (PValue)
-		return (WebSitePath*)PValue;
-	WebSitePath *wsp = pool.alloc();
-	PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
-	if (PValue == PJERR) {
-		LOG4CXX_ERROR(logger, "Malloc failed");
-		return false;
-	}
-	*PValue = (Word_t)wsp;
-	return wsp;
-}*/
-
 WebSitePath *WebSiteResource::getPathInfo(const char *path, bool create) {
 	PWord_t PValue;
 	PValue = (PWord_t)JudySLGet(paths, (uint8_t*)path, NULL);
@@ -130,11 +114,10 @@ WebSitePath *WebSiteResource::getPathInfo(const char *path, bool create) {
 		if (!create)
 			return NULL;
 		WebSitePath *wsp = pool.Alloc();
-		wsp->setPathStatus(WebSitePath::NEW_LINK);
 		PValue = (PWord_t)JudySLIns(&paths, (uint8_t*)path, NULL);
 		if (PValue == PJERR) {
 			LOG4CXX_ERROR(logger, "Malloc failed");
-			NULL;
+			return NULL;
 		}
 		*PValue = (Word_t)wsp;
 	}

@@ -15,7 +15,13 @@
 #				(default is one day)
 # 
 # Status:
-# not changed (on error, WebResources are discarded)
+# - input:
+# 0: OK
+# 1: error (by Fetcher)
+# - output:
+# 0: OK, robots fields filled or cleared (e.g. in case of bad mime type).
+# 1: client/server error, e.g. 404 not found
+# 2: redirect (temporary or permanent)
 
 package RobotsParser;
 
@@ -159,27 +165,61 @@ sub ProcessSimple() {
 		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-		
-	my $mime = $resource->getHeaderValue("Content-Type");
-	if ($mime eq '') {
-		$self->{'_object'}->log_debug($resource->toStringShort()." Missing robots.txt mime type (".$resource->getUrlHost().")");
-		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+
+	if ($resource->getStatus() != 0) {
 		return $resource;
 	}
-	if ($mime !~ /^text\/plain/) {
-		$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$mime." (".$resource->getUrlHost().")");
-		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+
+	my $status = $resource->getHeaderValue("X-Status");
+	if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
+		$self->{'_object'}->log_error($resource->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
+		$resource->setStatus(1);
 		return $resource;
 	}
-	my $content = $resource->getContent();
-	if (length($content) > 10000) {
-		$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->getUrlHost().")");
+	if ($status >= 100 and $status < 300) {
+		# 1xx, 2xx: OK
+		my $mime = $resource->getHeaderValue("Content-Type");
+		if ($mime eq '') {
+			$self->{'_object'}->log_debug($resource->toStringShort()." Missing robots.txt mime type (".$resource->getUrlHost().")");
+			$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+			# status is 0
+			return $resource;
+		}
+		if ($mime !~ /^text\/plain/) {
+			$self->{'_object'}->log_debug($resource->toStringShort()." Invalid robots.txt mime type: ".$mime." (".$resource->getUrlHost().")");
+			$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+			# status is 0
+			return $resource;
+		}
+		my $content = $resource->getContent();
+		if (length($content) > 100000) {
+			$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->getUrlHost().")");
+			$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+			# status is 0
+			return $resource;
+		}
+		my ($allow, $disallow) = $self->ParseRobots($content);
+		$wsr->setRobots($allow, $disallow, time()+$self->{'TTL'});
+		# status is 0
+		$self->{'items'}++;
+	} elsif ($status >= 300 and $status < 400) {
+		# 3xx: redirect
+		my $location = $resource->getHeaderValue("Location");
+		if (not defined $location) {
+			$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
+			$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
+			$resource->setStatus(1);
+			return $resource;
+		} else {
+			$resource->setUrl($location);
+			$resource->setStatus(2);
+			$self->{'items'}++;
+		}
+	} else {
+		# 4xx, 5xx: client or server error
 		$wsr->setRobots([], [], time()+$self->{'negativeTTL'});
-		return $resource;
+		$resource->setStatus(1);
 	}
-	my ($allow, $disallow) = $self->ParseRobots($content);
-	$wsr->setRobots($allow, $disallow, time()+$self->{'TTL'});
-	$self->{'items'}++;
 	return $resource;
 }
 

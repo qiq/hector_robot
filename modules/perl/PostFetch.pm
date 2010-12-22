@@ -130,13 +130,11 @@ sub ProcessSimple() {
 				$resource->setStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
-				my $location = $resource->getHeaderValue("Location");
-				if (not defined $location) {
+				if (not defined $resource->getHeaderValue("Location")) {
 					$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
 					my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
 					$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 				} else {
-					$resource->setUrl($location);
 					my $redirects = $resource->getRedirectCount();
 					if ($redirects > $self->{'maxRedirects'}) {
 						$self->{'_object'}->log_error($resource->toStringShort()." Too many redirects: ".$resource->getUrl());

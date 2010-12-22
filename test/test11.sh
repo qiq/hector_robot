@@ -8,7 +8,7 @@ test_server_start
 hector_client_set PE_test.run 1
 hector_client_set PE_dns.run 1
 hector_client_set PE_robots.run 1
-hector_client_wait M_output[0].items 19
+hector_client_wait M_output[0].items 15
 hector_client_set PE_test.run 0
 hector_client_set PE_dns.run 0
 hector_client_set PE_robots.run 0

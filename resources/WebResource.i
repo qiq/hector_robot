@@ -73,7 +73,7 @@ public:
 
 %inline %{
 WebResource *ResourceToWebResource(Resource *r) {
-        return dynamic_cast<WebResource*>(r);
+        return r->getTypeId() == WebResource::typeId ? static_cast<WebResource*>(r) : NULL;
 }
 %}
 

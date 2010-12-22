@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test9: Process WebResources: download them, pass them through WebSiteManager,
+test11: Process WebResources: download them, pass them through WebSiteManager,
 PreFetch, Fetch and PostFetch. Process redirects correctly.
+Run UrlExtractor.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -48,6 +49,7 @@ PreFetch, Fetch and PostFetch. Process redirects correctly.
 					</Module>
 					<Module id="M_dump3" lib="Dump.la"/>
 					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
+					<Module id="M_fixredirect" type="perl" lib="FixRedirect.pm"/>
 					<Module id="M_dump4" lib="Dump.la"/>
 				</modules>
 				<output>
@@ -61,7 +63,7 @@ PreFetch, Fetch and PostFetch. Process redirects correctly.
 					<queue/>
 				</input>
 				<modules>
-					<Module id="M_scheduler" lib="UrlExtractor.la"/>
+					<Module id="M_extractor" lib="UrlExtractor.la"/>
 					<Module id="M_dump5" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>

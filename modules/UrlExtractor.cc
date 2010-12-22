@@ -9,18 +9,21 @@
 #include <limits>
 #include "googleurl/src/gurl.h"
 #include "UrlExtractor.h"
-#include "TestResource.h"
+#include "WebResource.h"
 
 using namespace std;
 
 UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	newUrlStatus = 2;
+	imageLinks = false;
 
 	values = new ObjectValues<UrlExtractor>(this);
 	values->addGetter("items", &UrlExtractor::getItems);
 	values->addGetter("newUrlStatus", &UrlExtractor::getNewUrlStatus);
 	values->addSetter("newUrlStatus", &UrlExtractor::setNewUrlStatus);
+	values->addGetter("imageLinks", &UrlExtractor::getImageLinks);
+	values->addSetter("imageLinks", &UrlExtractor::setImageLinks);
 
 	scanner_create(&state, &scanner);
 }
@@ -43,6 +46,14 @@ void UrlExtractor::setNewUrlStatus(const char *name, const char *value) {
 	newUrlStatus = str2int(value);
 }
 
+char *UrlExtractor::getImageLinks(const char *name) {
+	return bool2str(imageLinks);
+}
+
+void UrlExtractor::setImageLinks(const char *name, const char *value) {
+	imageLinks = str2bool(value);
+}
+
 bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 	// second stage?
 	if (!params)
@@ -55,6 +66,9 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 }
 
 int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+	ObjectLockRead();
+	bool images = imageLinks;
+	ObjectUnlock();
 	while (inputResources->size() > 0) {
 		if (inputResources->front()->getTypeId() != WebResource::typeId) {
 			outputResources->push(inputResources->front());
@@ -77,6 +91,9 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 						base = new GURL(text);
 					}
 					break;
+				case TOK_IMG_URL:
+					if (!images)
+						break;
 				case TOK_URL:
 				case TOK_REDIRECT: {
 						// do not process anchors
@@ -84,8 +101,11 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 						if (s)
 							*s = '\0';
 						GURL resolved = base->Resolve(text);
-						if (resolved.is_valid())
-							urls.insert(resolved.spec());
+						if (resolved.is_valid()) {
+							const string &url = resolved.spec();
+							if (url.substr(0, 5) == "http:" || url.substr(0, 6) == "https:")
+								urls.insert(url);
+						}
 					}
 					break;
 				default:

@@ -145,20 +145,39 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 }
 
 void DnsResolver::StartResolution(Resource *resource) {
-	DnsResourceInfo *ri = unused.back();
-	unused.pop_back();
-	ri->current = resource;
 	const char *host = NULL;
 	if (resource->getTypeId() == WebResource::typeId) {
 		WebResource *wr = static_cast<WebResource*>(resource);
 		host = wr->getUrlHost().c_str();
-	} else {
+	} else if (resource->getTypeId() == WebSiteResource::typeId) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
 		host = wsr->getUrlHost().c_str();
+	} else {
+		LOG_ERROR_R(this, resource, "Unknown resource type: " << resource->getTypeStr());
+		return;
 	}
+
+	if (host[0] >= '0' && host[0] <= '9') {
+		IpAddr addr;
+		if (addr.ParseIp4Addr(host)) {
+			UpdateResource(resource, 0, &addr, numeric_limits<int>::max());
+			return;
+		}
+	} else if (host[0] == '[') {
+		IpAddr addr;
+		if (addr.ParseIp6Addr(host+1)) {
+			UpdateResource(resource, 0, &addr, numeric_limits<int>::max());
+			return;
+		}
+	}
+
+	DnsResourceInfo *ri = unused.back();
+	unused.pop_back();
+	ri->current = resource;
 	int result = ub_resolve_async(ctx, (char*)host, 1, 1, (void*)ri, &CompletedCallback, &ri->id);
 	if (result != 0) {
-		LOG_ERROR(this, "Cannot start asynchronous DNS lookup: " << result);
+		LOG_ERROR_R(this, resource, "Cannot start asynchronous DNS lookup: " << result);
+		unused.push_back(ri);
 		return;
 	}
 	running[ri->id] = ri;
@@ -173,23 +192,31 @@ void DnsResolver::FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4
 		ipAddrExpire = currentTime.tv_sec + negativeTTL;
 		ObjectUnlock();
 	}
-	ri->current->setStatus(status);
-	IpAddr ip;
-	ip.setIp4Addr(ip4);
-	if (ri->current->getTypeId() == WebResource::typeId) {
-		WebResource *wr = static_cast<WebResource*>(ri->current);
-		wr->setIpAddr(ip);
+	IpAddr addr;
+	addr.setIp4Addr(ip4);
+	UpdateResource(ri->current, status, &addr, ipAddrExpire);
+	running.erase(ri->id);
+	unused.push_back(ri);
+}
+
+void DnsResolver::UpdateResource(Resource *resource, int status, IpAddr *addr, uint32_t ipAddrExpire) {
+	resource->setStatus(status);
+	const char *host = NULL;
+	if (resource->getTypeId() == WebResource::typeId) {
+		WebResource *wr = static_cast<WebResource*>(resource);
+		wr->setIpAddr(*addr);
 		// WebResource has no ipAddrExpire
+		host = wr->getUrlHost().c_str();
 	} else {
-		WebSiteResource *wsr = static_cast<WebSiteResource*>(ri->current);
-		wsr->setIpAddrExpire(ip, ipAddrExpire);
+		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
+		wsr->setIpAddrExpire(*addr, ipAddrExpire);
+		host = wsr->getUrlHost().c_str();
 	}
-	outputResources->push(ri->current);
+	LOG_DEBUG_R(this, resource, "DNS " << host << ": " << addr->toString());
+	outputResources->push(resource);
 	ObjectLockWrite();
 	items++;
 	ObjectUnlock();
-	running.erase(ri->id);
-	unused.push_back(ri);
 }
 
 bool DnsResolver::Init(vector<pair<string, string> > *params) {

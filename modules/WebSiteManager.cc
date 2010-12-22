@@ -56,7 +56,16 @@ Resource *CallRobots::FinishResource(Resource *tmp) {
 	WebResource *wr = static_cast<WebResource*>(tmp);
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp->getAttachedResource());
 	wr->clearAttachedResource();
+	int status = wr->getStatus();
+	// redirect: set allow url to the redirected value
+	if (status == 2) {
+		vector<string> v;
+		v.push_back(wr->getUrl());
+		wsr->clearAllowUrls();
+		wsr->setAllowUrls(v);
+	}
 	unused.push_back(wr);
+	wsr->setStatus(status);
 	return wsr;
 }
 
@@ -81,10 +90,14 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	values->addSetter("load", &WebSiteManager::setLoad);
 	values->addGetter("save", &WebSiteManager::getSave);
 	values->addSetter("save", &WebSiteManager::setSave);
+	values->addGetter("robotsMaxRedirects", &WebSiteManager::getRobotsMaxRedirects);
+	values->addSetter("robotsMaxRedirects", &WebSiteManager::setRobotsMaxRedirects);
+	values->addGetter("robotsNegativeTTL", &WebSiteManager::getRobotsNegativeTTL);
+	values->addSetter("robotsNegativeTTL", &WebSiteManager::setRobotsNegativeTTL);
 
 	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
-	processingResourcesCount = 0;
+	waitingResourcesCount = 0;
 }
 
 WebSiteManager::~WebSiteManager() {
@@ -154,6 +167,22 @@ void WebSiteManager::setSave(const char *name, const char *value) {
 		LOG_ERROR(this, "Cannot save WebSiteManager data");
 }
 
+char *WebSiteManager::getRobotsMaxRedirects(const char *name) {
+	return int2str(robotsMaxRedirects);
+}
+
+void WebSiteManager::setRobotsMaxRedirects(const char *name, const char *value) {
+	robotsMaxRedirects = str2int(value);
+}
+
+char *WebSiteManager::getRobotsNegativeTTL(const char *name) {
+	return int2str(robotsNegativeTTL);
+}
+
+void WebSiteManager::setRobotsNegativeTTL(const char *name, const char *value) {
+	robotsNegativeTTL = str2int(value);
+}
+
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 	// second stage?
 	if (!params) {
@@ -206,42 +235,90 @@ WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
 	return wsr;
 }
 
-void WebSiteManager::StartProcessing(WebResource *wr, WebSiteResource *wsr, bool robotsOnly) {
+void WebSiteManager::CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst) {
+	vector<string> allow;
+	vector<string> disallow;
+	long time;
+	src->getRobots(allow, disallow, time);
+	dst->setRobots(allow, disallow, time);
+}
+
+void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool robotsOnly) {
 	// wsr is not yet being processed
-	tr1::unordered_map<WebSiteResource*, WebResource*>::iterator iter = processingResources.find(wsr);
-	if (iter == processingResources.end()) {
-		wr->setAttachedResource(wsr);
-		processingResources[wsr] = wr;
-		processingResourcesCount++;
+	tr1::unordered_map<WebSiteResource*, vector<Resource*> *>::iterator iter = waitingResources.find(wsr);
+	if (iter == waitingResources.end()) {
+		//r->setAttachedResource(wsr);
+		vector<Resource*> *v = new vector<Resource*>();
+		v->push_back(r);
+		waitingResources[wsr] = v;
+		waitingResourcesCount++;
 		if (!robotsOnly)
 			callDnsInput.push(wsr);
 		else
 			callRobotsInput.push(wsr);
 	} else {
-		// chain waiting web-resources
-		wr->setAttachedResource(iter->second);
-		processingResources[wsr] = wr;
-		processingResourcesCount++;
+		// append to the waiting resources list
+		iter->second->push_back(r);
+		waitingResourcesCount++;
 	}
 }
 
 void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources) {
-	tr1::unordered_map<WebSiteResource*, WebResource*>::iterator iter = processingResources.find(wsr);
-	assert(iter != processingResources.end());
-	WebResource *wr = static_cast<WebResource*>(iter->second);
-	Resource *next = wr->getAttachedResource();
-	wr->setAttachedResource(wsr);
-	wr->setStatus(0);
-	outputResources->push(wr);
-	processingResourcesCount--;
-	while (next != static_cast<Resource*>(iter->first)) {
-		WebResource *wr = static_cast<WebResource*>(next);
-		next = wr->getAttachedResource();
-		wr->setAttachedResource(wsr);
-		outputResources->push(wr);
-		processingResourcesCount--;
+	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(wsr);
+	assert(iter != waitingResources.end());
+	if (wsr->getStatus() == 2) {
+		// robots.txt was redirected, redirec target is allowed_urls[0]
+		int redirects = wsr->getRobotsRedirectCount();
+		vector<string> *v = wsr->getAllowUrls();
+		assert(v->size() == 1);
+		string url = v->front();
+		delete v;
+		ObjectLockRead();
+		int maxRedirects = robotsMaxRedirects;
+		ObjectUnlock();
+		if (redirects < maxRedirects) {
+			WebResource wr;
+			wr.setUrl(url);
+			WebSiteResource *next = getWebSiteResource(&wr);
+			if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
+				// WSR not up-to-date: recursively resolve WSR
+				next->setRobotsRedirectCount(redirects+1);
+				StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
+				return;
+			}
+			// WSR is ready, just copy info
+			CopyRobotsInfo(next, wsr);
+		} else {
+			// error: too many redirects, make resources
+			LOG_DEBUG_R(this, wsr, "Too many redirects: " << url);
+			vector<string> allow;
+			vector<string> disallow;
+			ObjectLockRead();
+			int ttl = robotsNegativeTTL;
+			ObjectUnlock();
+			wsr->setRobots(allow, disallow, ttl);
+		}
 	}
-	processingResources.erase(wsr);
+	// WSR is now refreshed
+	vector<Resource*> *v = iter->second;
+	for (vector<Resource*>::iterator iter = v->begin(); iter != v->end(); ++iter) {
+		Resource *r = *iter;
+		if (r->getTypeId() == WebResource::typeId) {
+			// WebResource, just put it into the output queue
+			r->setAttachedResource(wsr);
+			r->setStatus(0);
+			outputResources->push(r);
+			waitingResourcesCount--;
+		} else {
+			// WebSiteResource: resolve robots.txt redirection
+			WebSiteResource *prev = static_cast<WebSiteResource*>(r);
+			// copy robots info from current resource to previous (in the redirection chain)
+			CopyRobotsInfo(wsr, prev);
+			// recursively finish processing of resources
+			FinishProcessing(prev, outputResources);
+		}
+	}
+	waitingResources.erase(wsr);
 }
 
 bool WebSiteManager::LoadWebSiteResources(const char *filename) {
@@ -296,7 +373,7 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 	bool result = true;
 	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
 		if (!Resource::Serialize(iter->second, stream)) {
-			LOG_ERROR_R(this, iter->second, "Cannot serializei resource");
+			LOG_ERROR_R(this, iter->second, "Cannot serialize resource");
 			result = false;
 			break;
 		}
@@ -308,11 +385,11 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 }
 
 int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
-	int currentTime = time(NULL);
+	currentTime = time(NULL);
 	ObjectLockRead();
 	int tick = timeTick/2;
 	ObjectUnlock();
-	while (inputResources->size() > 0 && processingResourcesCount < maxRequests) {
+	while (inputResources->size() > 0 && waitingResourcesCount < maxRequests) {
 		if (inputResources->front()->getTypeId() == WebResource::typeId) {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
 			// get domain info
@@ -322,8 +399,8 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 				wr->setAttachedResource(wsr);
 				outputResources->push(wr);
 			} else {
-				if (wsr->getIpAddrExpire() < currentTime || wsr->getRobotsExpire() < currentTime) {
-					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= currentTime);
+				if (wsr->getIpAddrExpire() < (long)currentTime || wsr->getRobotsExpire() < (long)currentTime) {
+					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= (long)currentTime);
 				} else {
 					// no problem with the WSR, just attach it to WR
 					wr->setAttachedResource(wsr);
@@ -344,7 +421,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
 		callDnsOutput.pop();
 		IpAddr ip = wsr->getIpAddr();
-		if (!ip.isEmpty() && wsr->getRobotsExpire() < currentTime)
+		if (!ip.isEmpty() && wsr->getRobotsExpire() < (long)currentTime)
 			callRobotsInput.push(wsr);
 		else
 			FinishProcessing(wsr, outputResources);
@@ -362,7 +439,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	int min = dnsN < robotsN ? dnsN : robotsN;
 	if (expectingResources)
 		*expectingResources = min;
-	return processingResourcesCount;
+	return waitingResourcesCount;
 }
 
 bool WebSiteManager::SaveCheckpointSync(const char *path) {

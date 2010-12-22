@@ -36,6 +36,9 @@
 #include "WebSitePath.h"
 
 #define DEFAULT_MODIFICATION_HISTORY 37
+#define MIN_MODIFICATION_HISTORY 16
+#define MAX_MODIFICATION_HISTORY 41
+
 #define MAX_PATH_SIZE 2048
 
 class WebSiteResource : public ProtobufResource {
@@ -83,12 +86,12 @@ public:
 	void getIpAddrExpire(IpAddr &addr, long &time);
 	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
 	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-	bool PathReadyToFetch(const char *path, long lastScheduled);
+	int PathReadyToFetch(const char *path, long lastScheduled);
 	bool PathNewLinkReady(const char *path, long currentTime);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
 	bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
-	long PathNextModification(const char *path);
+	long PathNextRefresh(const char *path);
 
 	// change on-item methods
 	void setUrlScheme(int urlScheme);
@@ -115,6 +118,9 @@ public:
 	void setRobotsExpire(long time);
 	long getRobotsExpire();
 	void clearRobotsExpire();
+	void setRobotsRedirectCount(int redirects);
+	int getRobotsRedirectCount();
+	void clearRobotsRedirectCount();
 
 	static const int typeId = 11;
 
@@ -346,16 +352,21 @@ inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std
 }
 
 // test whether path is ready to be fetched
-inline bool WebSiteResource::PathReadyToFetch(const char *path, long lastScheduled) {
+// return: 0: OK, 1: invalid status, 2: status updated recently, 3: currently refreshing (locked)
+inline int WebSiteResource::PathReadyToFetch(const char *path, long lastScheduled) {
 	lock.LockWrite();
 	WebSitePath *wsp = getPathInfo(path, true);
-	bool result = false;
+	int result = 1;
 	if (wsp) {
-		if ((wsp->getPathStatus() == WebSitePath::OK || wsp->getPathStatus() == WebSitePath::NEW_LINK)
-			&& (!lastScheduled || wsp->getLastPathStatusUpdate() <= (uint32_t)lastScheduled)
-			&& !wsp->getRefreshing()) {
+		if (wsp->getPathStatus() != WebSitePath::OK && wsp->getPathStatus() != WebSitePath::NEW_LINK && wsp->getPathStatus() != WebSitePath::NONE) {
+			result = 1;
+		} else if (wsp->getLastPathStatusUpdate() > (uint32_t)lastScheduled) {
+			result = 2;
+		} else if  (wsp->getRefreshing()) {
+			result = 3;
+		} else {
 			wsp->setRefreshing(true);
-			result = true;
+			result = 0;
 		}
 	}
 	lock.Unlock();
@@ -368,7 +379,8 @@ inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		if (wsp->getPathStatus() == WebSitePath::NEW_LINK && wsp->getLastPathStatusUpdate() == 0) {
+		if (wsp->getPathStatus() == WebSitePath::NONE && wsp->getLastPathStatusUpdate() == 0) {
+			wsp->setPathStatus(WebSitePath::NEW_LINK);
 			wsp->setLastPathStatusUpdate(currentTime);
 			result = true;
 		}
@@ -402,10 +414,12 @@ inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTi
 	WebSitePath *wsp = getPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		if (redirectPermanent)
-			wsp->setPathStatus(WebSitePath::REDIRECT);
-		else
+		if (!redirectPermanent) {
 			wsp->setPathStatus(WebSitePath::OK);
+			result = true;
+		} else {
+			wsp->setPathStatus(WebSitePath::REDIRECT);
+		}
 		wsp->setErrorCount(0);
 		wsp->setLastPathStatusUpdate(currentTime);
 		wsp->setRefreshing(false);
@@ -429,10 +443,10 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 				int l;
 				if (lastModified > 0) {
 					l = floor(log((double)currentTime-lastModified)/log(1.5));
-					if (l < 16)
-						l = 16;
-					if (l > 41)
-						l = 41;
+					if (l < MIN_MODIFICATION_HISTORY)
+						l = MIN_MODIFICATION_HISTORY;
+					if (l > MAX_MODIFICATION_HISTORY)
+						l = MAX_MODIFICATION_HISTORY;
 				} else {
 					l = DEFAULT_MODIFICATION_HISTORY;
 				}
@@ -451,25 +465,35 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 	return result;
 }
 
-inline long WebSiteResource::PathNextModification(const char *path) {
+// result < 0: do not schedule
+inline long WebSiteResource::PathNextRefresh(const char *path) {
 	lock.LockRead();
 	WebSitePath *wsp = getPathInfo(path, true);
-	long result = 0;
+	long result = -1;
 	if (wsp) {
-		uint32_t history = wsp->getModificationHistory();
-		int a = history >> 24;
-		if (!a)
-			a = DEFAULT_MODIFICATION_HISTORY;
-		int b = (history >> 16) & 0xFF;
-		if (!b)
-			b = DEFAULT_MODIFICATION_HISTORY;
-		int c = (history >> 8) & 0xFF;
-		if (!c)
-			c = DEFAULT_MODIFICATION_HISTORY;
-		int d = history & 0xFF;
-		if (!d)
-			d = DEFAULT_MODIFICATION_HISTORY;
-		result = floor(exp((double)((a + b*2 + c*3 + d*4)/10)*log(1.5)));
+		WebSitePath::PathStatus status = wsp->getPathStatus();
+		if (status == WebSitePath::OK || status == WebSitePath::ERROR) {
+			int errors = wsp->getErrorCount();
+			if (!errors) {
+				uint32_t history = wsp->getModificationHistory();
+				int a = history >> 24;
+				if (!a)
+					a = DEFAULT_MODIFICATION_HISTORY;
+				int b = (history >> 16) & 0xFF;
+				if (!b)
+					b = DEFAULT_MODIFICATION_HISTORY;
+				int c = (history >> 8) & 0xFF;
+				if (!c)
+					c = DEFAULT_MODIFICATION_HISTORY;
+				int d = history & 0xFF;
+				if (!d)
+					d = DEFAULT_MODIFICATION_HISTORY;
+				result = floor(exp((double)((a + b*2 + c*3 + d*4)/10)*log(1.5)));
+			} else {
+				// 1d, 3d, 11d, 1m, 4m
+				result = 25+errors*3;
+			}
+		}
 	}
 	lock.Unlock();
 	return result;
@@ -636,6 +660,25 @@ inline long WebSiteResource::getRobotsExpire() {
 inline void WebSiteResource::clearRobotsExpire() {
 	lock.LockWrite();
 	r.clear_robots_expire();
+	lock.Unlock();
+}
+
+inline void WebSiteResource::setRobotsRedirectCount(int redirects) {
+	lock.LockWrite();
+	r.set_robots_redirect_count(redirects);
+	lock.Unlock();
+}
+
+inline int WebSiteResource::getRobotsRedirectCount() {
+	lock.LockRead();
+	int redirects = r.robots_redirect_count();
+	lock.Unlock();
+	return redirects;
+}
+
+inline void WebSiteResource::clearRobotsRedirectCount() {
+	lock.LockWrite();
+	r.clear_robots_redirect_count();
 	lock.Unlock();
 }
 

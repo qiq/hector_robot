@@ -179,8 +179,8 @@ void CheckCompleted(CurlInfo *ci) {
 			int result = (int)msg->data.result;
 			CurlResourceInfo *ri;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ri);
-			ci->parent->FinishResourceFetch(ri, result);
 			curl_multi_remove_handle(ci->multi, easy);
+			ci->parent->FinishResourceFetch(ri, result);
 		}
 	}
 }
@@ -316,9 +316,10 @@ void Fetcher::QueueResource(WebResource *wr) {
 	curlInfo.resources++;
 	if (ri->current || (curlInfo.currentTime < ri->time + wait)) {
 		ri->waiting.push_back(wr);
-		if (!ri->current) {	// just waiting for timeout (not currently being processed)
-			curlInfo.resourceInfoHeap.push_back(ri);
-			push_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
+		// just waiting for timeout (not currently being processed)
+		if (!ri->current && ri->waiting.size() == 1) {
+			curlInfo.waitingHeap.push_back(ri);
+			push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
 		}
 		return;
 	}
@@ -330,14 +331,13 @@ void Fetcher::StartQueuedResourcesFetch() {
 	ObjectLockRead();
 	int wait = minServerRelax;
 	ObjectUnlock();
-	while (curlInfo.resourceInfoHeap.size() > 0 && curlInfo.currentTime >= curlInfo.resourceInfoHeap[0]->time+wait) {
-		CurlResourceInfo *ri = curlInfo.resourceInfoHeap[0];
-		pop_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
-		curlInfo.resourceInfoHeap.pop_back();
+	while (curlInfo.waitingHeap.size() > 0 && curlInfo.currentTime >= curlInfo.waitingHeap[0]->time+wait) {
+		CurlResourceInfo *ri = curlInfo.waitingHeap[0];
+		pop_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
+		curlInfo.waitingHeap.pop_back();
 		WebResource *wr = ri->waiting.front();
-		int index = ri->index;
 		ri->waiting.pop_front();
-		StartResourceFetch(wr, index);
+		StartResourceFetch(wr, ri->index);
 	}
 }
 
@@ -379,15 +379,16 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// start!
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
 	if (rc != CURLM_OK)
-		LOG_ERROR(this, "Error adding easy handle to multi: " << rc);
+		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc);
 }
 
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	if (result == CURLE_OK) {
+		LOG_DEBUG_R(this, ri->current, "Fetched " << ri->current->getUrl());
 		ri->current->setStatus(0);
 	} else {
-		LOG_DEBUG_R(this, ri->current, "Erorr fetching URL: " << result);
+		LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->getUrl() << ": " << result);
 		ri->current->setStatus(1);
 	}
 	outputResources->push(ri->current);
@@ -403,8 +404,8 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 
 	// add resource to the heap again
 	if (ri->waiting.size() > 0) {
-		curlInfo.resourceInfoHeap.push_back(ri);
-		push_heap(curlInfo.resourceInfoHeap.begin(), curlInfo.resourceInfoHeap.end());
+		curlInfo.waitingHeap.push_back(ri);
+		push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
 	}
 }
 
@@ -433,7 +434,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	curlInfo.resources = 0;
 	curlInfo.stillRunning = 0;
 
-	curlInfo.resourceInfoHeap.reserve(maxRequests);
+	curlInfo.waitingHeap.reserve(maxRequests);
 	curlInfo.resourceInfo = new CurlResourceInfo[maxRequests];
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
@@ -466,6 +467,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 		curl_easy_setopt(ri->easy, CURLOPT_NOPROGRESS, 1L);
 		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_TIME, t);
 		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_LIMIT, 100L);
+		curl_easy_setopt(ri->easy, CURLOPT_SSL_VERIFYPEER, 0L);
 
 		ri->socketfd = -1;
 		ri->evSet = false;
@@ -513,7 +515,7 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	ObjectLockRead();
 	int tick = timeTick;
 	ObjectUnlock();
-	ev_timer_init(&curlInfo.tickTimer, TimeTickCallback, tick/1000000, 0.);
+	ev_timer_init(&curlInfo.tickTimer, TimeTickCallback, (double)tick/1000000, 0.);
 	ev_timer_start(curlInfo.loop, &curlInfo.tickTimer);
 	curlInfo.tickTimer.data = &curlInfo;
 

@@ -14,6 +14,8 @@ dnsEngine		init	ProcessingEngine to call for DNS resolution
 robotsEngine		init	ProcessingEngine to call for robots.txt refresh
 load			r/w	Save WebSiteResources to the file
 save			r/w	Load WebSiteResources from the file
+robotsMaxRedirects	r/w	Max redirects (default is 5)
+robotsNegativeTTL	r/w	Time to keep negative robots.txt result (too many redirects
 
 Status:
 - input:
@@ -91,6 +93,8 @@ private:
 	int timeTick;		// ObjectLock
 	char *dnsEngine;	// read-only
 	char *robotsEngine;	// read-only
+	int robotsMaxRedirects;	// ObjectLock
+	int robotsNegativeTTL;	// ObjectLock
 
 	char *getItems(const char *name);
 	char *getMaxRequests(const char *name);
@@ -105,6 +109,10 @@ private:
 	void setLoad(const char *name, const char *value);
 	char *getSave(const char *name);
 	void setSave(const char *name, const char *value);
+	char *getRobotsMaxRedirects(const char *name);
+	void setRobotsMaxRedirects(const char *name, const char *value);
+	char *getRobotsNegativeTTL(const char *name);
+	void setRobotsNegativeTTL(const char *name, const char *value);
 
 	ObjectValues<WebSiteManager> *values;
 	char *getValueSync(const char *name);
@@ -112,6 +120,7 @@ private:
 	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
 
+	uint32_t currentTime;
 	MemoryPool<WebSiteResource, true> *pool;
 	std::tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal> sites;
 	WebSiteResource key;
@@ -125,12 +134,15 @@ private:
 	std::queue<Resource*> callRobotsOutput;
 
 	// we do not process the same WSR more than once at the same time, so
-	// we keep info about what WebSiteResources we are working on
-	std::tr1::unordered_map<WebSiteResource*, WebResource*> processingResources;
-	int processingResourcesCount;
+	// we keep info about what WebSiteResources we are working on. There
+	// may be WebResources (common case) and WebSiteResources
+	// (redirect-sources) waiting.
+	std::tr1::unordered_map<WebSiteResource*, std::vector<Resource*>* > waitingResources;
+	int waitingResourcesCount;
 
 	WebSiteResource *getWebSiteResource(WebResource *wr);
-	void StartProcessing(WebResource *wr, WebSiteResource *wsr, bool robotsOnly);
+	void CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst);
+	void StartProcessing(Resource *r, WebSiteResource *wsr, bool robotsOnly);
 	void FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources);
 	bool LoadWebSiteResources(const char *filename);
 	bool SaveWebSiteResources(const char *filename);

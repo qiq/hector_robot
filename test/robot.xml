@@ -1,29 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test9: Process WebResources: download them, pass them through WebSiteManager,
-PreFetch, Fetch and PostFetch. Process redirects correctly.
-Run Scheduler.
 -->
 <Config>
-	<Server id="test" lib="RobotServer.la">
+	<Server id="robot" lib="RobotServer.la">
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>test.log.props</logConfig>
-		<ProcessingEngine id="PE_test">
+		<logConfig>robot.log.props</logConfig>
+		<ProcessingEngine id="PE_robot">
 			<Processor id="P_load">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
-						<param name="urlList">
-<![CDATA[						http://www.test.com:8012/foo.html
-							http://www.test.com:8012/bar.html
-							http://www.test.com:8012/xyzzy.html
-							http://www.test.com:8012/redirect.html ]]>
-						</param>
+					<Module id="M_load" lib="Load.la">
+						<param name="filename" value="newlink.tmp"/>
 					</Module>
-					<Module id="M_dump1" lib="Dump.la"/>
+					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[
+							http://192.168.1.38/
+]]>
+						</param>
+					</Module-->
+					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[
+							http://www.mff.cuni.cz/
+							http://ufal.mff.cuni.cz/
+]]>
+						</param>
+					</Module-->
+					<Module id="M_load_dump" lib="Dump.la"/>
 				</modules>
 				<output>
 					<nextProcessor ref="P_main"/>
@@ -40,34 +47,62 @@ Run Scheduler.
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
-					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
-					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
-					<Module id="M_dump2" lib="Dump.la"/>
-					<Module id="M_fetch" lib="Fetcher.la">
-						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="0"/>
-					</Module>
-					<Module id="M_dump3" lib="Dump.la"/>
-					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
-					<Module id="M_fixredirect" type="perl" lib="FixRedirect.pm"/>
-					<Module id="M_dump4" lib="Dump.la"/>
 				</modules>
 				<output>
-					<nextProcessor ref="P_main" filter="1" priority="100"/>
-					<nextProcessor ref="P_save"/>
+					<nextProcessor ref="P_newlink" filter="2"/>
+					<nextProcessor ref="P_fetch"/>
 				</output>
 			</Processor>
-			<Processor id="P_save">
+			<Processor id="P_fetch">
 				<threads>1</threads>
 				<input>
 					<queue/>
 				</input>
 				<modules>
-					<Module id="M_scheduler" lib="Scheduler.la">
-						<param name="outputDir" value="test10.tmp/"/>
+					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
+					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
+					<Module id="M_fetch" lib="Fetcher.la">
+						<param name="timeTick" value="100000"/>
+						<param name="minServerRelax" value="1"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://host/)"/>
 					</Module>
-					<Module id="M_dump5" lib="Dump.la"/>
-					<Module id="M_output" lib="TestOutput.la"/>
+					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
+					<Module id="M_scheduler" lib="Scheduler.la">
+						<param name="outputDir" value="refresh"/>
+					</Module>
+					<Module id="M_extractor" lib="UrlExtractor.la"/>
+					<Module id="M_fix_redirect" type="perl" lib="FixRedirect.pm"/>
+				</modules>
+				<output>
+					<nextProcessor ref="P_main" filter="1" priority="100"/>
+					<nextProcessor ref="P_main" filter="2" priority="100"/>
+					<nextProcessor ref="P_postprocess"/>
+				</output>
+			</Processor>
+			<Processor id="P_newlink">
+				<threads>1</threads>
+				<input>
+					<queue/>
+				</input>
+				<modules>
+					<Module id="M_newlink_dump" lib="Dump.la"/>
+					<Module id="M_newlink_filter" type="perl" lib="NewLinkFilter.pm"/>
+					<Module id="M_newlink_save" lib="Save.la">
+						<param name="filename" value="refresh/newlink"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_postprocess">
+				<threads>1</threads>
+				<input>
+					<queue/>
+				</input>
+				<modules>
+					<!--Module id="M_postprocess_dump" lib="Dump.la"/-->
+					<Module id="M_postprocess_save" lib="Save.la">
+						<param name="filename" value="refresh/data"/>
+					</Module>
+					<!--Module id="M_postprocess_output" lib="TestOutput.la"/-->
 				</modules>
 			</Processor>
 		</ProcessingEngine>
@@ -77,13 +112,13 @@ Run Scheduler.
 			<Processor id="P_dns">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_dump_dns1" lib="Dump.la"/>
+					<!--Module id="M_dump_dns1" lib="Dump.la"/-->
 					<Module id="M_dns" lib="DnsResolver.la">
-						<param name="forwardServer" value="127.0.0.1"/>
-						<param name="forwardPort" value="5354"/>
+						<!--param name="forwardServer" value="127.0.0.1"/>
+						<param name="forwardPort" value="5354"/-->
 						<param name="negativeTTL" value="86400"/>
 					</Module>
-					<Module id="M_dump_dns2" lib="Dump.la"/>
+					<!--Module id="M_dump_dns2" lib="Dump.la"/-->
 				</modules>
                                 <input>
                                         <queue/>
@@ -99,16 +134,17 @@ Run Scheduler.
 			<Processor id="P_robots">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_dump_robots1" lib="Dump.la"/>
+					<!--Module id="M_dump_robots1" lib="Dump.la"/-->
 					<Module id="M_fetch_robots" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="0"/>
+						<param name="minServerRelax" value="1"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://host/)"/>
 					</Module>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>
 						<param name="negativeTTL" value="86400"/>
 					</Module>
-					<Module id="M_dump_robots2" lib="Dump.la"/>
+					<!--Module id="M_dump_robots2" lib="Dump.la"/-->
 				</modules>
                                 <input>
                                         <queue/>
@@ -116,17 +152,6 @@ Run Scheduler.
                                 <output>
                                         <nextProcessor ref="PE_robots"/>
                                 </output>
-			</Processor>
-		</ProcessingEngine>
-
-		<ProcessingEngine id="PE_dump">
-			<Processor id="P_dump">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_dump_load" lib="Load.la"/>
-					<Module id="M_dump_dump" lib="Dump.la"/>
-					<Module id="M_dump_output" lib="TestOutput.la"/>
-				</modules>
 			</Processor>
 		</ProcessingEngine>
 	</Server>

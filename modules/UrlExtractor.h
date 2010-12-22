@@ -7,6 +7,7 @@ Dependencies: none
 Parameters:
 items		r/o	Total items processed
 newUrlStatus	r/w	Status to be set for new-url WebResources
+imageLinks	r/w	Also extract image links
 
 Status:
 original WR: untouched
@@ -38,10 +39,13 @@ public:
 private:
 	int items;		// ObjectLock, items processed
 	int newUrlStatus;	// ObjectLock, status to be set for new-url WebResources
+	bool imageLinks;	// ObjectLock, also extract image links (e.g. <img src=""/>)
 
 	char *getItems(const char *name);
 	char *getNewUrlStatus(const char *name);
 	void setNewUrlStatus(const char *name, const char *value);
+	char *getImageLinks(const char *name);
+	void setImageLinks(const char *name, const char *value);
 
 	ObjectValues<UrlExtractor> *values;
 	char *getValueSync(const char *name);

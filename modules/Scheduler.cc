@@ -93,7 +93,9 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		currentTime = now;
 	}
 	// next update should be in 'next' seconds
-	int next = wsr->PathNextModification(wr->getUrlPath().c_str())/1000;
+	int next = wsr->PathNextRefresh(wr->getUrlPath().c_str())/1000;
+	if (next == 0)
+		next = 1;
 
 	// is file already open?
 	tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.find(now+next);
@@ -126,6 +128,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return resource;
 	}
 	delete other;
+	LOG_DEBUG_R(this, wr, "Scheduling " << wr->getUrl() << " " << next << " (" << now+next << ")");
 
 	return resource;
 }

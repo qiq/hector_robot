@@ -1,7 +1,5 @@
-# PreFetch.pm, simple, perl
-# Pre-process WebResource before passing to the Fetch module, test that
-# WebSitePath is not locked, lock it and propagate IP address from WSR to WR.
-# If WR does not pass the test, it is discarded.
+# FixRedirect.pm, simple, perl
+# Copy Location header field of the redirect into WebResource's url.
 # 
 # Dependencies: none
 # 
@@ -9,9 +7,8 @@
 # items			r/o	Total items processed
 # 
 # Status:
-# not changed (on error, WebResources are discarded)
 
-package PreFetch;
+package FixRedirect;
 
 use warnings;
 use strict;
@@ -25,6 +22,7 @@ sub new {
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'items' => 0,
+		'redirectStatus' => 1,
 	};
 	bless($self, $class);
 	return $self;
@@ -96,30 +94,10 @@ sub ProcessSimple() {
 		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
-	if ($wsr->getTypeStr() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->toStringShort()." Invalid type: ".$wsr->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
-		return $resource;
-	}
-
-	# check that path is ready to be fetched (not disabled, etc) and lock it
-	my $err = $wsr->PathReadyToFetch($resource->getUrlPath(), $resource->getScheduled());
-	if ($err == 0) {
-		my $ip = $wsr->getIpAddr();
-		$resource->setIpAddr($ip);
+	
+	if ($resource->getStatus() == $self->{'redirectStatus'}) {
+		$resource->setUrl($resource->getHeaderValue("Location"));
 		$self->{'items'}++;
-	} else {
-		if ($err == 1) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (status)");
-		} elsif ($err == 2) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (updated recently)");
-		} elsif ($err == 3) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (currently updating)");
-		} else {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled");
-		}
-		$resource->setFlag($Hector::Resource::DELETED);
 	}
 	return $resource;
 }

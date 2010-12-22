@@ -1,7 +1,6 @@
-# PreFetch.pm, simple, perl
-# Pre-process WebResource before passing to the Fetch module, test that
-# WebSitePath is not locked, lock it and propagate IP address from WSR to WR.
-# If WR does not pass the test, it is discarded.
+# SaveNewUrl.pm, simple, perl
+# Check that we are first saving a WebResource, set status to 0, otherwise
+# delete it (set DELETED flag).
 # 
 # Dependencies: none
 # 
@@ -9,9 +8,9 @@
 # items			r/o	Total items processed
 # 
 # Status:
-# not changed (on error, WebResources are discarded)
+# set status to 0
 
-package PreFetch;
+package NewLinkFilter;
 
 use warnings;
 use strict;
@@ -102,23 +101,14 @@ sub ProcessSimple() {
 		$resource->setFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
+	
+	$self->{'items'}++;
 
-	# check that path is ready to be fetched (not disabled, etc) and lock it
-	my $err = $wsr->PathReadyToFetch($resource->getUrlPath(), $resource->getScheduled());
-	if ($err == 0) {
-		my $ip = $wsr->getIpAddr();
-		$resource->setIpAddr($ip);
-		$self->{'items'}++;
+	my $currentTime = time();
+	my $ok = $wsr->PathNewLinkReady($resource->getUrlPath(), $currentTime);
+	if ($ok) {
+		$resource->setStatus(0);
 	} else {
-		if ($err == 1) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (status)");
-		} elsif ($err == 2) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (updated recently)");
-		} elsif ($err == 3) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (currently updating)");
-		} else {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled");
-		}
 		$resource->setFlag($Hector::Resource::DELETED);
 	}
 	return $resource;

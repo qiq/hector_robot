@@ -38,12 +38,12 @@ public:
         void getIpAddrExpire(IpAddr &addr, long &time);
         void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
         void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-        bool PathReadyToFetch(const char *path, long lastScheduled);
+        int PathReadyToFetch(const char *path, long lastScheduled);
         bool PathNewLinkReady(const char *path, long currentTime);
         bool PathUpdateError(const char *path, long currentTime, int maxCount);
         bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
         bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
-        long PathNextModification(const char *path);
+        long PathNextRefresh(const char *path);
 
         // change on-item methods
         void setUrlScheme(int urlScheme);
@@ -70,11 +70,14 @@ public:
         void setRobotsExpire(long time);
         long getRobotsExpire();
         void clearRobotsExpire();
+        void setRobotsRedirects(int redirects);
+        int getRobotsRedirects();
+        void clearRobotsRedirects();
 };
 
 %inline %{
 WebSiteResource *ResourceToWebSiteResource(Resource *r) {
-        return dynamic_cast<WebSiteResource*>(r);
+        return r->getTypeId() == WebSiteResource::typeId ? static_cast<WebSiteResource*>(r) : NULL;
 }
 
 void DeleteVectorOfString(std::vector<std::string> *v) {

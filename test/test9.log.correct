@@ -1,9 +1,9 @@
 url: http://localhost:8012/boo.html (HTTP localhost:8012 /boo.html), size: 15, ip: 127.0.0.1, scheduled: 0
-url: http://localhost:8012/boo.html (HTTP localhost:8012 /boo.html), size: 449, ip: 127.0.0.1, scheduled: 0
-url: http://localhost:8012/boo.html (HTTP localhost:8012 /boo.html), size: 449, ip: 127.0.0.1, scheduled: 0
+url: http://localhost:8012/boo.html (HTTP localhost:8012 /boo.html), size: 472, ip: 127.0.0.1, scheduled: 0
+url: http://localhost:8012/boo.html (HTTP localhost:8012 /boo.html), size: 472, ip: 127.0.0.1, scheduled: 0
 url: http://localhost:8012/redirect2.html (HTTP localhost:8012 /redirect2.html), size: 15, ip: 127.0.0.1, scheduled: 0
 url: http://localhost:8012/redirect3.html (HTTP localhost:8012 /redirect3.html), size: 15, ip: 127.0.0.1, scheduled: 0
-url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 449, ip: 127.0.0.1, scheduled: 0
-url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 449, ip: 127.0.0.1, scheduled: 0
+url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 472, ip: 127.0.0.1, scheduled: 0
+url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 472, ip: 127.0.0.1, scheduled: 0
 url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 53, ip: 127.0.0.1, scheduled: 0
 url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 53, ip: 127.0.0.1, scheduled: 0

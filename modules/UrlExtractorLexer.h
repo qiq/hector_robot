@@ -1,13 +1,15 @@
 struct scanner_state {
 	int inBase;
 	int inRefresh;
+	int inImage;
 };
 
 enum token_type {
 	TOK_EOF = 0,
 	TOK_URL = 1,
-	TOK_BASE = 2,
-	TOK_REDIRECT = 3,
+	TOK_IMG_URL = 2,
+	TOK_BASE = 3,
+	TOK_REDIRECT = 4,
 };
 
 void scanner_create(struct scanner_state *state, void **scanner);

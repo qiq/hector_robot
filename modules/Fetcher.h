@@ -69,7 +69,7 @@ typedef struct CurlInfo_ {
 	uint32_t currentTime;	// current time
 
 	CurlResourceInfo *resourceInfo;
-	std::vector<CurlResourceInfo*> resourceInfoHeap;
+	std::vector<CurlResourceInfo*> waitingHeap;
 
         log4cxx::LoggerPtr logger;
 } CurlInfo;

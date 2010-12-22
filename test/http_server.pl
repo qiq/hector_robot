@@ -32,6 +32,7 @@ while (my $c = $d->accept) {
 <img alt="test" src="testb.pdf"/>bar bar BAR
 <map>
 <area shape="rect" coords="0,0,1,1" href="t.html" alt="t"/>
+<area href="ta.html"/>
 </map>
 <frameset>
 <frame src="frame.html"/>

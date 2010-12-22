@@ -23,6 +23,7 @@ extern "C" {
 #include <unbound.h>
 }
 #include "common.h"
+#include "IpAddr.h"
 #include "Module.h"
 #include "ObjectValues.h"
 #include "Resource.h"
@@ -79,6 +80,7 @@ private:
 	std::queue<Resource*> *outputResources;
 	uint32_t currentTime;	// time of ProcessMulti() call
 
+	void UpdateResource(Resource *resource, int status, IpAddr *addr, uint32_t ipAddrExpire);
 };
 
 inline Module::Type DnsResolver::getType() {

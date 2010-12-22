@@ -30,10 +30,10 @@
 <INITIAL>{
 \<head[^>]*\/>		;
 \<head			yy_push_state(head, yyscanner);
-\<body[[:space:]]	yy_push_state(body, yyscanner);
+\<body[[:space:]]	{ yy_push_state(body, yyscanner); yyextra->inImage = 1; }
 \<a[[:space:]]		yy_push_state(a, yyscanner);
 \<area[[:space:]]	yy_push_state(area, yyscanner);
-\<img[[:space:]]	yy_push_state(img, yyscanner);
+\<img[[:space:]]	{ yy_push_state(img, yyscanner); yyextra->inImage = 1; }
 \<frame[[:space:]]	yy_push_state(frame, yyscanner);
 \<iframe[[:space:]]	yy_push_state(iframe, yyscanner);
 }
@@ -63,12 +63,12 @@ refresh			yyextra->inRefresh = 1;
 }
 
 <body>{
-\>						yy_pop_state(yyscanner);
+\>						{ yy_pop_state(yyscanner); yyextra->inImage = 0; }
 background[[:space:]]*=[[:space:]]*['"]?	yy_push_state(url, yyscanner);
 }
 
 <img,frame,iframe>{
-\>						yy_pop_state(yyscanner);
+\>						{ yy_pop_state(yyscanner); yyextra->inImage = 0; }
 src[[:space:]]*=[[:space:]]*['"]?		yy_push_state(url, yyscanner);
 }
 
@@ -78,8 +78,8 @@ href[[:space:]]*=[[:space:]]*['"]?		yy_push_state(url, yyscanner);
 }
 
 <url>{
-[^'">]+			{ return yyextra->inBase ? TOK_BASE : TOK_URL; }
-.			{ yy_pop_state(yyscanner); yyextra->inBase = 0; }
+[^'">]+			{ return yyextra->inBase ? TOK_BASE : ( yyextra->inImage ? TOK_IMG_URL : TOK_URL); }
+.			{ yy_pop_state(yyscanner); yyextra->inBase = 0; yyextra->inImage = 0; }
 }
 
 .|\n			;
@@ -94,6 +94,7 @@ void scanner_set_buffer(const char *data, int size, struct scanner_state *state,
 	yy_scan_bytes(data, size, scanner);
 	state->inBase = 0;
 	state->inRefresh = 0;
+	state->inImage = 0;
 }
 
 enum token_type scanner_scan(char **text, void *scanner) {

@@ -48,6 +48,7 @@ PreFetch, Fetch and PostFetch. Process redirects correctly.
 					</Module>
 					<Module id="M_dump3" lib="Dump.la"/>
 					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
+					<Module id="M_fixredirect" type="perl" lib="FixRedirect.pm"/>
 					<Module id="M_dump4" lib="Dump.la"/>
 				</modules>
 				<output>

@@ -15,6 +15,6 @@ message WebResource {
 	repeated string header_names = 7;	// response header field names
 	repeated string header_values = 8;	// response header field values
 	optional int32 redirect_count = 9;	// number of redirects
-	optional string content = 10;		// content of a resource
+	optional bytes content = 10;		// content of a resource
 	optional fixed32 scheduled = 11;	// last touched this WR
 }

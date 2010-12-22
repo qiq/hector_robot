@@ -29,6 +29,7 @@ message WebSiteResource {
 	repeated string allow_urls = 10;	// list of allowed URLs
 	repeated string disallow_urls = 11;	// list of disallowed URLs
 	optional fixed32 robots_expire = 12;	// when robots.txt will expire
+	optional int32 robots_redirect_count = 13;	// number of redirects while fetching robots.txt
 
-	repeated WebSitePath paths = 13;	// all paths
+	repeated WebSitePath paths = 14;	// all paths
 }

@@ -16,8 +16,8 @@ hector_client_set PE_robots.run 0
 # close (flush) all files
 hector_client_set M_scheduler[0].outputDir test10.tmp
 hector_client_set PE_dump.run 1
-file=`ls test10.tmp/*|head -n1`
-hector_client_set M_dump_load[0].filename $file
+cat test10.tmp/* >test10.tmp/all
+hector_client_set M_dump_load[0].filename test10.tmp/all
 hector_client_wait M_dump_output[0].items 3
 hector_server_shutdown
 pkill dns_server.pl
