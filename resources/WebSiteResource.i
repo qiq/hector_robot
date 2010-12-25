@@ -38,7 +38,7 @@ public:
         void getIpAddrExpire(IpAddr &addr, long &time);
         void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
         void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-        int PathReadyToFetch(const char *path, long lastScheduled);
+        int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
         bool PathNewLinkReady(const char *path, long currentTime);
         bool PathUpdateError(const char *path, long currentTime, int maxCount);
         bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
@@ -70,9 +70,9 @@ public:
         void setRobotsExpire(long time);
         long getRobotsExpire();
         void clearRobotsExpire();
-        void setRobotsRedirects(int redirects);
-        int getRobotsRedirects();
-        void clearRobotsRedirects();
+        void setRobotsRedirectCount(int redirects);
+        int getRobotsRedirectCount();
+        void clearRobotsRedirectCount();
 };
 
 %inline %{

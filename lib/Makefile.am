@@ -11,7 +11,7 @@ hectorinclude_HEADERS = robot_common.h
 
 librobot_la_SOURCES = \
 		robot_common.h robot_common.cc
-librobot_la_CXXFLAGS = $(AM_CXXFLAGS)
+librobot_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 librobot_la_LIBADD = libgoogleurl.la
 librobot_la_LDFLAGS = -version-info 0:0:0 $(AM_LDFLAGS) -lltdl
 

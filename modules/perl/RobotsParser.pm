@@ -211,7 +211,8 @@ sub ProcessSimple() {
 			$resource->setStatus(1);
 			return $resource;
 		} else {
-			$resource->setUrl($location);
+			my $wr = HectorRobot::ResourceToWebResource($resource);
+			$wr->setUrl(HectorRobot::AbsolutizeUrl($resource->getUrl(), $location));
 			$resource->setStatus(2);
 			$self->{'items'}++;
 		}

@@ -32,4 +32,6 @@ inline long CountCksum(const char *data, int size) {
 	return (long)SuperFastHash(data, size);
 }
 
+std::string AbsolutizeUrl(const std::string &baseUrl, const std::string &url);
+
 #endif

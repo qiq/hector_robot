@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include "WebSiteManager.h"
 #include "TestResource.h"
+#include "WebSiteManager.h"
 
 using namespace std;
 
@@ -23,10 +23,12 @@ CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
+LOG4CXX_DEBUG(logger, "Starting dns resolution: " << src->getId());
 	return src;
 }
 
 Resource *CallDns::FinishResource(Resource *tmp) {
+LOG4CXX_DEBUG(logger, "Finishing dns resolution: " << tmp->getId());
 	return tmp;
 }
 
@@ -49,6 +51,7 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	IpAddr ip = wsr->getIpAddr();
 	wr->setIpAddr(ip);
 	wr->setAttachedResource(wsr);
+LOG4CXX_DEBUG(logger, "Starting robots resolution: " << wsr->getUrlHost());
 	return wr;
 }
 
@@ -66,6 +69,7 @@ Resource *CallRobots::FinishResource(Resource *tmp) {
 	}
 	unused.push_back(wr);
 	wsr->setStatus(status);
+LOG4CXX_DEBUG(logger, "Finishing robots resolution: " << wsr->getUrlHost() << " (" << status << ")");
 	return wsr;
 }
 
@@ -75,6 +79,8 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	timeTick = DEFAULT_TIME_TICK;
 	dnsEngine = NULL;
 	robotsEngine = NULL;
+	robotsMaxRedirects = 5;
+	robotsNegativeTTL = 86400;
 
 	values = new ObjectValues<WebSiteManager>(this);
 	values->addGetter("items", &WebSiteManager::getItems);
@@ -247,27 +253,32 @@ void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool rob
 	// wsr is not yet being processed
 	tr1::unordered_map<WebSiteResource*, vector<Resource*> *>::iterator iter = waitingResources.find(wsr);
 	if (iter == waitingResources.end()) {
+LOG_DEBUG_R(this, r, "start processing (really)");
 		//r->setAttachedResource(wsr);
 		vector<Resource*> *v = new vector<Resource*>();
 		v->push_back(r);
 		waitingResources[wsr] = v;
-		waitingResourcesCount++;
+		if (r->getTypeId() == WebResource::typeId)
+			waitingResourcesCount++;
 		if (!robotsOnly)
 			callDnsInput.push(wsr);
 		else
 			callRobotsInput.push(wsr);
 	} else {
+LOG_DEBUG_R(this, r, "start processing (wait)");
 		// append to the waiting resources list
 		iter->second->push_back(r);
-		waitingResourcesCount++;
+		if (r->getTypeId() == WebResource::typeId)
+			waitingResourcesCount++;
 	}
 }
 
 void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources) {
+LOG_DEBUG_R(this, wsr, "finished wsr");
 	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(wsr);
 	assert(iter != waitingResources.end());
 	if (wsr->getStatus() == 2) {
-		// robots.txt was redirected, redirec target is allowed_urls[0]
+		// robots.txt was redirected, redirect target is allowed_urls[0]
 		int redirects = wsr->getRobotsRedirectCount();
 		vector<string> *v = wsr->getAllowUrls();
 		assert(v->size() == 1);
@@ -281,6 +292,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			wr.setUrl(url);
 			WebSiteResource *next = getWebSiteResource(&wr);
 			if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
+LOG_DEBUG_R(this, wsr, "recurse");
 				// WSR not up-to-date: recursively resolve WSR
 				next->setRobotsRedirectCount(redirects+1);
 				StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
@@ -288,6 +300,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			}
 			// WSR is ready, just copy info
 			CopyRobotsInfo(next, wsr);
+			wsr->setStatus(next->getStatus());
 		} else {
 			// error: too many redirects, make resources
 			LOG_DEBUG_R(this, wsr, "Too many redirects: " << url);
@@ -305,19 +318,26 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 		Resource *r = *iter;
 		if (r->getTypeId() == WebResource::typeId) {
 			// WebResource, just put it into the output queue
+LOG_DEBUG_R(this, r, "finished WR");
 			r->setAttachedResource(wsr);
 			r->setStatus(0);
 			outputResources->push(r);
 			waitingResourcesCount--;
+			ObjectLockWrite();
+			items++;
+			ObjectUnlock();
 		} else {
+LOG_DEBUG_R(this, r, "finished WSR (recurse)");
 			// WebSiteResource: resolve robots.txt redirection
 			WebSiteResource *prev = static_cast<WebSiteResource*>(r);
 			// copy robots info from current resource to previous (in the redirection chain)
 			CopyRobotsInfo(wsr, prev);
+			prev->setStatus(wsr->getStatus());
 			// recursively finish processing of resources
 			FinishProcessing(prev, outputResources);
 		}
 	}
+	delete v;
 	waitingResources.erase(wsr);
 }
 
@@ -399,9 +419,11 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 				wr->setAttachedResource(wsr);
 				outputResources->push(wr);
 			} else {
+LOG_DEBUG_R(this, wr, "checking wr: " << wr->getUrl());
 				if (wsr->getIpAddrExpire() < (long)currentTime || wsr->getRobotsExpire() < (long)currentTime) {
 					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= (long)currentTime);
 				} else {
+LOG_DEBUG_R(this, wr, "checking wr: no-op" << wr->getUrl());
 					// no problem with the WSR, just attach it to WR
 					wr->setAttachedResource(wsr);
 					wr->setStatus(0);
@@ -439,6 +461,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	int min = dnsN < robotsN ? dnsN : robotsN;
 	if (expectingResources)
 		*expectingResources = min;
+LOG_DEBUG(this, "min: " << min << ", waitingResourcesCount: " << waitingResourcesCount);
 	return waitingResourcesCount;
 }
 

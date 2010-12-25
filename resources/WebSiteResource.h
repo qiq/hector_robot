@@ -86,7 +86,7 @@ public:
 	void getIpAddrExpire(IpAddr &addr, long &time);
 	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
 	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-	int PathReadyToFetch(const char *path, long lastScheduled);
+	int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
 	bool PathNewLinkReady(const char *path, long currentTime);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
 	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
@@ -209,7 +209,7 @@ inline int WebSiteResource::getStatus() {
 
 inline void WebSiteResource::setStatus(int status) {
 	lock.LockWrite();
-	r.set_status(status);
+	this->status = status;
 	lock.Unlock();
 }
 
@@ -353,18 +353,25 @@ inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std
 
 // test whether path is ready to be fetched
 // return: 0: OK, 1: invalid status, 2: status updated recently, 3: currently refreshing (locked)
-inline int WebSiteResource::PathReadyToFetch(const char *path, long lastScheduled) {
+inline int WebSiteResource::PathReadyToFetch(const char *path, long currentTime, long lastScheduled) {
 	lock.LockWrite();
 	WebSitePath *wsp = getPathInfo(path, true);
 	int result = 1;
 	if (wsp) {
-		if (wsp->getPathStatus() != WebSitePath::OK && wsp->getPathStatus() != WebSitePath::NEW_LINK && wsp->getPathStatus() != WebSitePath::NONE) {
+		WebSitePath::PathStatus status = wsp->getPathStatus();
+		if (status != WebSitePath::OK && status != WebSitePath::NEW_LINK && status != WebSitePath::NONE) {
 			result = 1;
-		} else if (wsp->getLastPathStatusUpdate() > (uint32_t)lastScheduled) {
+		// NEW_LINK saved, but we want to download WR now anyway
+		} else if (status != WebSitePath::NEW_LINK && wsp->getLastPathStatusUpdate() > (uint32_t)lastScheduled) {
 			result = 2;
 		} else if  (wsp->getRefreshing()) {
 			result = 3;
 		} else {
+			// previously we did not want to 
+			if (wsp->getPathStatus() == WebSitePath::NONE) {
+				wsp->setPathStatus(WebSitePath::NEW_LINK);
+				wsp->setLastPathStatusUpdate(currentTime);
+			}
 			wsp->setRefreshing(true);
 			result = 0;
 		}

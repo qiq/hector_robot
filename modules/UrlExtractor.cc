@@ -128,6 +128,9 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 		outputResources->push(tmp);
 	}
 	urls.clear();
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
 
 	if (expectingResources)
 		*expectingResources = 1000;

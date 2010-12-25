@@ -11,7 +11,6 @@
 #include <tr1/unordered_map>
 #include "Module.h"
 #include "ObjectValues.h"
-#include "ProcessingEngine.h"
 #include "robot_common.h"
 #include "Resource.h"
 
@@ -21,7 +20,7 @@ public:
 	class Action;
 	class Rule;
 
-	Filter(ObjectRegistry *objects, ProcessingEngine *engine, const char *id, int threadIndex);
+	Filter(ObjectRegistry *objects, const char *id, int threadIndex);
 	~Filter();
 	bool Init(vector<pair<string, string> > *params);
 	vector<Filter::Rule*> *InitResource(Resource *resource);

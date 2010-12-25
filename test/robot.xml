@@ -12,16 +12,16 @@
 			<Processor id="P_load">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_load" lib="Load.la">
+					<!--Module id="M_load" lib="Load.la">
 						<param name="filename" value="newlink.tmp"/>
-					</Module>
-					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+					</Module-->
+					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
 						<param name="urlList">
 <![CDATA[
-							http://192.168.1.38/
+							http://idnes.cz/
 ]]>
 						</param>
-					</Module-->
+					</Module>
 					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
 						<param name="urlList">
 <![CDATA[
@@ -47,6 +47,7 @@
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
+<Module id="M_main_dump" lib="Dump.la"/>
 				</modules>
 				<output>
 					<nextProcessor ref="P_newlink" filter="2"/>
@@ -140,11 +141,12 @@
 						<param name="minServerRelax" value="1"/>
 						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://host/)"/>
 					</Module>
+					<Module id="M_dump_robots1" lib="Dump.la"/>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>
 						<param name="negativeTTL" value="86400"/>
 					</Module>
-					<!--Module id="M_dump_robots2" lib="Dump.la"/-->
+					<Module id="M_dump_robots2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>

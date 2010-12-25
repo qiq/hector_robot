@@ -86,14 +86,18 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return wr;
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(r);
 
+	// next update should be in 'next' seconds
+	long n = wsr->PathNextRefresh(wr->getUrlPath().c_str());
+	if (n < 0)
+		return resource;
+
 	uint32_t t = time(NULL);
 	uint32_t now = t/1000;
 	if (now > currentTime) {
 		CloseFiles();
 		currentTime = now;
 	}
-	// next update should be in 'next' seconds
-	int next = wsr->PathNextRefresh(wr->getUrlPath().c_str())/1000;
+	int next = n/1000;
 	if (next == 0)
 		next = 1;
 
@@ -128,6 +132,9 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return resource;
 	}
 	delete other;
+	ObjectLockWrite();
+	items++;
+	ObjectUnlock();
 	LOG_DEBUG_R(this, wr, "Scheduling " << wr->getUrl() << " " << next << " (" << now+next << ")");
 
 	return resource;

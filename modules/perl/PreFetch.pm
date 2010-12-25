@@ -103,8 +103,9 @@ sub ProcessSimple() {
 		return $resource;
 	}
 
+	my $currentTime = time();
 	# check that path is ready to be fetched (not disabled, etc) and lock it
-	my $err = $wsr->PathReadyToFetch($resource->getUrlPath(), $resource->getScheduled());
+	my $err = $wsr->PathReadyToFetch($resource->getUrlPath(), $currentTime, $resource->getScheduled());
 	if ($err == 0) {
 		my $ip = $wsr->getIpAddr();
 		$resource->setIpAddr($ip);

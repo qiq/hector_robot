@@ -1,13 +1,16 @@
 - umet processit relativni Location
-
+	- detekce relativniho URL (://) a resolve
+	- otestovat na real datech (robot.sh)
 - pridat do fetch/resolver debug o uspesnem vysledku
-	- obecne vsechny interakce se servery
-- pause + save checkpoint -> deadlock!
+	- obecne vsechny interakce se servery, sjednotit debug, errors, ...
+	- pridat trace, default level bude info(?)
+
+- kazdy modul by mel mit jeden trace event, kde se rika, co se dela
+
 - robots a redirect...
 	- kdyz bude robots.txt redirect, tak musis ziskat robots.txt pro jiny
 	  wsr (pripadne i dns) a nastav, ze po resolvu se zkopiruji robots info do jineho resource
-
-- proc pada fetch?
+	- otestovat na nejake domene, melo byt fungovat
 - scheme filter: obecne filter!
 
 - ke kazdemu modulu, co zpracovava za resources
@@ -16,16 +19,9 @@ testy:
 	urlextractor
 		- otestovat base
 
-- rozmyslet, jak odfiltrovat nove resources z cyklu (a ulozit do jednoho souboru
-	- pres queue + status == 2
-	- ukladani bude neco jako lastScheduled == 0 -> nastav a OK, jinak zahod
-
-- otestovat stazeni seed + nove linky
-
 - http://www.searchtools.com/robots/robot-checklist.html
 
 - disable libunbound cache (resp. konfigurace cesty ke konfiguracnimu souboru)
-
 - upravit resourceinfo, aby fungoval pro websiteresource
 - items: jen korektne zpracovane resources, ne vsechny -- predelat
 - jmena metod na velka pismena (krome getteru/setteru)

@@ -26,6 +26,7 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	timeTick = DEFAULT_TIME_TICK;
 	forwardServer = NULL;
 	forwardPort = 0;
+	negativeTTL = 86400;
 
 	values = new ObjectValues<DnsResolver>(this);
 	values->addGetter("items", &DnsResolver::getItems);

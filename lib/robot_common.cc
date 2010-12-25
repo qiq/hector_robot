@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "googleurl/src/gurl.h"
 #include "robot_common.h"
 
 using namespace std;
@@ -41,7 +42,7 @@ bool parseString(string *data, string *value, char separator) {
 		i++;
 	bool finished = false;
 	bool escape = false;
-	while (!finished && i < data->length()) {
+	while (!finished && i < (int)data->length()) {
 		char c = data->at(i);
 		if (c == '\\') {
 			if (!escape) {
@@ -146,4 +147,15 @@ char* itoa(int value, char* str) {
 		str[i] = tmp;
 	}
 	return str;
+}
+
+string AbsolutizeUrl(const string &baseUrl, const string &url) {
+	// url is absolute
+	if (url.find("://") != string::npos)
+		return url;
+	GURL base(baseUrl);
+	GURL resolved = base.Resolve(url);
+	if (!resolved.is_valid())
+		return url;
+	return resolved.spec();
 }
