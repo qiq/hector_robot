@@ -1,17 +1,17 @@
-# WebResourceCreator.pm, input, perl
-# Create WRs according to the list of url got in the config or in the file.
+# Filter.pm, simple, perl
+# Run a Perl script to filter resources, it may use any resource's methods.
 # 
 # Dependencies: none
 # 
 # Parameters:
 # items			r/o	Total items processed
-# urlList		r/w	List of URLs (text or CDATA section)
-# urlFile		r/w	File with list of URLs
+# filter		r/w	Filter as specified in the XML file (text or CDATA section)
+# filterFile		r/w	Filter in the file (replaces filter)
 # 
 # Status:
-# 0 (default of WR)
+# 0 or as set in the filter
 
-package WebResourceCreator;
+package Filter;
 
 use warnings;
 use strict;
@@ -25,10 +25,8 @@ sub new {
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
 		'items' => 0,
-		'urlList' => undef,
-		'urlFile' => undef,
-		'_url' => [],
-		'_finished' => 0,
+		'filter' => undef,
+		'filterFile' => undef,
 	};
 	bless($self, $class);
 	return $self;
@@ -37,27 +35,13 @@ sub new {
 sub DESTROY {
 }
 
-sub createUrlList {
-	my ($self, $s) = @_;
-	return [] if (not defined $s);
-	my @a;
-	foreach my $url (split(/[\n\r]+/, $s)) {
-		$url =~ s/^\s+//;
-		$url =~ s/\s+$//;
-		next if ($url eq '');
-		push(@a, $url);
-	}
-	return \@a;
-}
-
 sub loadFile {
 	my ($self, $file) = @_;
 	if (defined open(my $fh, '<'.$file)) {
 		my @lines = <$fh>;
 		close($fh);
-		push(@{$self->{'_url'}}, @{$self->createUrlList(join("\n", @lines))});
-		$self->{'urlFile'} = $file;
-		$self->{'_finished'} = 0;
+		$self->{'filter'} = join("\n", @lines);
+		$self->{'filterFile'} = $file;
 		return 1;
 	} else {
 		$self->{'_object'}->log_error("Cannot open file: ".$file);
@@ -76,20 +60,15 @@ sub Init {
 			$self->{$p->[0]} = $p->[1];
 		}
 	}
-	my @url;
-	if (defined $self->{'urlList'}) {
-		push(@{$self->{'_url'}}, @{$self->createUrlList($self->{'urlList'})});
-		$self->{'_finished'} = 0;
-	}
-	if (defined $self->{'urlFile'}) {
-		return 0 if (not $self->loadFile($self->{'urlFile'}));
+	if (defined $self->{'filterFile'}) {
+		return 0 if (not $self->loadFile($self->{'filterFile'}));
 	}
 	return 1;
 }
 
 sub getType {
 	my ($self) = @_;
-	return $Hector::Module::INPUT;
+	return $Hector::Module::SIMPLE;
 }
 
 sub getValueSync {
@@ -106,10 +85,7 @@ sub setValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
-		if ($name eq 'urlList') {
-			push(@{$self->{'_url'}}, @{$self->createUrlList($value)});
-			$self->{'_finished'} = 0;
-		} elsif ($name eq 'urlFile') {
+		if ($name eq 'filterFile') {
 			return 0 if (not $self->loadFile($value));
 		}
 	} else {
@@ -134,23 +110,45 @@ sub RestoreCheckpoint {
 	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
-sub ProcessInput() {
+$Filter::resource = undef;
+$Filter::object = undef;
+
+sub log_trace() {
+	my ($msg) = @_;
+	$Filter::object->log_trace($Filter::resource->toStringShort." ".$msg);
+}
+
+sub log_debug() {
+	my ($msg) = @_;
+	$Filter::object->log_debug($Filter::resource->toStringShort." ".$msg);
+}
+
+sub log_info() {
+	my ($msg) = @_;
+	$Filter::object->log_info($Filter::resource->toStringShort." ".$msg);
+}
+
+sub log_error() {
+	my ($msg) = @_;
+	$Filter::object->log_error($Filter::resource->toStringShort." ".$msg);
+}
+
+sub log_fatal() {
+	my ($msg) = @_;
+	$Filter::object->log_fatal($Filter::resource->toStringShort." ".$msg);
+}
+
+sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if (defined $resource) {
-		$self->{'_object'}->log_error($resource->toStringShort()." Resource is already defined.");
-		return undef;
-	}
-	if (@{$self->{'_url'}} == 0) {
-		if (not $self->{'_finished'}) {
-			$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
-			$self->{'_finished'} = 1;
-		}
-		return undef;
-	}
-	$resource = HectorRobot::WebResource->new();
-	$resource->setId($self->{'_threadIndex'}*10000+$self->{'items'});
-	$resource->setUrl(shift(@{$self->{'_url'}}));
+	return $resource if (not defined $self->{'filter'});
+
+	$Filter::resource = $resource;
+	$Filter::object = $self->{'_object'};
+
+	eval $self->{'filter'};
+	&log_error($@) if ($@);
+
 	$self->{'items'}++;
 	return $resource;
 }
