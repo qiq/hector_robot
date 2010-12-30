@@ -62,10 +62,16 @@ public:
         long getIpAddrExpire();
         void clearIpAddrExpire();
         void setAllowUrls(const std::vector<std::string> &allow_urls);
+        void setAllowUrl(int index, const std::string &url);
         std::vector<std::string> *getAllowUrls();
+        const std::string &getAllowUrl(int index);
+        int countAllowUrls();
         void clearAllowUrls();
         void setDisallowUrls(const std::vector<std::string> &disallow_urls);
+        void setDisallowUrl(int index, const std::string &url);
         std::vector<std::string> *getDisallowUrls();
+        const std::string &getDisallowUrl(int index);
+        int countDisallowUrls();
         void clearDisallowUrls();
         void setRobotsExpire(long time);
         long getRobotsExpire();

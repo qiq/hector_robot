@@ -203,88 +203,62 @@ ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 		type = INT;
 		get_u.i = &WebSiteResource::getId;
 		set_u.i = &WebSiteResource::setId;
-		clear_u.c = NULL;
+		clear_all = NULL;
 	} else if (name == "status") {
 		type = INT;
 		get_u.i = &WebSiteResource::getStatus;
 		set_u.i = &WebSiteResource::setStatus;
-		clear_u.c = NULL;
-/*	} else if (name == "url") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrl;
-		set_u.s = &WebSiteResource::setUrl;
-		clear_u.c = &WebSiteResource::clearUrl;
-	} else if (name == "time") {
-		type = LONG;
-		get_u.l = &WebSiteResource::getTime;
-		set_u.l = &WebSiteResource::setTime;
-		clear_u.c = &WebSiteResource::clearTime;
-	} else if (name == "mimeType") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getMimeType;
-		set_u.s = &WebSiteResource::setMimeType;
-		clear_u.c = &WebSiteResource::clearMimeType;
-	} else if (name == "content") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getContent;
-		set_u.s = &WebSiteResource::setContent;
-		clear_u.c = &WebSiteResource::clearContent;
-	} else if (name == "header") {
-		type = STRING2;
-		get_u.s2 = &WebSiteResource::getHeaderValue;
-		set_u.s2 = &WebSiteResource::setHeaderValue;
-		clear_u.c = &WebSiteResource::clearHeaderFields;
-	} else if (name == "ip4Addr") {
-		type = IP4;
-		get_u.a4 = &WebSiteResource::getIp4Addr;
-		set_u.a4 = &WebSiteResource::setIp4Addr;
-		clear_u.c = &WebSiteResource::clearIp4Addr;
-	} else if (name == "ip6Addr") {
-		type = IP6;
-		get_u.a6 = &WebSiteResource::getIp6Addr;
-		set_u.a6 = &WebSiteResource::setIp6Addr;
-		clear_u.c = &WebSiteResource::clearIp6Addr;
-	} else if (name == "ipAddrExpire") {
-		type = LONG;
-		get_u.l = &WebSiteResource::getIpAddrExpire;
-		set_u.l = &WebSiteResource::setIpAddrExpire;
-		clear_u.c = &WebSiteResource::clearIpAddrExpire;
+		clear_all = NULL;
 	} else if (name == "urlScheme") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrlScheme;
-		set_u.s = &WebSiteResource::setUrlScheme;
-		clear_u.c = &WebSiteResource::clearUrlScheme;
-	} else if (name == "urlUsername") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrlUsername;
-		set_u.s = &WebSiteResource::setUrlUsername;
-		clear_u.c = &WebSiteResource::clearUrlUsername;
-	} else if (name == "urlPassword") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrlPassword;
-		set_u.s = &WebSiteResource::setUrlPassword;
-		clear_u.c = &WebSiteResource::clearUrlPassword;
+		type = INT;
+		get_u.i = &WebSiteResource::getUrlScheme;
+		set_u.i = &WebSiteResource::setUrlScheme;
+		clear_all = &WebSiteResource::clearUrlScheme;
 	} else if (name == "urlHost") {
 		type = STRING;
 		get_u.s = &WebSiteResource::getUrlHost;
 		set_u.s = &WebSiteResource::setUrlHost;
-		clear_u.c = &WebSiteResource::clearUrlHost;
+		clear_all = &WebSiteResource::clearUrlHost;
 	} else if (name == "urlPort") {
 		type = INT;
 		get_u.i = &WebSiteResource::getUrlPort;
 		set_u.i = &WebSiteResource::setUrlPort;
-		clear_u.c = &WebSiteResource::clearUrlPort;
-	} else if (name == "urlPath") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrlPath;
-		set_u.s = &WebSiteResource::setUrlPath;
-		clear_u.c = &WebSiteResource::clearUrlPath;
-	} else if (name == "urlQuery") {
-		type = STRING;
-		get_u.s = &WebSiteResource::getUrlQuery;
-		set_u.s = &WebSiteResource::setUrlQuery;
-		clear_u.c = &WebSiteResource::clearUrlQuery;
-	} else {*/
-		type = UNKNOWN;
+		clear_all = &WebSiteResource::clearUrlPort;
+	} else if (name == "ipAddr") {
+		type = IP;
+		get_u.ip = &WebSiteResource::getIpAddr;
+		set_u.ip = &WebSiteResource::setIpAddr;
+		clear_all = &WebSiteResource::clearIpAddr;
+	} else if (name == "ipAddrExpire") {
+		type = LONG;
+		get_u.l = &WebSiteResource::getIpAddrExpire;
+		set_u.l = &WebSiteResource::setIpAddrExpire;
+		clear_all = &WebSiteResource::clearIpAddrExpire;
+	} else if (name == "allowUrls") {
+		type = ARRAY_STRING;
+		get_u.as = &WebSiteResource::getAllowUrl;
+		set_u.as = &WebSiteResource::setAllowUrl;
+		get_all_values_u.s = &WebSiteResource::getAllowUrls;
+		set_all_values_u.s = &WebSiteResource::setAllowUrls;
+		count = &WebSiteResource::countAllowUrls;
+		clear_all = &WebSiteResource::clearAllowUrls;
+	} else if (name == "disallowUrls") {
+		type = ARRAY_STRING;
+		get_u.as = &WebSiteResource::getDisallowUrl;
+		set_u.as = &WebSiteResource::setDisallowUrl;
+		get_all_values_u.s = &WebSiteResource::getDisallowUrls;
+		set_all_values_u.s = &WebSiteResource::setDisallowUrls;
+		count = &WebSiteResource::countDisallowUrls;
+		clear_all = &WebSiteResource::clearDisallowUrls;
+	} else if (name == "robotsExpire") {
+		type = LONG;
+		get_u.l = &WebSiteResource::getRobotsExpire;
+		set_u.l = &WebSiteResource::setRobotsExpire;
+		clear_all = &WebSiteResource::clearRobotsExpire;
+	} else if (name == "robotsRedirectCount") {
+		type = INT;
+		get_u.i = &WebSiteResource::getRobotsRedirectCount;
+		set_u.i = &WebSiteResource::setRobotsRedirectCount;
+		clear_all = &WebSiteResource::clearRobotsRedirectCount;
 	}
 }

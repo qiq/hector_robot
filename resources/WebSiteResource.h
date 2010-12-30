@@ -104,16 +104,22 @@ public:
 	int getUrlPort();
 	void clearUrlPort();
 	void setIpAddr(IpAddr &addr);
-	IpAddr getIpAddr();
+	IpAddr &getIpAddr();
 	void clearIpAddr();
 	void setIpAddrExpire(long time);
 	long getIpAddrExpire();
 	void clearIpAddrExpire();
 	void setAllowUrls(const std::vector<std::string> &allow_urls);
+	void setAllowUrl(int index, const std::string &url);
 	std::vector<std::string> *getAllowUrls();
+	const std::string &getAllowUrl(int index);
+	int countAllowUrls();
 	void clearAllowUrls();
 	void setDisallowUrls(const std::vector<std::string> &disallow_urls);
+	void setDisallowUrl(int index, const std::string &url);
 	std::vector<std::string> *getDisallowUrls();
+	const std::string &getDisallowUrl(int index);
+	int countDisallowUrls();
 	void clearDisallowUrls();
 	void setRobotsExpire(long time);
 	long getRobotsExpire();
@@ -569,9 +575,9 @@ inline void WebSiteResource::setIpAddr(IpAddr &addr) {
 	lock.Unlock();
 }
 
-inline IpAddr WebSiteResource::getIpAddr() {
+inline IpAddr &WebSiteResource::getIpAddr() {
 	lock.LockRead();
-	IpAddr a = addr;
+	IpAddr &a = addr;
 	lock.Unlock();
 	return a;
 }
@@ -610,12 +616,32 @@ inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_
 	lock.Unlock();
 }
 
+inline void WebSiteResource::setAllowUrl(int index, const std::string &url) {
+	lock.LockWrite();
+	r.set_allow_urls(index, url);
+	lock.Unlock();
+}
+
 inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
 	std::vector<std::string> *result = new std::vector<std::string>();
 	lock.LockRead();
 	for (int i = 0; i < r.allow_urls_size(); i++) {
 		result->push_back(r.allow_urls(i));
 	}
+	lock.Unlock();
+	return result;
+}
+
+inline const std::string &WebSiteResource::getAllowUrl(int index) {
+	lock.LockRead();
+	std::string &result = *r.mutable_allow_urls(index);
+	lock.Unlock();
+	return result;
+}
+
+inline int WebSiteResource::countAllowUrls() {
+	lock.LockRead();
+	int result = r.allow_urls_size();
 	lock.Unlock();
 	return result;
 }
@@ -635,12 +661,32 @@ inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &dis
 	lock.Unlock();
 }
 
+inline void WebSiteResource::setDisallowUrl(int index, const std::string &url) {
+	lock.LockWrite();
+	r.set_disallow_urls(index, url);
+	lock.Unlock();
+}
+
 inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
 	std::vector<std::string> *result = new std::vector<std::string>();
 	lock.LockRead();
 	for (int i = 0; i < r.disallow_urls_size(); i++) {
 		result->push_back(r.disallow_urls(i));
 	}
+	lock.Unlock();
+	return result;
+}
+
+inline const std::string &WebSiteResource::getDisallowUrl(int index) {
+	lock.LockRead();
+	std::string &result = *r.mutable_disallow_urls(index);
+	lock.Unlock();
+	return result;
+}
+
+inline int WebSiteResource::countDisallowUrls() {
+	lock.LockRead();
+	int result = r.disallow_urls_size();
 	lock.Unlock();
 	return result;
 }

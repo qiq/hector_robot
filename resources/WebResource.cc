@@ -179,6 +179,20 @@ const std::string &WebResource::getHeaderValue(const std::string &name) {
 	return iter->second;
 }
 
+int WebResource::getHeaderCount() {
+	if (header_map_ready)
+		return headers.size();
+	else
+		return r.header_names_size();
+}
+
+void WebResource::clearHeaderField(const std::string &name) {
+	if (!header_map_ready)
+		LoadHeaders();
+	headers.erase(name);
+	header_map_dirty = 1;
+}
+
 void WebResource::clearHeaderFields() {
 	r.clear_header_names();
 	r.clear_header_values();
@@ -237,68 +251,74 @@ ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 		type = INT;
 		get_u.i = &WebResource::getId;
 		set_u.i = &WebResource::setId;
-		clear_u.c = NULL;
+		clear_all = NULL;
 	} else if (name == "status") {
 		type = INT;
 		get_u.i = &WebResource::getStatus;
 		set_u.i = &WebResource::setStatus;
-		clear_u.c = NULL;
+		clear_all = NULL;
 	} else if (name == "url") {
 		type = STRING;
 		get_u.s = &WebResource::getUrl;
 		set_u.s = &WebResource::setUrl;
-		clear_u.c = &WebResource::clearUrl;
+		clear_all = &WebResource::clearUrl;
 	} else if (name == "ipAddr") {
 		type = IP;
 		get_u.ip = &WebResource::getIpAddr;
 		set_u.ip = &WebResource::setIpAddr;
-		clear_u.c = &WebResource::clearIpAddr;
+		clear_all = &WebResource::clearIpAddr;
 	} else if (name == "header") {
-		type = STRING2;
-		get_u.s2 = &WebResource::getHeaderValue;
-		set_u.s2 = &WebResource::setHeaderValue;
-		clear_u.c = &WebResource::clearHeaderFields;
+		type = HASH_STRING;
+		get_u.hs = &WebResource::getHeaderValue;
+		set_u.hs = &WebResource::setHeaderValue;
+		count = &WebResource::getHeaderCount;
+		get_all_keys = &WebResource::getHeaderNames;
+		clear_hash_item = &WebResource::clearHeaderField;
+		clear_all = &WebResource::clearHeaderFields;
 	} else if (name == "redirectCount") {
 		type = INT;
 		get_u.i = &WebResource::getRedirectCount;
 		set_u.i = &WebResource::setRedirectCount;
-		clear_u.c = &WebResource::clearRedirectCount;
+		clear_all = &WebResource::clearRedirectCount;
 	} else if (name == "content") {
 		type = STRING;
 		get_u.s = &WebResource::getContent;
 		set_u.s = &WebResource::setContent;
-		clear_u.c = &WebResource::clearContent;
+		clear_all = &WebResource::clearContent;
+	} else if (name == "scheduled") {
+		type = LONG;
+		get_u.l = &WebResource::getScheduled;
+		set_u.l = &WebResource::setScheduled;
+		clear_all = &WebResource::clearScheduled;
 	} else if (name == "urlScheme") {
 		type = INT;
 		get_u.i = &WebResource::getUrlScheme;
 		set_u.i = &WebResource::setUrlScheme;
-		clear_u.c = &WebResource::clearUrlScheme;
+		clear_all = &WebResource::clearUrlScheme;
 	} else if (name == "urlUsername") {
 		type = STRING;
 		get_u.s = &WebResource::getUrlUsername;
 		set_u.s = &WebResource::setUrlUsername;
-		clear_u.c = &WebResource::clearUrlUsername;
+		clear_all = &WebResource::clearUrlUsername;
 	} else if (name == "urlPassword") {
 		type = STRING;
 		get_u.s = &WebResource::getUrlPassword;
 		set_u.s = &WebResource::setUrlPassword;
-		clear_u.c = &WebResource::clearUrlPassword;
+		clear_all = &WebResource::clearUrlPassword;
 	} else if (name == "urlHost") {
 		type = STRING;
 		get_u.s = &WebResource::getUrlHost;
 		set_u.s = &WebResource::setUrlHost;
-		clear_u.c = &WebResource::clearUrlHost;
+		clear_all = &WebResource::clearUrlHost;
 	} else if (name == "urlPort") {
 		type = INT;
 		get_u.i = &WebResource::getUrlPort;
 		set_u.i = &WebResource::setUrlPort;
-		clear_u.c = &WebResource::clearUrlPort;
+		clear_all = &WebResource::clearUrlPort;
 	} else if (name == "urlPath") {
 		type = STRING;
 		get_u.s = &WebResource::getUrlPath;
 		set_u.s = &WebResource::setUrlPath;
-		clear_u.c = &WebResource::clearUrlPath;
-	} else {
-		type = UNKNOWN;
+		clear_all = &WebResource::clearUrlPath;
 	}
 }

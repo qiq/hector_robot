@@ -66,6 +66,8 @@ public:
 	std::vector<std::string> *getHeaderNames();
 	void setHeaderValue(const std::string &name, const std::string &value);
 	const std::string &getHeaderValue(const std::string &name);
+	int getHeaderCount();
+	void clearHeaderField(const std::string &name);
 	void clearHeaderFields();
 	void setRedirectCount(int count);
 	int getRedirectCount();
