@@ -1,0 +1,8 @@
+if ($resource->getUrl() =~ /http:/) {
+	$resource->setStatus(3);
+	print STDERR "test ".$resource->getUrlHost()."\n";
+	$self->{'_object'}->log_debug($resource->toString()."XXXX");
+	if ($resource->getIpAddr()->Match("127.0.0.2/30")) {
+		print STDERR "IP OK\n";
+	}
+}

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+test11: Process WebResources: download them, pass them through WebSiteManager,
+PreFetch, Fetch and PostFetch. Process redirects correctly.
+Run UrlExtractor.
+-->
+<Config>
+	<Server id="test" lib="RobotServer.la">
+		<threads>1</threads>
+		<serverHost>*</serverHost>
+		<serverPort>1100</serverPort>
+		<logConfig>test.log.props</logConfig>
+		<ProcessingEngine id="PE_test">
+			<Processor id="P_load">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[						http://www.test.com:8012/foo.html
+							http://www.test.com:8012/bar.html
+							http://www.test.com:8012/xyzzy.html
+							http://www.test.com:8012/redirect.html ]]>
+						</param>
+					</Module>
+					<Module id="M_dump1" lib="Dump.la"/>
+				</modules>
+				<output>
+					<nextProcessor ref="P_main"/>
+				</output>
+			</Processor>
+			<Processor id="P_main">
+				<threads>1</threads>
+				<input>
+					<queue/>			<!-- default queue -->
+					<queue priority="100"/>		<!-- redirect queue -->
+				</input>
+				<modules>
+					<Module id="M_wsm" lib="WebSiteManager.la">
+						<param name="dnsEngine" value="PE_dns"/>
+						<param name="robotsEngine" value="PE_robots"/>
+					</Module>
+					<Module id="M_filter" type="perl" lib="Filter.pm">
+						<param name="filterFile" value="test12.filter"/>
+					</Module>
+					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
+					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
+					<Module id="M_dump2" lib="Dump.la"/>
+					<Module id="M_fetch" lib="Fetcher.la">
+						<param name="timeTick" value="100000"/>
+						<param name="minServerRelax" value="0"/>
+					</Module>
+					<Module id="M_dump3" lib="Dump.la"/>
+					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
+					<Module id="M_fixredirect" type="perl" lib="FixRedirect.pm"/>
+					<Module id="M_dump4" lib="Dump.la"/>
+				</modules>
+				<output>
+					<nextProcessor ref="P_main" filter="1" priority="100"/>
+					<nextProcessor ref="P_save"/>
+				</output>
+			</Processor>
+			<Processor id="P_save">
+				<threads>1</threads>
+				<input>
+					<queue/>
+				</input>
+				<modules>
+					<Module id="M_extractor" lib="UrlExtractor.la"/>
+					<Module id="M_dump5" lib="Dump.la"/>
+					<Module id="M_output" lib="TestOutput.la"/>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+
+		<ProcessingEngine id="PE_dns">
+                        <inputProcessor ref="P_dns"/>
+			<Processor id="P_dns">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_dump_dns1" lib="Dump.la"/>
+					<Module id="M_dns" lib="DnsResolver.la">
+						<param name="forwardServer" value="127.0.0.1"/>
+						<param name="forwardPort" value="5354"/>
+						<param name="negativeTTL" value="86400"/>
+					</Module>
+					<Module id="M_dump_dns2" lib="Dump.la"/>
+				</modules>
+                                <input>
+                                        <queue/>
+                                </input>
+                                <output>
+                                        <nextProcessor ref="PE_dns"/>
+                                </output>
+			</Processor>
+		</ProcessingEngine>
+
+		<ProcessingEngine id="PE_robots">
+                        <inputProcessor ref="P_robots"/>
+			<Processor id="P_robots">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_dump_robots1" lib="Dump.la"/>
+					<Module id="M_fetch_robots" lib="Fetcher.la">
+						<param name="timeTick" value="100000"/>
+						<param name="minServerRelax" value="0"/>
+					</Module>
+					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
+						<param name="TTL" value="86400"/>
+						<param name="negativeTTL" value="86400"/>
+					</Module>
+					<Module id="M_dump_robots2" lib="Dump.la"/>
+				</modules>
+                                <input>
+                                        <queue/>
+                                </input>
+                                <output>
+                                        <nextProcessor ref="PE_robots"/>
+                                </output>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
