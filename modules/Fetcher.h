@@ -122,7 +122,6 @@ private:
 	std::vector<std::string> *listNamesSync();
 
 	std::queue<Resource*> *outputResources;
-
 };
 
 inline Module::Type Fetcher::getType() {
