@@ -10,10 +10,12 @@ modules_LTLIBRARIES = WebResourceGenerator.la Fetcher.la DnsResolver.la WebSiteM
 WebResourceGenerator_la_SOURCES = WebResourceGenerator.h WebResourceGenerator.cc
 WebResourceGenerator_la_LIBADD = ../resources/libWebResource.la
 
-#Filter_la_SOURCES = Filter.h Filter.cc
+#Filter_la_SOURCES = Filter.h Filter.cc FilterLexer.h FilterLexer.cc
 #Filter_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBPCRECPP_CFLAGS@
 #Filter_la_LDFLAGS = $(AM_LDFLAGS) @LIBPCRECPP_LIBS@
 #Filter_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
+#FilterLexer.cc: FilterLexer.l
+#	flex -8 -f -Cf -Ca -Cr -t FilterLexer.l >FilterLexer.cc
 
 Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
 Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) -I ../lib/curl/include

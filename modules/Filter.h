@@ -7,12 +7,14 @@
 
 #include <config.h>
 
-#include <pcrecpp.h>
 #include <tr1/unordered_map>
+#include <vector>
+#include <pcrecpp.h>
+#include "robot_common.h"
 #include "Module.h"
 #include "ObjectValues.h"
-#include "robot_common.h"
 #include "Resource.h"
+#include "ResourceFieldInfo.h"
 
 class Filter : public Module {
 public:
@@ -22,8 +24,8 @@ public:
 
 	Filter(ObjectRegistry *objects, const char *id, int threadIndex);
 	~Filter();
-	bool Init(vector<pair<string, string> > *params);
-	vector<Filter::Rule*> *InitResource(Resource *resource);
+	bool Init(std::vector<std::pair<std::string, std::string> > *params);
+	std::vector<Filter::Rule*> *InitResource(Resource *resource);
 	Module::Type getType();
 	Resource *ProcessSimple(Resource *resource);
 
@@ -32,25 +34,42 @@ private:
 	char *ruleList;		// initOnly
 	char *ruleFile;		// initOnly
 
-	std::tr1::unordered_map<int, vector<Filter::Rule*>*> rules;
-
-	ObjectValues<Filter> *values;
-
 	char *getItems(const char *name);
 	char *getRuleList(const char *name);
 	void setRuleList(const char *name, const char *value);
 	char *getRuleFile(const char *name);
 	void setRuleFile(const char *name, const char *value);
 
+	ObjectValues<Filter> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
 	bool isInitOnly(const char *name);
-	vector<string> *listNamesSync();
+	std::vector<std::string> *listNamesSync();
+
+	std::tr1::unordered_map<int, std::vector<Filter::Rule*>*> rules;
 
 public:
 	// one left-hand condition (cond1 && cond2 => action1, action2)
 	class Condition {
 	public:
+		enum OperandType {
+			UNKNOWN,
+			STRING,
+			INT,
+			LONG,
+			IP,
+		};
+		enum Operation {
+			SCALAR,
+			ARRAY,
+			HASH,
+			ARRAY_ALL,
+			HASH_ALL,
+			ARRAY_ANY,
+			HASH_ANY,
+			COUNT,
+		};
+
 		enum OperatorType {
 			INT_EQ, INT_NE, INT_LT, INT_LE, INT_GT, INT_GE,
 			LONG_EQ, LONG_NE, LONG_LT, LONG_LE, LONG_GT, LONG_GE,
@@ -62,7 +81,7 @@ public:
 
 		Condition();
 		~Condition();
-		bool Init(string *data, int lineNo, Resource *resource);
+		bool Init(std::string *data, int lineNo, Resource *resource);
 		bool isTrue(Resource *wr);
 
 	private:
@@ -76,8 +95,7 @@ public:
 		std::string sValue;
 		int iValue;
 		long lValue;
-		ip4_addr_t a4Value;
-		ip6_addr_t a6Value;
+		IpAddr addrValue;
 		int prefix;
 		pcrecpp::RE *regex;
 		std::string replacement;
@@ -86,24 +104,22 @@ public:
 		static log4cxx::LoggerPtr logger;
 	};
 
-	// one right-hand condition (cond1 && cond2 => action1, action2)
+	// one action part of the rule (cond1 && cond2 => action1, action2)
 	class Action {
 	public:
 		enum ActionType {
-			ACCEPT,
+			ACCEPT,		// default
 			DROP,
 			CONTINUE,
-			SETVAL,
-			CLEAR,
 		};
 
 		Action();
 		~Action();
-		bool Init(string *data, int lineNo, Resource *resource);
+		bool Init(std::string *data, int lineNo, Resource *resource);
 		ActionType Apply(Resource *wr);
 
 	private:
-		// action: ACCEPT | DROP | CONTINUE | STATUS = xxx
+		// action: ACCEPT | CONTINUE | DROP
 		ActionType type;
 		// variable setters
 		ResourceFieldInfo *info;
@@ -112,8 +128,7 @@ public:
 		std::string sValue;
 		int iValue;
 		long lValue;
-		ip4_addr_t a4Value;
-		ip6_addr_t a6Value;
+		IpAddr addrValue;
 
 		static log4cxx::LoggerPtr logger;
 	};
@@ -123,11 +138,11 @@ public:
 	public:
 		Rule() {};
 		~Rule();
-		bool Init(string *line, int lineNo, Resource *resource);
+		bool Init(std::string *line, int lineNo, Resource *resource);
 		Filter::Action::ActionType Apply(Resource *resource);
 	private:
-		vector<Condition*> conditions;
-		vector<Action*> actions;
+		std::vector<Condition*> conditions;
+		std::vector<Action*> actions;
 
 		static log4cxx::LoggerPtr logger;
 	};
@@ -149,7 +164,7 @@ inline bool Filter::isInitOnly(const char *name) {
 	return values->isInitOnly(name);
 }
 
-inline vector<string> *Filter::listNamesSync() {
+inline std::vector<std::string> *Filter::listNamesSync() {
 	return values->listNamesSync();
 }
 

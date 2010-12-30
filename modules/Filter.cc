@@ -8,6 +8,8 @@
 #include "common.h"
 #include "Filter.h"
 
+using namespace std;
+
 Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	ruleFile = NULL;
@@ -177,6 +179,293 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 	}
 
 	log4cxx::LoggerPtr Filter::Condition::logger(log4cxx::Logger::getLogger("module.Filter.Condition"));
+
+	OpType Filter::Condition::FieldInfoToOpType(ResourceFieldInfo::FieldType type);
+		OpType result;
+		switch (type) {
+		case ResourceFieldInfo::STRING:
+		case ResourceFieldInfo::ARRAY_STRING:
+		case ResourceFieldInfo::HASH_STRING:
+			result = STRING;
+			break;
+		case ResourceFieldInfo::INT:
+		case ResourceFieldInfo::ARRAY_INT:
+		case ResourceFieldInfo::HASH_INT:
+			result = INT;
+			break;
+		case ResourceFieldInfo::LONG:
+		case ResourceFieldInfo::ARRAY_LONG:
+		case ResourceFieldInfo::HASH_LONG:
+			result = LONG;
+			break;
+		case ResourceFieldInfo::IP:
+		case ResourceFieldInfo::ARRAY_IP:
+		case ResourceFieldInfo::HASH_IP:
+			result = IP;
+			break;
+		default:
+			result = UNKNOWN;
+			break;
+		}
+		return result;
+	}
+
+	bool ParseArray(yyscan_t *scanner, scanner_state *state, Operand *o, const char *name) {
+		// a[]
+		o->info = resource->getFieldInfo(name);
+		int type = o->info->getType();
+		if (type == ResourceFieldInfo::UNKNOWN) {
+			LOG4CXX_ERROR(logger, "Invalid array name: " << text << " (line " << state->line << ")");
+			return false;
+		}
+		switch (scanner_scan(&text, scanner)) {
+		case TOK_NUMBER:
+			// a[3]
+			o->op = ARRAY;
+			op->opType = FieldInfoToOpType(type);
+			if (op->opType == UNKNOWN)
+				return false;
+			o->iValue = atoi(text);
+			break;
+		case TOK_STRING:
+			// a["abc"]
+			text = UnescapeString(text);
+		case TOK_LABEL:
+			// a[abc]
+			o->op = HASH;
+			op->opType = FieldInfoToOpType(type);
+			if (op->opType == UNKNOWN)
+				return false;
+			o->sValue = text;
+			break;
+		case TOK_ALL:
+			// a[*]
+			if (type == ResourceFieldInfo::ARRAY_STRING || type == ResourceFieldInfo::ARRAY_INT || type == ResourceFieldInfo::ARRAY_LONG || type == ResourceFieldInfo::ARRAY_IP) {
+				o->op = ARRAY_ALL;
+			} else if (type == ResourceFieldInfo::HASH_STRING || type == ResourceFieldInfo::HASH_INT || type == ResourceFieldInfo::HASH_LONG || type == ResourceFieldInfo::HASH_IP) {
+				o->op = HASH_ALL;
+			} else {
+				LOG4CXX_ERROR(logger, "Invalid array type: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			o->opType = FieldInfoToOpType(type);
+			break;
+		case TOK_ANY:
+			// a[?]
+			if (type == ResourceFieldInfo::ARRAY_STRING || type == ResourceFieldInfo::ARRAY_INT || type == ResourceFieldInfo::ARRAY_LONG || type == ResourceFieldInfo::ARRAY_IP) {
+				o->op = ARRAY_ANY;
+			} else if (type == ResourceFieldInfo::HASH_STRING || type == ResourceFieldInfo::HASH_INT || type == ResourceFieldInfo::HASH_LONG || type == ResourceFieldInfo::HASH_IP) {
+				o->op = HASH_ANY;
+			} else {
+				LOG4CXX_ERROR(logger, "Invalid array type: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			o->opType = FieldInfoToOpType(type);
+			break;
+		case TOK_EOF:
+			return false;
+		default:
+			LOG4CXX_ERROR(logger, "Invalid input encountered: " << text << " (line " << state->line << ")");
+			return false;
+		}
+		return true;
+	}
+
+	
+
+	bool Filter::Condition::ParseOperand(yyscan_t *scanner, scanner_state *state, Operand *o, bool lvalue) {
+		o->type = UNKNOWN;
+		o->length = false;
+		o->info = NULL;
+		char *text;
+		switch (scanner_scan(&text, scanner)) {
+		case TOK_FUNCTION_CLEAR:
+			if (lvalue) {
+			}
+			switch (scanner_scan(&text, scanner)) {
+			case TOK_LABEL:
+				o->info = Resource::getFieldInfo(text);
+				int type = o->info->getType();
+				if (type != ResourceFieldInfo::ARRAY_) {
+				}
+				break;
+			case TOK_EOF:
+				return false;
+			default:
+			}
+			break;
+		case TOK_FUNCTION_DELETE:
+			switch (scanner_scan(&text, scanner)) {
+			case TOK_ARRAY:
+				o->info = Resource::getFieldInfo(text);
+				int type = o->info->getType();
+				if (type != ResourceFieldInfo::ARRAY_) {
+				}
+				break;
+			case TOK_EOF:
+				return false;
+			default:
+				// ERROR
+			}
+			break;
+		case TOK_FUNCTION_COUNT:
+			break;
+		case TOK_FUNCTION_LENGTH:
+			if (lvalue) {
+				LOG4CXX_ERROR(logger, "length() cannot be used as a l-value: (line " << state->line << ")");
+				return false;
+			}
+			o->length = true;
+			switch (scanner_scan(&text, scanner)) {
+			case TOK_LABEL:
+				// length(var)
+				o->op = SCALAR:
+				o->opType = STRING;
+				o->info = resource->getFieldInfo(text);
+				if (o->info->getType() != ResourceFieldInfo::STRING) {
+					LOG4CXX_ERROR(logger, "Invalid length() variable: " << text << " (line " << state->line << ")");
+					return false;
+				}
+				break;
+			case TOK_STRING:
+				// length("abc")
+				o->op = SCALAR;
+				o->opType = INT;
+				iValue = strlen(UnescapeString(text));
+				length = false;
+				break;
+			case TOK_ARRAY:
+				if (!ParseArray())
+					return false;
+				if (o->opType != STRING) {
+					LOG4CXX_ERROR(logger, "length() requires string type (line " << state->line << ")");
+					return false;
+				}
+			case TOK_EOF:
+				return false;
+			default:
+				LOG4CXX_ERROR(logger, "Invalid input encountered: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			break;
+		case TOK_FUNCTION_DELETE_KEY:
+		case TOK_FUNCTION_DELETE_VALUE:
+		case TOK_FUNCTION_KEEP_KEY:
+		case TOK_FUNCTION_KEEP_VALUE:
+			break;
+		case TOK_LABEL:
+			// var
+			o->op = SCALAR:
+			o->info = resource->getFieldInfo(text);
+			op->opType = FieldInfoToOpType(o->info->getType());
+			if (op->opType == UNKNOWN)
+				return false;
+			break;
+		case TOK_NUMBER:
+			// 3
+			if (lvalue) {
+				LOG4CXX_ERROR(logger, "Constant cannot be used as a l-value: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			iValue = atoi(text);
+			o->op = SCALAR;
+			o->opType = INT;
+			break;
+		case TOK_STRING:
+			// "abc"
+			if (lvalue) {
+				LOG4CXX_ERROR(logger, "Constant cannot be used as a l-value: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			sValue = UnescapeString(text);
+			o->op = SCALAR;
+			o->opType = STRING;
+			break;
+		case TOK_REGEX:
+			// "abc"
+			if (lvalue) {
+				LOG4CXX_ERROR(logger, "Regular expression cannot be used as a l-value: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			o->re_subst = false;
+			o->re_global = false;
+			bool caseless = false;
+			string match = text;
+			bool re_end = false;
+			while (!re_end) {
+				switch (scanner_scan(&text, scanner)) {
+				case TOK_REGEX_NOFLAGS:
+					re_end = true;
+					break;
+				case TOK_REGEX_G:
+					o->re_global = true;
+					break;
+				case TOK_REGEX_I:
+					caseless = true;
+					break;
+				case TOK_REGEX_SUBST:
+					o->re_subst = true;
+					o->re_subst_text = text;
+					break;
+				case TOK_EOF:
+					return false;
+				default:
+					LOG4CXX_ERROR(logger, "Invalid token: " << text << " (line " << state->line << ")");
+					return false;
+				}
+			}
+			o->regex = new pcrecpp::RE(match, caseless ? pcrecpp::RE_Options().set_caseless(true).set_utf8(true) : pcrecpp::RE_Options().set_utf8(true));
+			o->op = SCALAR;
+			o->opType = STRING;
+			break;
+		case TOK_IP4:
+			o->ip_prefix = 0;
+			if (!o->ip.parseIp4(text)) {
+				LOG4CXX_ERROR(logger, "Invalid IPv4 address: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			switch (scanner_scan(&text, scanner)) {
+			case TOK_IP_PREFIX:
+				o->ip_prefix = atoi(text);
+				break;
+			case TOK_IP_NOPREFIX:
+				break;
+			case TOK_EOF:
+				return false;
+			}
+			break;
+		case TOK_IP6:
+			o->ip_prefix = 0;
+			if (!o->ip.parseIp6(text)) {
+				LOG4CXX_ERROR(logger, "Invalid IPv6 address: " << text << " (line " << state->line << ")");
+				return false;
+			}
+			switch (scanner_scan(&text, scanner)) {
+			case TOK_IP_PREFIX:
+				o->ip_prefix = atoi(text);
+				break;
+			case TOK_IP_NOPREFIX:
+				break;
+			case TOK_EOF:
+				return false;
+			}
+			break;
+		default:
+			LOG4CXX_ERROR(logger, "Invalid input encountered: " << text << " (line " << state->line << ")");
+			return false;
+		}
+	}
+
+	void EvaluateOperand(Operand *o) {
+		
+	}
+
+	bool filter::condition::init(yyscan_t *scanner, scanner_state *state) {
+		length = false;
+// parse operand1, operator, operand2
+// check that operator is compatible with operands
+// eval: eval operand1, operand2 and apply operator
+
 
 	bool Filter::Condition::Init(string *data, int lineNo, Resource *resource) {
 		// first part, what: label | length(label) | label[name]
