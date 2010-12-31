@@ -113,32 +113,32 @@ sub RestoreCheckpoint {
 $Filter::resource = undef;
 $Filter::object = undef;
 
-sub log_trace() {
+sub log_trace {
 	my ($msg) = @_;
 	$Filter::object->log_trace($Filter::resource->toStringShort." ".$msg);
 }
 
-sub log_debug() {
+sub log_debug {
 	my ($msg) = @_;
 	$Filter::object->log_debug($Filter::resource->toStringShort." ".$msg);
 }
 
-sub log_info() {
+sub log_info {
 	my ($msg) = @_;
 	$Filter::object->log_info($Filter::resource->toStringShort." ".$msg);
 }
 
-sub log_error() {
+sub log_error {
 	my ($msg) = @_;
 	$Filter::object->log_error($Filter::resource->toStringShort." ".$msg);
 }
 
-sub log_fatal() {
+sub log_fatal {
 	my ($msg) = @_;
 	$Filter::object->log_fatal($Filter::resource->toStringShort." ".$msg);
 }
 
-sub ProcessSimple() {
+sub ProcessSimple {
 	my ($self, $resource) = @_;
 
 	return $resource if (not defined $self->{'filter'});
