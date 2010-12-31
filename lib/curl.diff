@@ -1,0 +1,98 @@
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index cb9d0fb..6b533b5 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -1436,6 +1436,9 @@ typedef enum {
+   /* FNMATCH_FUNCTION user pointer */
+   CINIT(FNMATCH_DATA, OBJECTPOINT, 202),
+ 
++  /* qiq: DNS translation already done, accepts struct sockaddr_storage* */
++  CINIT(DNS_IP_ADDR, OBJECTPOINT, 255),
++
+   CURLOPT_LASTENTRY /* the last unused */
+ } CURLoption;
+ 
+diff --git a/lib/hostip.c b/lib/hostip.c
+index 8f6a52e..38ffcf4 100644
+--- a/lib/hostip.c
++++ b/lib/hostip.c
+@@ -407,6 +407,42 @@ int Curl_resolv(struct connectdata *conn,
+ 
+   *entry = NULL;
+ 
++  /* qiq: IP address already resolved */
++  if (data->set.dns_ip_addr.ss_family != AF_UNSPEC) {
++    Curl_addrinfo *addr;
++    void *inaddr;
++
++    /* Create a new cache entry */
++    dns = calloc(1, sizeof(struct Curl_dns_entry));
++    if (!dns)
++      return rc;
++
++    /* Create Curl_addrinfo */
++    switch (data->set.dns_ip_addr.ss_family) {
++    case AF_INET:
++      inaddr = &((struct sockaddr_in*)&data->set.dns_ip_addr)->sin_addr;
++      break;
++    case AF_INET6:
++      inaddr = &((struct sockaddr_in6*)&data->set.dns_ip_addr)->sin6_addr;
++      break;
++    default:
++      return rc;
++      break;
++    }
++    addr = Curl_ip2addr(data->set.dns_ip_addr.ss_family, inaddr, hostname, port);
++    if (!addr)
++      return rc;
++
++    dns->inuse = 1;
++    dns->addr = addr;
++    dns->timestamp = 0; /* not in the cache */
++
++    *entry = dns;
++    rc = CURLRESOLV_RESOLVED;
++
++    return rc;
++  }
++
+   /* Create an entry id, based upon the hostname and port */
+   entry_id = create_hostcache_id(hostname, port);
+   /* If we can't create the entry id, fail */
+diff --git a/lib/url.c b/lib/url.c
+index 1b65a92..2d8379e 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -789,6 +789,9 @@ CURLcode Curl_init_userdefined(struct UserDefined *set)
+   set->chunk_bgn      = ZERO_NULL;
+   set->chunk_end      = ZERO_NULL;
+ 
++  /* qiq: IP address */
++  set->dns_ip_addr.ss_family = AF_UNSPEC;
++
+   return res;
+ }
+ 
+@@ -2497,6 +2500,10 @@ CURLcode Curl_setopt(struct SessionHandle *data, CURLoption option,
+   case CURLOPT_FNMATCH_DATA:
+     data->set.fnmatch_data = va_arg(param, void *);
+     break;
++  case CURLOPT_DNS_IP_ADDR:
++    /* qiq: Set hard-wired IP address, prevent DNS lookups */
++    memcpy(&data->set.dns_ip_addr, va_arg(param, struct sockaddr_storage *), sizeof(struct sockaddr_storage));
++    break;
+   default:
+     /* unknown tag and its companion, just ignore: */
+     result = CURLE_FAILED_INIT; /* correct this */
+diff --git a/lib/urldata.h b/lib/urldata.h
+index 4d60591..d675d40 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -1434,6 +1434,7 @@ struct UserDefined {
+   curl_fnmatch_callback fnmatch; /* callback to decide which file corresponds
+                                     to pattern (e.g. if WILDCARDMATCH is on) */
+   void *fnmatch_data;
++  struct sockaddr_storage dns_ip_addr;   /* qiq: hard-wired IP address */
+ };
+ 
+ struct Names {
