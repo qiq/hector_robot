@@ -65,7 +65,7 @@
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 						<param name="minServerRelax" value="1"/>
-						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://host/)"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://hector.ms.mff.cuni.cz/)"/>
 					</Module>
 					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
 					<Module id="M_scheduler" lib="Scheduler.la">
@@ -139,7 +139,7 @@
 					<Module id="M_fetch_robots" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 						<param name="minServerRelax" value="1"/>
-						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://host/)"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://hector.ms.mff.cuni.cz/)"/>
 					</Module>
 					<Module id="M_dump_robots1" lib="Dump.la"/>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">

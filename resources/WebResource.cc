@@ -273,7 +273,7 @@ ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
 		set_u.hs = &WebResource::setHeaderValue;
 		count = &WebResource::getHeaderCount;
 		get_all_keys = &WebResource::getHeaderNames;
-		clear_hash_item = &WebResource::clearHeaderField;
+		delete_hash_item = &WebResource::clearHeaderField;
 		clear_all = &WebResource::clearHeaderFields;
 	} else if (name == "redirectCount") {
 		type = INT;
