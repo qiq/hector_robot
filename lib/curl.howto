@@ -1,4 +1,7 @@
 git clone git://github.com/bagder/curl.git
 patch -d curl -p1 <curl.diff
+( cd lib; ./buildconf }
+- update:
 ( cd lib; git pull )
+- make new diff:
 ( cd lib; git diff >../curl.diff )

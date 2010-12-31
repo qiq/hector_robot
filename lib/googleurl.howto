@@ -1,0 +1,4 @@
+svn co http://google-url.googlecode.com/svn/trunk googleurl
+patch -p0 <googleurl.diff
+- make new patch
+svn diff googleurl >googleurl.diff

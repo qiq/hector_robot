@@ -1,0 +1,54 @@
+Index: googleurl/base/string16.cc
+===================================================================
+--- googleurl/base/string16.cc	(revision 151)
++++ googleurl/base/string16.cc	(working copy)
+@@ -28,6 +28,7 @@
+ 
+ #include "base/string16.h"
+ 
++#include <string.h>
+ #ifdef WIN32
+ 
+ #error This file should not be used on 2-byte wchar_t systems
+Index: googleurl/base/string16.h
+===================================================================
+--- googleurl/base/string16.h	(revision 151)
++++ googleurl/base/string16.h	(working copy)
+@@ -51,7 +51,9 @@
+ // of carrying UTF-16-encoded data.
+ 
+ #include <string>
++#include <cstdio>
+ 
++
+ #include "base/basictypes.h"
+ 
+ #ifdef WIN32
+Index: googleurl/base/basictypes.h
+===================================================================
+--- googleurl/base/basictypes.h	(revision 151)
++++ googleurl/base/basictypes.h	(working copy)
+@@ -6,6 +6,7 @@
+ typedef unsigned char  uint8;
+ typedef unsigned short uint16;
+ typedef unsigned int   uint32;
++typedef unsigned long long uint64;
+ 
+ const uint8  kuint8max  = (( uint8) 0xFF);
+ const uint32 kuint32max = ((uint32) 0xFFFFFFFF);
+Index: googleurl/base/logging.h
+===================================================================
+--- googleurl/base/logging.h	(revision 151)
++++ googleurl/base/logging.h	(working copy)
+@@ -7,7 +7,11 @@
+ #include <string>
+ #include <cstring>
+ #include <strstream>
++#ifdef WIN32
+ #include <tchar.h>
++#else
++#define TCHAR char
++#endif
+ 
+ #include "base/basictypes.h"
+ #include "base/scoped_ptr.h"
