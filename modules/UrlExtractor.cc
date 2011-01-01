@@ -4,9 +4,6 @@
 
 #include <string.h>
 #include <sys/socket.h>
-#include <curl/curl.h>
-#include <ev.h>
-#include <limits>
 #include "googleurl/src/gurl.h"
 #include "UrlExtractor.h"
 #include "WebResource.h"

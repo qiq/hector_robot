@@ -12,7 +12,9 @@ enum token_type {
 	TOK_REDIRECT = 4,
 };
 
-void scanner_create(struct scanner_state *state, void **scanner);
-enum token_type scanner_scan(char **text, void *scanner);
-void scanner_set_buffer(const char *data, int size, struct scanner_state *state, void *scanner);
-void scanner_destroy(void *scanner);
+extern "C" {
+	void scanner_create(struct scanner_state *state, void **scanner);
+	enum token_type scanner_scan(char **text, void *scanner);
+	void scanner_set_buffer(const char *data, int size, struct scanner_state *state, void *scanner);
+	void scanner_destroy(void *scanner);
+}

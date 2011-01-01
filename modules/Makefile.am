@@ -35,7 +35,7 @@ UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h Url
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 UrlExtractor_la_LIBADD = ../resources/libWebResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
 UrlExtractorLexer.cc: UrlExtractorLexer.l
-	flex -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
+	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
 
 Scheduler_la_SOURCES = Scheduler.h Scheduler.cc
 Scheduler_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la
