@@ -214,7 +214,7 @@ string WebResource::toString(Object::LogLevel logLevel) {
 	}
 	snprintf(buf, sizeof(buf), " %s:%d %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str());
 	s += buf;
-	snprintf(buf, sizeof(buf), ", size: %d", this->getContent().length());
+	snprintf(buf, sizeof(buf), ", size: %d", (int)this->getContent().length());
 	s += buf;
 	s += ", ip: ";
 	s += addr.toString();
