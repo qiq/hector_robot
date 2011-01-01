@@ -7,12 +7,11 @@ export PERL5LIB=$base/perl:$base/modules/perl:$PERL5LIB
 . hector_common.sh
 #set -x
 
-rm -rf robot.log refresh
-mkdir refresh
+rm -rf robot.log #refresh
+#mkdir refresh
 hector_server_start robot.xml robot
 #valgrind hector_server -c robot.xml -fa robot &
 #sleep 15
-#( ./dns_server.pl 5354 &  ./http_server.pl 8012 & )
 hector_client_set PE_robot.run 1
 hector_client_set PE_dns.run 1
 hector_client_set PE_robots.run 1
@@ -21,6 +20,5 @@ hector_client_set PE_robot.run 0
 hector_client_set PE_dns.run 0
 hector_client_set PE_robots.run 0
 hector_server_shutdown
-#pkill dns_server.pl; pkill http_server.pl
 
 exit $?
