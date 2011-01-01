@@ -35,7 +35,10 @@ AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
 AC_SUBST(HECTOR_CORE_PREFIX)
-AC_CHECK_LIB(Judy, JudySLIns)
+AC_CHECK_LIB(Judy, JudySLIns, [], [ echo "Please install libJudy"; exit -1 ])
+AC_CHECK_LIB(ev, ev_loop, [], [ echo "Please install libev"; exit -1 ])
+AC_CHECK_LIB(ldns, ldns_rr_free, [], [ echo "Please install libldns"; exit -1 ])
+AC_CHECK_LIB(unbound, ub_process, [], [ echo "Please install libunbound"; exit -1 ])
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
@@ -45,7 +48,10 @@ AC_CHECK_LIB(Judy, JudySLIns)
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h limits.h netdb.h netinet/in.h stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h unbound.h])
+AC_CHECK_HEADERS([arpa/inet.h limits.h netdb.h netinet/in.h stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h Judy.h ev.h unbound.h], [], [
+	echo "Some headers not found"
+	exit -1
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
