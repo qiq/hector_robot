@@ -23,12 +23,12 @@ CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
-LOG4CXX_DEBUG(logger, "Starting dns resolution: " << src->getId());
+	LOG4CXX_TRACE(logger, "DNS start: " << src->getId());
 	return src;
 }
 
 Resource *CallDns::FinishResource(Resource *tmp) {
-LOG4CXX_DEBUG(logger, "Finishing dns resolution: " << tmp->getId());
+	LOG4CXX_TRACE(logger, "DNS finish: " << tmp->getId());
 	return tmp;
 }
 
@@ -51,7 +51,7 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	IpAddr ip = wsr->getIpAddr();
 	wr->setIpAddr(ip);
 	wr->setAttachedResource(wsr);
-LOG4CXX_DEBUG(logger, "Starting robots resolution: " << wsr->getUrlHost());
+	LOG4CXX_TRACE(logger, "Robots start: " << wsr->getUrlHost());
 	return wr;
 }
 
@@ -69,7 +69,7 @@ Resource *CallRobots::FinishResource(Resource *tmp) {
 	}
 	unused.push_back(wr);
 	wsr->setStatus(status);
-LOG4CXX_DEBUG(logger, "Finishing robots resolution: " << wsr->getUrlHost() << " (" << status << ")");
+	LOG4CXX_TRACE(logger, "Robots finish: " << wsr->getUrlHost() << " (" << status << ")");
 	return wsr;
 }
 
@@ -253,8 +253,7 @@ void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool rob
 	// wsr is not yet being processed
 	tr1::unordered_map<WebSiteResource*, vector<Resource*> *>::iterator iter = waitingResources.find(wsr);
 	if (iter == waitingResources.end()) {
-LOG_DEBUG_R(this, r, "start processing (really)");
-		//r->setAttachedResource(wsr);
+		LOG_TRACE_R(this, r, "start");
 		vector<Resource*> *v = new vector<Resource*>();
 		v->push_back(r);
 		waitingResources[wsr] = v;
@@ -265,7 +264,7 @@ LOG_DEBUG_R(this, r, "start processing (really)");
 		else
 			callRobotsInput.push(wsr);
 	} else {
-LOG_DEBUG_R(this, r, "start processing (wait)");
+		LOG_TRACE_R(this, r, "waiting");
 		// append to the waiting resources list
 		iter->second->push_back(r);
 		if (r->getTypeId() == WebResource::typeId)
@@ -274,7 +273,6 @@ LOG_DEBUG_R(this, r, "start processing (wait)");
 }
 
 void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources) {
-LOG_DEBUG_R(this, wsr, "finished wsr");
 	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(wsr);
 	assert(iter != waitingResources.end());
 	if (wsr->getStatus() == 2) {
@@ -292,7 +290,6 @@ LOG_DEBUG_R(this, wsr, "finished wsr");
 			wr.setUrl(url);
 			WebSiteResource *next = getWebSiteResource(&wr);
 			if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
-LOG_DEBUG_R(this, wsr, "recurse");
 				// WSR not up-to-date: recursively resolve WSR
 				next->setRobotsRedirectCount(redirects+1);
 				StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
@@ -318,7 +315,7 @@ LOG_DEBUG_R(this, wsr, "recurse");
 		Resource *r = *iter;
 		if (r->getTypeId() == WebResource::typeId) {
 			// WebResource, just put it into the output queue
-LOG_DEBUG_R(this, r, "finished WR");
+			LOG_TRACE_R(this, r, "finish WR");
 			r->setAttachedResource(wsr);
 			r->setStatus(0);
 			outputResources->push(r);
@@ -327,7 +324,7 @@ LOG_DEBUG_R(this, r, "finished WR");
 			items++;
 			ObjectUnlock();
 		} else {
-LOG_DEBUG_R(this, r, "finished WSR (recurse)");
+			LOG_TRACE_R(this, r, "finish WSR (recurse)");
 			// WebSiteResource: resolve robots.txt redirection
 			WebSiteResource *prev = static_cast<WebSiteResource*>(r);
 			// copy robots info from current resource to previous (in the redirection chain)
@@ -419,11 +416,11 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 				wr->setAttachedResource(wsr);
 				outputResources->push(wr);
 			} else {
-LOG_DEBUG_R(this, wr, "checking wr: " << wr->getUrl());
+				LOG_TRACE_R(this, wr, "Checking WR: " << wr->getUrl());
 				if (wsr->getIpAddrExpire() < (long)currentTime || wsr->getRobotsExpire() < (long)currentTime) {
 					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= (long)currentTime);
 				} else {
-LOG_DEBUG_R(this, wr, "checking wr: no-op" << wr->getUrl());
+					LOG_TRACE_R(this, wr, "NOP: " << wr->getUrl());
 					// no problem with the WSR, just attach it to WR
 					wr->setAttachedResource(wsr);
 					wr->setStatus(0);
@@ -461,7 +458,6 @@ LOG_DEBUG_R(this, wr, "checking wr: no-op" << wr->getUrl());
 	int min = dnsN < robotsN ? dnsN : robotsN;
 	if (expectingResources)
 		*expectingResources = min;
-LOG_DEBUG(this, "min: " << min << ", waitingResourcesCount: " << waitingResourcesCount);
 	return waitingResourcesCount;
 }
 
