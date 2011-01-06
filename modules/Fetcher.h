@@ -15,6 +15,7 @@ userAgent		init	User-Agent: header field
 maxRequests		init	Number of concurrent requests
 maxContentLength	r/w	Maximum length of the content to download
 timeTick		r/w	Max time to spend in ProcessMulti()
+allowedContentTypes	r/w	List of mime-types that are allowed to be downloaded
 
 Status:
 0	OK
@@ -50,11 +51,14 @@ typedef struct CurlResourceInfo_ {
 	bool evSet;		// whether event was set or not
 	uint32_t time;		// last request completion time
 	struct CurlInfo_ *info; // parent
-
-	bool operator<(const struct CurlResourceInfo_ &ri) {
-		return time > ri.time;
-	}
 } CurlResourceInfo;
+
+
+struct CurlResourceInfo_compare {
+	bool operator()(CurlResourceInfo const*a, CurlResourceInfo const *b) const {
+		return a->time > b->time;
+	}
+};
 
 typedef struct CurlInfo_ {
 	class Fetcher *parent;
@@ -88,6 +92,7 @@ public:
 	void StartQueuedResourcesFetch();
 	void StartResourceFetch(WebResource *wr, int index);
 	void FinishResourceFetch(CurlResourceInfo *ri, int result);
+	bool CheckContentType(std::string *contentType);
 
 private:
 	int items;		// ObjectLock, items processed
@@ -98,6 +103,7 @@ private:
 	int maxRequests;	// initOnly, number of concurrent requests
 	long maxContentLength;	// ObjectLock, maximum length of the content to download
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
+	std::vector<std::string> allowedContentTypes;	// ObjectLock, list of mime-types that are allowed to be downloaded
 
 	char *getItems(const char *name);
 	char *getMinServerRelax(const char *name);
@@ -114,6 +120,8 @@ private:
 	void setMaxContentLength(const char *name, const char *value);
 	char *getTimeTick(const char *name);
 	void setTimeTick(const char *name, const char *value);
+	char *getAllowedContentTypes(const char *name);
+	void setAllowedContentTypes(const char *name, const char *value);
 
 	ObjectValues<Fetcher> *values;
 	char *getValueSync(const char *name);

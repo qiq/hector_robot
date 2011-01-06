@@ -28,6 +28,9 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	maxRequests = 5;
 	maxContentLength = 1024*1024;
 	timeTick = DEFAULT_TIME_TICK;
+	allowedContentTypes.push_back("text/html");
+	allowedContentTypes.push_back("text/plain");
+	allowedContentTypes.push_back("application/msword");
 
 	values = new ObjectValues<Fetcher>(this);
 	values->addGetter("items", &Fetcher::getItems);
@@ -45,6 +48,8 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	values->addSetter("maxContentLength", &Fetcher::setMaxContentLength);
 	values->addGetter("timeTick", &Fetcher::getTimeTick);
 	values->addSetter("timeTick", &Fetcher::setTimeTick);
+	values->addGetter("allowedContentTypes", &Fetcher::getAllowedContentTypes);
+	values->addSetter("allowedContentTypes", &Fetcher::setAllowedContentTypes);
 
 	curlInfo.logger = this->logger;
 }
@@ -131,6 +136,41 @@ char *Fetcher::getTimeTick(const char *name) {
 
 void Fetcher::setTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
+}
+
+char *Fetcher::getAllowedContentTypes(const char *name) {
+	string result;
+	for (int i = 0; i < (int)allowedContentTypes.size(); i++) {
+		if (i > 0)
+			result += " ";
+		result += allowedContentTypes[i];
+	}
+	return strdup(result.c_str());
+}
+
+void Fetcher::setAllowedContentTypes(const char *name, const char *value) {
+	allowedContentTypes.clear();
+	char *s = strdup(value);
+	bool space = true;
+	char *start = NULL;
+	while (*s) {
+		if (isspace(*s)) {
+			if (!space) {
+				*s = '\0';
+				allowedContentTypes.push_back(start);
+				space = true;
+			}
+		} else {
+			if (space) {
+				space = false;
+				start = s;
+			}
+		}
+		s++;
+	}
+	if (!space)
+		allowedContentTypes.push_back(start);
+	free(s);
 }
 
 void CheckCompleted(CurlInfo *ci);
@@ -240,8 +280,10 @@ size_t WriteCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 				ri->content->reserve(ri->contentLength < ri->maxContentLength ? ri->contentLength : ri->maxContentLength);
 		} else {
 			// non-text object which is too large: we are not interested in
-			if (ri->contentLength > ri->maxContentLength)
+			if (ri->contentLength > ri->maxContentLength) {
+				LOG_DEBUG_R(ri->info->parent, ri->current, "Object too large: " << ri->contentLength);
 				return 0;
+			}
 		}
 	}
 	// text object is too large? Trim!
@@ -284,11 +326,19 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		s.erase(0, pos+i);
 		if (name != "X-Status")		// we do not want malicious server to overwrite the status :)
 			ri->current->setHeaderValue(name.c_str(), s.c_str());
-		if (name == "Content-Size") {
+		if (name == "Content-Length") {
 			ri->contentLength = atol(s.c_str());
+			if (ri->contentLength > ri->maxContentLength) {
+				LOG_DEBUG_R(ri->info->parent, ri->current, "Object too large: " << ri->contentLength);
+				return 0;	// will cause CURLE_WRITE_ERROR
+			}
 		} else if (name == "Content-Type") {
 			if (!s.compare(0, 9, "text/html") || !s.compare(0, 10, "text/plain"))
 				ri->contentIsText = true;
+			if (!ri->info->parent->CheckContentType(&s)) {
+				LOG_DEBUG_R(ri->info->parent, ri->current, "Content-Type not allowed: " << s);
+				return 0;	// will cause CURLE_WRITE_ERROR
+			}
 		}
 	}
 	return realsize;
@@ -299,7 +349,7 @@ void Fetcher::QueueResource(WebResource *wr) {
 	IpAddr &ip = wr->getIpAddr();
 	uint32_t ip_sum;
 	if (ip.isIp4Addr()) {
-		ip_sum = ip.getIp4Addr();
+		ip_sum = ntohl(ip.getIp4Addr());
 	} else {
 		uint64_t ip6 = ip.getIp6Addr(true);
 		ip_sum = (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
@@ -316,13 +366,15 @@ void Fetcher::QueueResource(WebResource *wr) {
 	curlInfo.resources++;
 	if (ri->current || (curlInfo.currentTime < ri->time + wait)) {
 		ri->waiting.push_back(wr);
+		LOG_TRACE_R(this, wr, "Waiting (h: " << hash << ")");
 		// just waiting for timeout (not currently being processed)
 		if (!ri->current && ri->waiting.size() == 1) {
 			curlInfo.waitingHeap.push_back(ri);
-			push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
+			push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end(), CurlResourceInfo_compare());
 		}
 		return;
 	}
+	LOG_TRACE_R(this, wr, "Not waiting (h: " << hash << ")");
 	StartResourceFetch(wr, hash);
 }
 
@@ -333,7 +385,8 @@ void Fetcher::StartQueuedResourcesFetch() {
 	ObjectUnlock();
 	while (curlInfo.waitingHeap.size() > 0 && curlInfo.currentTime >= curlInfo.waitingHeap[0]->time+wait) {
 		CurlResourceInfo *ri = curlInfo.waitingHeap[0];
-		pop_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
+		LOG_TRACE(this, "waking up, h: " << ri->index);
+		pop_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end(), CurlResourceInfo_compare());
 		curlInfo.waitingHeap.pop_back();
 		WebResource *wr = ri->waiting.front();
 		ri->waiting.pop_front();
@@ -377,18 +430,22 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	ri->contentIsText = false;
 
 	// start!
+	LOG_TRACE_R(this, ri->current, "Fetching " << ri->current->getUrl());
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
 	if (rc != CURLM_OK)
-		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc);
+		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc << " (" << ri->current->getUrl() << ")");
 }
 
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	if (result == CURLE_OK) {
-		LOG_DEBUG_R(this, ri->current, "Fetched " << ri->current->getUrl());
+		LOG_DEBUG_R(this, ri->current, "Fetched " << ri->current->getUrl() << " (" << ri->current->getContent().size() << ")");
 		ri->current->setStatus(0);
 	} else {
-		LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->getUrl() << ": " << result);
+		// CURLE_WRITE_ERROR == invalid content-type or too large object
+		if (result != CURLE_WRITE_ERROR) {
+			LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->getUrl() << ": " << curl_easy_strerror((CURLcode)result));
+		}
 		ri->current->setStatus(1);
 	}
 	outputResources->push(ri->current);
@@ -405,8 +462,23 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	// add resource to the heap again
 	if (ri->waiting.size() > 0) {
 		curlInfo.waitingHeap.push_back(ri);
-		push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end());
+		push_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end(), CurlResourceInfo_compare());
 	}
+}
+
+bool Fetcher::CheckContentType(string *contentType) {
+	bool allowed = false;
+	ObjectLockRead();
+	if (allowedContentTypes.size() > 0) {
+		for (vector<string>::iterator iter = allowedContentTypes.begin(); iter != allowedContentTypes.end(); ++iter) {
+			if (!contentType->compare(0, iter->length(), *iter)) {
+				allowed = true;
+				break;
+			}
+		}
+	}
+	ObjectUnlock();
+	return allowed;
 }
 
 bool Fetcher::Init(vector<pair<string, string> > *params) {
