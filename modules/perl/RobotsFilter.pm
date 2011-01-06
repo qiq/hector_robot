@@ -107,15 +107,17 @@ sub ProcessSimple() {
 	my $path = $resource->getUrlPath();
 	my $allowed = 0;
 	my $au = $wsr->getAllowUrls();
+	my $prefix;
 	for (my $i = 0; $i < $au->size(); $i++) {
-		my $prefix= $au->get($i);
+		$prefix = $au->get($i);
 		if ($self->{'wildcards'}) {
 			if ($path =~ /$prefix/) {
 				$allowed = 1;
 				last;
 			}
 		} else {
-			if (substr($path, length($prefix)) == $prefix) {
+			my $l = length($prefix);
+			if (length($path) >= $l and substr($path, 0, $l) eq $prefix) {
 				$allowed = 1;
 				last;
 			}
@@ -126,14 +128,15 @@ sub ProcessSimple() {
 		my $disallowed = 0;
 		my $du = $wsr->getDisallowUrls();
 		for (my $i = 0; $i < $du->size(); $i++) {
-			my $prefix= $du->get($i);
+			$prefix = $du->get($i);
 			if ($self->{'wildcards'}) {
 				if ($path =~ /$prefix/) {
 					$disallowed = 1;
 					last;
 				}
 			} else {
-				if (substr($path, length($prefix)) == $prefix) {
+				my $l = length($prefix);
+				if (length($path) >= $l and substr($path, 0, $l) eq $prefix) {
 					$disallowed = 1;
 					last;
 				}
@@ -141,7 +144,7 @@ sub ProcessSimple() {
 		}
 		HectorRobot::DeleteVectorOfString($du);
 		if ($disallowed) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy: ".$resource->getUrl());
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy ($prefix): ".$resource->getUrl());
 			$resource->setFlag($Hector::Resource::DELETED);
 		}
 	}

@@ -96,7 +96,9 @@ sub ProcessSimple() {
 	}
 	
 	if ($resource->getStatus() == $self->{'redirectStatus'}) {
-		$resource->setUrl(HectorRobot::AbsolutizeUrl($resource->getUrl(), $resource->getHeaderValue("Location")));
+		my $location = HectorRobot::AbsolutizeUrl($resource->getUrl(), $resource->getHeaderValue("Location"));
+		$resource->setUrl($location);
+		$self->{'_object'}->log_debug($resource->toStringShort()." New location: ".$location);
 		$self->{'items'}++;
 	}
 	return $resource;

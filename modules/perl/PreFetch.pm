@@ -112,13 +112,13 @@ sub ProcessSimple() {
 		$self->{'items'}++;
 	} else {
 		if ($err == 1) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (status)");
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (status): ".$resource->getUrl());
 		} elsif ($err == 2) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (updated recently)");
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (updated recently): ".$resource->getUrl());
 		} elsif ($err == 3) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (currently updating)");
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled (currently updating): ".$resource->getUrl());
 		} else {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled");
+			$self->{'_object'}->log_debug($resource->toStringShort()." Disabled: ".$resource->getUrl());
 		}
 		$resource->setFlag($Hector::Resource::DELETED);
 	}

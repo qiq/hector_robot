@@ -23,12 +23,16 @@ CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests, true) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
-	LOG4CXX_TRACE(logger, "DNS start: " << src->getId());
+	assert(src->getTypeId() == WebSiteResource::typeId);
+	WebSiteResource *wsr = static_cast<WebSiteResource*>(src);
+	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "DNS start: " << wsr->getUrlHost());
 	return src;
 }
 
 Resource *CallDns::FinishResource(Resource *tmp) {
-	LOG4CXX_TRACE(logger, "DNS finish: " << tmp->getId());
+	assert(tmp->getTypeId() == WebSiteResource::typeId);
+	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp);
+	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "DNS finish: " << wsr->getUrlHost());
 	return tmp;
 }
 
@@ -51,7 +55,7 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	IpAddr ip = wsr->getIpAddr();
 	wr->setIpAddr(ip);
 	wr->setAttachedResource(wsr);
-	LOG4CXX_TRACE(logger, "Robots start: " << wsr->getUrlHost());
+	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots start (" << src->toStringShort() << "): " << wsr->getUrlHost());
 	return wr;
 }
 
@@ -69,7 +73,7 @@ Resource *CallRobots::FinishResource(Resource *tmp) {
 	}
 	unused.push_back(wr);
 	wsr->setStatus(status);
-	LOG4CXX_TRACE(logger, "Robots finish: " << wsr->getUrlHost() << " (" << status << ")");
+	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots finish (" << tmp->toStringShort() << "): " << wsr->getUrlHost() << " (" << status << ")");
 	return wsr;
 }
 
@@ -253,7 +257,7 @@ void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool rob
 	// wsr is not yet being processed
 	tr1::unordered_map<WebSiteResource*, vector<Resource*> *>::iterator iter = waitingResources.find(wsr);
 	if (iter == waitingResources.end()) {
-		LOG_TRACE_R(this, r, "start");
+		LOG_TRACE_R(this, r, "start (" << wsr->toStringShort() << ")");
 		vector<Resource*> *v = new vector<Resource*>();
 		v->push_back(r);
 		waitingResources[wsr] = v;
@@ -264,7 +268,7 @@ void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool rob
 		else
 			callRobotsInput.push(wsr);
 	} else {
-		LOG_TRACE_R(this, r, "waiting");
+		LOG_TRACE_R(this, r, "waiting (" << wsr->toStringShort() << ")");
 		// append to the waiting resources list
 		iter->second->push_back(r);
 		if (r->getTypeId() == WebResource::typeId)
@@ -291,6 +295,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			WebSiteResource *next = getWebSiteResource(&wr);
 			if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
 				// WSR not up-to-date: recursively resolve WSR
+				LOG_TRACE_R(this, wsr, "Recursively resolve WSR");
 				next->setRobotsRedirectCount(redirects+1);
 				StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
 				return;
@@ -315,7 +320,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 		Resource *r = *iter;
 		if (r->getTypeId() == WebResource::typeId) {
 			// WebResource, just put it into the output queue
-			LOG_TRACE_R(this, r, "finish WR");
+			LOG_TRACE_R(this, r, "finish WR (" << wsr->toStringShort() << ")");
 			r->setAttachedResource(wsr);
 			r->setStatus(0);
 			outputResources->push(r);
@@ -406,6 +411,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	ObjectLockRead();
 	int tick = timeTick/2;
 	ObjectUnlock();
+LOG_TRACE(this, "waitingResourcesCount: " << waitingResourcesCount << ", maxRequests: " << maxRequests);
 	while (inputResources->size() > 0 && waitingResourcesCount < maxRequests) {
 		if (inputResources->front()->getTypeId() == WebResource::typeId) {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
