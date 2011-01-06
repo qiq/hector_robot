@@ -1,0 +1,27 @@
+my $host = $resource->getUrlHost();
+my $n = length('mff.cuni.cz');
+if (substr($host, -$n) ne 'mff.cuni.cz') {
+	log_debug("Not in allowed scope: ".$host);
+	$resource->setFlag($Hector::Resource::DELETED);
+	return;
+}
+
+my %parts;
+foreach my $part (split(/\//, $resource->getUrlPath())) {
+	next if (length($part) == 0);
+	$parts{$part}++;
+	if ($parts{$part} > 1) {
+		log_debug("Repeated segment(s): ".$resource->getUrlPath());
+		$resource->setFlag($Hector::Resource::DELETED);
+		return;
+	}
+}
+
+#if ($resource->getUrl() =~ /http:/) {
+#        $resource->setStatus(3);
+#        print STDERR "test ".$resource->getUrlHost()."\n";
+#        $self->{'_object'}->log_debug($resource->toString()."XXXX");
+#        if ($resource->getIpAddr()->Match("127.0.0.2/30")) {
+#                print STDERR "IP OK\n";
+#        }
+#}

@@ -7,7 +7,7 @@
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>robot.log.props</logConfig>
+		<logConfig>robot.log.props.trace</logConfig>
 		<ProcessingEngine id="PE_robot">
 			<Processor id="P_load">
 				<threads>1</threads>
@@ -20,6 +20,23 @@
 <![CDATA[
 							http://www.mff.cuni.cz/
 							http://ufal.mff.cuni.cz/
+							http://fykos.mff.cuni.cz/
+							http://d3s.mff.cuni.cz/
+							http://skas.mff.cuni.cz/
+							http://kmop.mff.cuni.cz/
+							http://ksvi.mff.cuni.cz/
+							http://www.karlin.mff.cuni.cz/
+							http://www.ms.mff.cuni.cz/
+]]>
+						</param>
+					</Module-->
+					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+						<param name="urlList">
+<![CDATA[
+https://atrey.karlin.mff.cuni.cz/cgi-bin/mailman/listinfo
+https://atrey.karlin.mff.cuni.cz/cgi-bin/mailman/listinfo/skas-l
+http://atrey.karlin.mff.cuni.cz/~johanka/
+http://atrey.karlin.mff.cuni.cz/~qiq/
 ]]>
 						</param>
 					</Module-->
@@ -43,27 +60,31 @@
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
+<Module id="M_load_dumpA" lib="Dump.la"/>
 				</modules>
 				<output>
 					<nextProcessor ref="P_newlink" filter="2"/>
 					<nextProcessor ref="P_fetch"/>
 				</output>
 			</Processor>
+
 			<Processor id="P_fetch">
 				<threads>1</threads>
 				<input>
 					<queue/>
 				</input>
 				<modules>
-					<Module id="M_filter" type="perl" lib="Filter.pm">
-						<param name="filterFile" value="filter.txt"/>
+<Module id="M_load_dumpB" lib="Dump.la"/>
+					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm">
+						<param name="wildcards" value="0"/>
 					</Module>
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
-					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
+<Module id="M_load_dumpC" lib="Dump.la"/>
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
+						<param name="maxRequests" value="1000"/>
 						<param name="minServerRelax" value="10"/>
-						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://hector.ms.mff.cuni.cz/)"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
 					</Module>
 					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
@@ -71,23 +92,36 @@
 						<param name="outputDir" value="refresh"/>
 					</Module>
 					<Module id="M_extractor" lib="UrlExtractor.la"/>
-					<Module id="M_fix_redirect" type="perl" lib="FixRedirect.pm"/>
 				</modules>
 				<output>
-					<nextProcessor ref="P_main" filter="1" priority="100"/>
-					<nextProcessor ref="P_main" filter="2" priority="100"/>
+					<nextProcessor ref="P_backlink" filter="1"/>
+					<nextProcessor ref="P_backlink" filter="2"/>
 					<nextProcessor ref="P_postprocess"/>
 				</output>
 			</Processor>
+
+			<Processor id="P_backlink">
+				<threads>1</threads>
+				<input>
+					<queue/>
+				</input>
+				<modules>
+					<Module id="M_backlink_fix_redirect" type="perl" lib="FixRedirect.pm"/>
+					<Module id="M_backlink_filter" type="perl" lib="Filter.pm">
+						<param name="filterFile" value="filter.txt"/>
+					</Module>
+				</modules>
+				<output>
+					<nextProcessor ref="P_main" priority="100"/>
+				</output>
+			</Processor>
+		
 			<Processor id="P_newlink">
 				<threads>1</threads>
 				<input>
 					<queue/>
 				</input>
 				<modules>
-					<Module id="M_newlink_filter" type="perl" lib="Filter.pm">
-						<param name="filterFile" value="filter.txt"/>
-					</Module>
 					<Module id="M_newlink_linkfilter" type="perl" lib="NewLinkFilter.pm"/>
 					<Module id="M_newlink_save" lib="Save.la">
 						<param name="filename" value="refresh/newlink"/>
@@ -104,7 +138,6 @@
 					<Module id="M_postprocess_save" lib="Save.la">
 						<param name="filename" value="refresh/data"/>
 					</Module>
-					<!--Module id="M_postprocess_output" lib="TestOutput.la"/-->
 				</modules>
 			</Processor>
 		</ProcessingEngine>
@@ -116,8 +149,8 @@
 				<modules>
 					<!--Module id="M_dump_dns1" lib="Dump.la"/-->
 					<Module id="M_dns" lib="DnsResolver.la">
-						<!--param name="forwardServer" value="127.0.0.1"/>
-						<param name="forwardPort" value="5354"/-->
+						<param name="forwardServer" value="127.0.0.1"/>
+						<param name="forwardPort" value="53"/>
 						<param name="negativeTTL" value="86400"/>
 					</Module>
 					<!--Module id="M_dump_dns2" lib="Dump.la"/-->
@@ -136,19 +169,18 @@
 			<Processor id="P_robots">
 				<threads>1</threads>
 				<modules>
-					<!--Module id="M_dump_robots1" lib="Dump.la"/-->
 					<Module id="M_fetch_robots" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
+						<param name="maxRequests" value="1000"/>
 						<param name="minServerRelax" value="10"/>
-						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorRobot 0.1; +http://hector.ms.mff.cuni.cz/)"/>
+						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
 					</Module>
-					<Module id="M_dump_robots1" lib="Dump.la"/>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>
 						<param name="negativeTTL" value="86400"/>
+						<param name="wildcards" value="0"/>
 					</Module>
-					<Module id="M_dump_robots2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>
