@@ -19,7 +19,7 @@ using namespace std;
 // sleep TIME_TICK useconds waiting for socket changes
 #define DEFAULT_TIME_TICK 100*1000
 
-CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests) {
+CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests, true) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
@@ -32,7 +32,7 @@ Resource *CallDns::FinishResource(Resource *tmp) {
 	return tmp;
 }
 
-CallRobots::CallRobots(int maxRequests) : CallProcessingEngine(maxRequests) {
+CallRobots::CallRobots(int maxRequests) : CallProcessingEngine(maxRequests, true) {
 }
 
 Resource *CallRobots::PrepareResource(Resource *src) {
