@@ -156,8 +156,9 @@ sub ProcessSimple() {
 	} else {
 		# error fetching object
 		$self->{'_object'}->log_error($resource->toStringShort()." Cannot fetch object: ".$resource->getUrl());
-		my $disabled = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-		$resource->setFlag($Hector::Resource::DELETED) if ($disabled);
+		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+		$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+		$resource->setStatus(0);
 	}
 	return $resource;
 }
