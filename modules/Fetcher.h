@@ -69,6 +69,7 @@ typedef struct CurlInfo_ {
 
 	CURLM *multi;
 	int resources;		// number of resources currently in queue/processed
+	int waiting;		// number of resources waiting
 	int stillRunning;	// running requests -- just communicating using curl
 	uint32_t currentTime;	// current time
 

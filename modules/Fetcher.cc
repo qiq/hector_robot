@@ -150,7 +150,8 @@ char *Fetcher::getAllowedContentTypes(const char *name) {
 
 void Fetcher::setAllowedContentTypes(const char *name, const char *value) {
 	allowedContentTypes.clear();
-	char *s = strdup(value);
+	char *v = strdup(value);
+	char *s = v;
 	bool space = true;
 	char *start = NULL;
 	while (*s) {
@@ -170,7 +171,7 @@ void Fetcher::setAllowedContentTypes(const char *name, const char *value) {
 	}
 	if (!space)
 		allowedContentTypes.push_back(start);
-	free(s);
+	free(v);
 }
 
 void CheckCompleted(CurlInfo *ci);
@@ -366,7 +367,8 @@ void Fetcher::QueueResource(WebResource *wr) {
 	curlInfo.resources++;
 	if (ri->current || (curlInfo.currentTime < ri->time + wait)) {
 		ri->waiting.push_back(wr);
-		LOG_TRACE_R(this, wr, "Waiting (h: " << hash << ")");
+		curlInfo.waiting++;
+		LOG_TRACE_R(this, wr, "waiting (h: " << hash << ")");
 		// just waiting for timeout (not currently being processed)
 		if (!ri->current && ri->waiting.size() == 1) {
 			curlInfo.waitingHeap.push_back(ri);
@@ -390,6 +392,7 @@ void Fetcher::StartQueuedResourcesFetch() {
 		curlInfo.waitingHeap.pop_back();
 		WebResource *wr = ri->waiting.front();
 		ri->waiting.pop_front();
+		curlInfo.waiting--;
 		StartResourceFetch(wr, ri->index);
 	}
 }
@@ -504,6 +507,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	curl_multi_setopt(curlInfo.multi, CURLMOPT_TIMERFUNCTION, MultiTimerCallback);
 	curl_multi_setopt(curlInfo.multi, CURLMOPT_TIMERDATA, &curlInfo);
 	curlInfo.resources = 0;
+	curlInfo.waiting = 0;
 	curlInfo.stillRunning = 0;
 
 	curlInfo.waitingHeap.reserve(maxRequests);
@@ -556,6 +560,8 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	curlInfo.currentTime = time(NULL);
 	this->outputResources = outputResources;
 
+	LOG_TRACE(this, "< waiting: " << curlInfo.waiting << ", processing: " << curlInfo.resources-curlInfo.waiting);
+
 	// start queued resources
 	StartQueuedResourcesFetch();
 
@@ -577,9 +583,12 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 		inputResources->pop();
 	}
 
-	if (curlInfo.resources == 0)
-	if (expectingResources) {
-		*expectingResources = maxRequests;
+	if (curlInfo.resources == 0) {
+		if (expectingResources)
+			*expectingResources = maxRequests;
+
+		LOG_TRACE(this, "> waiting: " << curlInfo.waiting << ", processing: " << curlInfo.resources-curlInfo.waiting);
+
 		return 0;
 	}
 
@@ -597,6 +606,9 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	// finished resources are already appended to the outputResources queue
 	if (expectingResources)
 		*expectingResources = maxRequests-curlInfo.resources;
+
+	LOG_TRACE(this, "> waiting: " << curlInfo.waiting << ", processing: " << curlInfo.resources-curlInfo.waiting);
+
 	return curlInfo.resources;
 }
 
