@@ -82,10 +82,11 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 <Module id="M_load_dumpC" lib="Dump.la"/>
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
-						<param name="maxRequests" value="1000"/>
+						<param name="maxRequests" value="10000"/>
 						<param name="minServerRelax" value="10"/>
 						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
+						<param name="allowedContentTypes" value="text/plain text/html application/msword"/>
 					</Module>
 					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
 					<Module id="M_scheduler" lib="Scheduler.la">
@@ -175,6 +176,7 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 						<param name="minServerRelax" value="10"/>
 						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
+						<param name="allowedContentTypes" value="text/plain"/>
 					</Module>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>

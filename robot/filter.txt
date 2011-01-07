@@ -6,15 +6,30 @@ if (substr($host, -$n) ne 'mff.cuni.cz') {
 	return;
 }
 
+# path segments count
+my $path = $resource->getUrlPath();
+my @parts = split(/\//, $path);
+if (@parts > 10) {
+	log_debug("Too many segment: ".$path);
+	$resource->setFlag($Hector::Resource::DELETED);
+	return;
+}
+# repeated path segments
 my %parts;
-foreach my $part (split(/\//, $resource->getUrlPath())) {
+foreach my $part (@parts) {
 	next if (length($part) == 0);
 	$parts{$part}++;
 	if ($parts{$part} > 1) {
-		log_debug("Repeated segment(s): ".$resource->getUrlPath());
+		log_debug("Repeated segment(s): ".$path);
 		$resource->setFlag($Hector::Resource::DELETED);
 		return;
 	}
+}
+# path including extensions
+if ($path =~ /\.(bmp|jpe?g|gif|png|pdf|e?ps|svg|xls|csv|ppt|pps|mp3|wav|wma|flv|mov|mp4|mpe?g|swf|vob|wmv|jar|exe|rss)/) {
+	log_debug("Disabled extension: ".$path);
+	$resource->setFlag($Hector::Resource::DELETED);
+	return;
 }
 
 #if ($resource->getUrl() =~ /http:/) {
