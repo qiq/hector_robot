@@ -55,7 +55,7 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 	IpAddr ip = wsr->getIpAddr();
 	wr->setIpAddr(ip);
 	wr->setAttachedResource(wsr);
-	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots start (" << src->toStringShort() << "): " << wsr->getUrlHost());
+	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots start (" << wr->toStringShort() << "): " << wsr->getUrlHost());
 	return wr;
 }
 
