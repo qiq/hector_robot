@@ -14,6 +14,8 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	items = 0;
 	newUrlStatus = 2;
 	imageLinks = false;
+	allowedSchemes = "http";
+	allowedSchemesSet.insert("http");
 
 	values = new ObjectValues<UrlExtractor>(this);
 	values->addGetter("items", &UrlExtractor::getItems);
@@ -21,6 +23,8 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	values->addSetter("newUrlStatus", &UrlExtractor::setNewUrlStatus);
 	values->addGetter("imageLinks", &UrlExtractor::getImageLinks);
 	values->addSetter("imageLinks", &UrlExtractor::setImageLinks);
+	values->addGetter("allowedSchemes", &UrlExtractor::getAllowedSchemes);
+	values->addSetter("allowedSchemes", &UrlExtractor::setAllowedSchemes);
 
 	scanner_create(&state, &scanner);
 }
@@ -49,6 +53,36 @@ char *UrlExtractor::getImageLinks(const char *name) {
 
 void UrlExtractor::setImageLinks(const char *name, const char *value) {
 	imageLinks = str2bool(value);
+}
+
+char *UrlExtractor::getAllowedSchemes(const char *name) {
+	return strdup(allowedSchemes.c_str());
+}
+
+void UrlExtractor::setAllowedSchemes(const char *name, const char *value) {
+	allowedSchemes = value;
+	allowedSchemesSet.clear();
+        char *s = strdup(value);
+        bool space = true;
+        char *start = NULL;
+        while (*s) {
+                if (isspace(*s)) {
+                        if (!space) {
+                                *s = '\0';
+                		allowedSchemesSet.insert(start);
+                                space = true;
+                        }
+                } else {
+                        if (space) {
+                                space = false;
+                                start = s;
+                        }
+                }
+                s++;
+        }
+        if (!space)
+                allowedSchemesSet.insert(start);
+        free(s);
 }
 
 bool UrlExtractor::Init(vector<pair<string, string> > *params) {
@@ -100,8 +134,13 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 						GURL resolved = base->Resolve(text);
 						if (resolved.is_valid()) {
 							const string &url = resolved.spec();
-							if (url.substr(0, 5) == "http:" || url.substr(0, 6) == "https:")
+							size_t colon = url.find_first_of(':');
+							assert(colon != string::npos);
+							string scheme = url.substr(0, colon);
+							ObjectLockRead();
+							if (allowedSchemesSet.find(scheme) != allowedSchemesSet.end())
 								urls.insert(url);
+							ObjectUnlock();
 						}
 					}
 					break;

@@ -40,12 +40,16 @@ private:
 	int items;		// ObjectLock, items processed
 	int newUrlStatus;	// ObjectLock, status to be set for new-url WebResources
 	bool imageLinks;	// ObjectLock, also extract image links (e.g. <img src=""/>)
+	std::string allowedSchemes;	// ObjectLock, allowed schemes, separated by space, by default "http"
+	std::tr1::unordered_set<std::string> allowedSchemesSet;
 
 	char *getItems(const char *name);
 	char *getNewUrlStatus(const char *name);
 	void setNewUrlStatus(const char *name, const char *value);
 	char *getImageLinks(const char *name);
 	void setImageLinks(const char *name, const char *value);
+	char *getAllowedSchemes(const char *name);
+	void setAllowedSchemes(const char *name, const char *value);
 
 	ObjectValues<UrlExtractor> *values;
 	char *getValueSync(const char *name);
