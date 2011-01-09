@@ -60,7 +60,6 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
-<Module id="M_load_dumpA" lib="Dump.la"/>
 				</modules>
 				<output>
 					<nextProcessor ref="P_newlink" filter="2"/>
@@ -74,12 +73,10 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 					<queue/>
 				</input>
 				<modules>
-<Module id="M_load_dumpB" lib="Dump.la"/>
 					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm">
 						<param name="wildcards" value="0"/>
 					</Module>
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
-<Module id="M_load_dumpC" lib="Dump.la"/>
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 						<param name="maxRequests" value="10000"/>

@@ -26,7 +26,7 @@ foreach my $part (@parts) {
 	}
 }
 # path including extensions
-if ($path =~ /\.(bmp|jpe?g|gif|png|pdf|e?ps|svg|xls|csv|ppt|pps|mp3|wav|wma|flv|mov|mp4|mpe?g|swf|vob|wmv|jar|exe|rss)/) {
+if ($path =~ /\.(bmp|jpe?g|gif|png|pdf|e?ps|svg|xls|csv|ppt|pps|mp3|wav|wma|flv|mov|mp4|mpe?g|swf|vob|wmv|jar|exe|rss|gz|tar|tgz|zip|bz2)/) {
 	log_debug("Disabled extension: ".$path);
 	$resource->setFlag($Hector::Resource::DELETED);
 	return;
