@@ -166,7 +166,10 @@ sub ProcessSimple() {
 		return $resource;
 	}
 
-	if ($resource->getStatus() != 0) {
+	# status == 1 or 2: error
+	my $s = $resource->getStatus();
+	if ($s != 0) {
+		$resource->setStatus(1) if ($s != 1);
 		return $resource;
 	}
 
