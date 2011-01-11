@@ -60,12 +60,14 @@ Fetcher::~Fetcher() {
 		Resource::ReleaseResource(ri->current);
 		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
 			Resource::ReleaseResource(*iter);
+		curl_multi_remove_handle(curlInfo.multi, ri->easy);
 		curl_easy_cleanup(ri->easy);
 		if (ri->headers)
 			curl_slist_free_all(ri->headers);
 	}
 	curl_multi_cleanup(curlInfo.multi);
 	ev_loop_destroy(curlInfo.loop);
+	delete[] curlInfo.resourceInfo;
 	free(userAgent);
 	free(from);
 
@@ -446,10 +448,13 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 		ri->current->setStatus(0);
 	} else {
 		// CURLE_WRITE_ERROR == invalid content-type or too large object
-		if (result != CURLE_WRITE_ERROR) {
+		if (result == CURLE_WRITE_ERROR) {
+			ri->current->setStatus(2);
+		} else {
+			// other errors, 404 Not found, etc.
 			LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->getUrl() << ": " << curl_easy_strerror((CURLcode)result));
+			ri->current->setStatus(1);
 		}
-		ri->current->setStatus(1);
 	}
 	outputResources->push(ri->current);
 	ObjectLockWrite();

@@ -19,7 +19,8 @@ allowedContentTypes	r/w	List of mime-types that are allowed to be downloaded
 
 Status:
 0	OK
-1	error
+1	(maybe) temporary error (DNS error, connection refused, not found and )
+2	permanent error (e.g. not allowed content type, invalid size, ...)
 */
 
 #ifndef _MODULES_FETCH_H_
