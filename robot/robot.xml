@@ -7,7 +7,7 @@
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>robot.log.props.trace</logConfig>
+		<logConfig>robot.log.props</logConfig>
 		<ProcessingEngine id="PE_robot">
 			<Processor id="P_load">
 				<threads>1</threads>
@@ -59,6 +59,7 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 					<Module id="M_wsm" lib="WebSiteManager.la">
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
+						<param name="timeTick" value="100000"/>
 					</Module>
 				</modules>
 				<output>
@@ -75,6 +76,7 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 				<modules>
 					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm">
 						<param name="wildcards" value="0"/>
+						<param name="logLevel" value="INFO"/>
 					</Module>
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
 					<Module id="M_fetch" lib="Fetcher.la">
@@ -107,6 +109,7 @@ http://atrey.karlin.mff.cuni.cz/~qiq/
 					<Module id="M_backlink_fix_redirect" type="perl" lib="FixRedirect.pm"/>
 					<Module id="M_backlink_filter" type="perl" lib="Filter.pm">
 						<param name="filterFile" value="filter.txt"/>
+						<param name="logLevel" value="INFO"/>
 					</Module>
 				</modules>
 				<output>
