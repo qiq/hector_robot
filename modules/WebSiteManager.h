@@ -143,6 +143,7 @@ private:
 	WebSiteResource *getWebSiteResource(WebResource *wr);
 	void CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst);
 	void StartProcessing(Resource *r, WebSiteResource *wsr, bool robotsOnly);
+	bool IsRedirectCycle(WebSiteResource *current, WebSiteResource *wsr);
 	void FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources);
 	bool LoadWebSiteResources(const char *filename);
 	bool SaveWebSiteResources(const char *filename);

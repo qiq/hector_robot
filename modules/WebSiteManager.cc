@@ -276,6 +276,21 @@ void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool rob
 	}
 }
 
+bool WebSiteManager::IsRedirectCycle(WebSiteResource *current, WebSiteResource *wsr) {
+	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(current);
+	if (iter == waitingResources.end())
+		return false;
+	vector<Resource*> *v = iter->second;
+	for (vector<Resource*>::iterator iter = v->begin(); iter != v->end(); ++iter) {
+		if ((*iter)->getTypeId() == WebSiteResource::typeId) {
+			WebSiteResource *prev = static_cast<WebSiteResource*>(*iter);
+			if (prev == wsr || IsRedirectCycle(prev, wsr))
+				return true;
+		}
+	}
+	return false;
+}
+
 void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources) {
 	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(wsr);
 	assert(iter != waitingResources.end());
@@ -293,16 +308,27 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			WebResource wr;
 			wr.setUrl(url);
 			WebSiteResource *next = getWebSiteResource(&wr);
-			if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
-				// WSR not up-to-date: recursively resolve WSR
-				LOG_TRACE_R(this, wsr, "Recursively resolve WSR");
-				next->setRobotsRedirectCount(redirects+1);
-				StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
-				return;
+			// redirect to self? report error and process resources
+			if (IsRedirectCycle(wsr, next)) {
+				LOG_DEBUG_R(this, wsr, "Redirect to self: " << url);
+				vector<string> allow;
+				vector<string> disallow;
+				ObjectLockRead();
+				int ttl = robotsNegativeTTL;
+				ObjectUnlock();
+				wsr->setRobots(allow, disallow, ttl);
+			} else {
+				if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
+					// WSR not up-to-date: recursively resolve WSR
+					LOG_TRACE_R(this, wsr, "Recursively resolve WSR");
+					next->setRobotsRedirectCount(redirects+1);
+					StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
+					return;
+				}
+				// WSR is ready, just copy info
+				CopyRobotsInfo(next, wsr);
+				wsr->setStatus(next->getStatus());
 			}
-			// WSR is ready, just copy info
-			CopyRobotsInfo(next, wsr);
-			wsr->setStatus(next->getStatus());
 		} else {
 			// error: too many redirects, make resources
 			LOG_DEBUG_R(this, wsr, "Too many redirects: " << url);
@@ -411,7 +437,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	ObjectLockRead();
 	int tick = timeTick/2;
 	ObjectUnlock();
-LOG_TRACE(this, "waitingResourcesCount: " << waitingResourcesCount << ", maxRequests: " << maxRequests);
+	LOG_TRACE(this, "waitingResourcesCount: " << waitingResourcesCount << ", maxRequests: " << maxRequests);
 	while (inputResources->size() > 0 && waitingResourcesCount < maxRequests) {
 		if (inputResources->front()->getTypeId() == WebResource::typeId) {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
