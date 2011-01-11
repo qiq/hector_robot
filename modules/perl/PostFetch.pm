@@ -111,13 +111,14 @@ sub ProcessSimple() {
 
 	my $currentTime = time();
 	# check result of the Fetcher module
-	if ($resource->getStatus() == 0) {
-		# get status code
+	my $error = 0;
+	my $rs = $resource->getStatus();
+	if ($rs == 0) {
+		# get "real" status code
 		my $status = $resource->getHeaderValue("X-Status");
 		if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
 			$self->{'_object'}->log_error($resource->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
-			my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-			$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+			$error = 1;
 		} else {
 			$self->{'_object'}->log_debug($resource->toStringShort().' Status: '.$status.' '.$resource->getUrl());
 			if ($status >= 100 and $status < 300) {
@@ -132,14 +133,12 @@ sub ProcessSimple() {
 				# 3xx: redirect
 				if (not defined $resource->getHeaderValue("Location")) {
 					$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
-					my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-					$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+					$error = 1;
 				} else {
 					my $redirects = $resource->getRedirectCount();
 					if ($redirects > $self->{'maxRedirects'}) {
 						$self->{'_object'}->log_error($resource->toStringShort()." Too many redirects: ".$resource->getUrl());
-						my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-						$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+						$error = 1;
 					} else {
 						# correct redirects
 						$resource->setRedirectCount($redirects+1);
@@ -149,17 +148,27 @@ sub ProcessSimple() {
 				}
 			} else {
 				# 4xx, 5xx: client or server error
-				my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-				$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+				$error = 1;
 			}
 		}
-	} else {
-		# error fetching object
+	} elsif ($rs == 1) {
+		# error fetching object (temoporary error)
 		$self->{'_object'}->log_error($resource->toStringShort()." Cannot fetch object: ".$resource->getUrl());
-		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+		$resource->setStatus(0);
+		$error = 1;
+	} elsif ($rs == 2) {
+		# error fetching object (permanent error)
+		$self->{'_object'}->log_error($resource->toStringShort()." Invalid object: ".$resource->getUrl());
+		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, 1);
 		$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
 		$resource->setStatus(0);
 	}
+
+	if ($error == 1) {
+		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
+		$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+	}
+
 	return $resource;
 }
 
