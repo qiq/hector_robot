@@ -239,6 +239,12 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 		return false;
 	}
 
+	// do threaded async resolution
+	if (ub_ctx_async(ctx, 1) < 0) {
+		LOG_ERROR(this, "Could not set threaded async resolution");
+		return false;
+	}
+
 	fd = ub_fd(ctx);
 	if (fd == -1) {
 		LOG_ERROR(this, "Could not get unbound ready descriptor");
