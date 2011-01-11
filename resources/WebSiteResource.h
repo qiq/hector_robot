@@ -504,7 +504,7 @@ inline long WebSiteResource::PathNextRefresh(const char *path) {
 				result = floor(exp((double)((a + b*2 + c*3 + d*4)/10)*log(1.5)));
 			} else {
 				// 1d, 3d, 11d, 1m, 4m
-				result = 25+errors*3;
+				result = floor(exp((double)(25+errors*3)*log(1.5)));
 			}
 		}
 	}
