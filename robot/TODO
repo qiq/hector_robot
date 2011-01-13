@@ -1,0 +1,8 @@
+start.sh WR_file [checkpoint]
+stop.sh checkpoint
+pause.sh
+resume.sh
+save_state.sh [checkpoint]
+load_sate.sh [checkpoint]
+
+Check for orphans: get last status update + compute next refresh and compare this to the current time
