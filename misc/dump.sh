@@ -5,7 +5,8 @@ if [ -z "$1" ]; then
 	exit 1;
 fi
 
-. hector_common.sh
+HECTOR_HOST="localhost:1102"
+. ../robot/robot_common.sh
 
 hector_server -c dump.xml -f dump $1 &
 hector_client_set PE_dump.run 1

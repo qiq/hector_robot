@@ -7,7 +7,7 @@ Just dumps all resources in file $1
 	<Server id="dump" lib="RobotServer.la">
 		<threads>1</threads>
 		<serverHost>*</serverHost>
-		<serverPort>1100</serverPort>
+		<serverPort>1102</serverPort>
 		<logConfig>dump.log.props</logConfig>
 		<ProcessingEngine id="PE_dump">
 			<Processor id="P_dump">

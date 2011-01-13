@@ -31,14 +31,7 @@
 						</param>
 					</Module-->
 					<!--Module id="M_input" type="perl" lib="WebResourceCreator.pm">
-						<param name="urlList">
-<![CDATA[
-https://atrey.karlin.mff.cuni.cz/cgi-bin/mailman/listinfo
-https://atrey.karlin.mff.cuni.cz/cgi-bin/mailman/listinfo/skas-l
-http://atrey.karlin.mff.cuni.cz/~johanka/
-http://atrey.karlin.mff.cuni.cz/~qiq/
-]]>
-						</param>
+						<param name="urlFile" value="$1"/>
 					</Module-->
 					<Module id="M_load_filter" type="perl" lib="Filter.pm">
 						<param name="filterFile" value="filter.txt"/>

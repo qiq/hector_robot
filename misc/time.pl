@@ -1,4 +1,7 @@
 #!/usr/bin/env perl
+# Transform timestamps as seen in log files to current time. Timestamp is
+# seconds since 01-01-1970. Specify no time to convert current time to the
+# timestamp.
 use strict;
 use warnings;
 use POSIX;

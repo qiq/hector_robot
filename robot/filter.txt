@@ -1,6 +1,6 @@
 my $host = $resource->getUrlHost();
-my $n = length('mff.cuni.cz');
-if (substr($host, -$n) ne 'mff.cuni.cz') {
+my $n = length('cuni.cz');
+if (substr($host, -$n) ne 'cuni.cz') {
 	log_debug("Not in allowed scope: ".$host);
 	$resource->setFlag($Hector::Resource::DELETED);
 	return;
@@ -10,7 +10,7 @@ if (substr($host, -$n) ne 'mff.cuni.cz') {
 my $path = $resource->getUrlPath();
 my @parts = split(/\//, $path);
 if (@parts > 10) {
-	log_debug("Too many segment: ".$path);
+	log_debug("Too many segments: ".$path);
 	$resource->setFlag($Hector::Resource::DELETED);
 	return;
 }
