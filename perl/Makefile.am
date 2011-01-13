@@ -17,7 +17,7 @@ HectorRobot_wrap.cc HectorRobot.pm: $(top_srcdir)/HectorRobot.i
 
 HectorRobot_la_SOURCES = \
 	HectorRobot_wrap.cc
-HectorRobot_la_CXXFLAGS = $(AM_CXXFLAGS) -DSWIGRUNTIME_DEBUG
+HectorRobot_la_CXXFLAGS = $(AM_CXXFLAGS)
 HectorRobot_la_LIBADD = $(top_builddir)/resources/libWebResource.la $(top_builddir)/resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la
 #HectorRobot_la_LIBADD = $(top_builddir)/libhectorrobot.la $(top_builddir)/resources/libWebResource.la
 
