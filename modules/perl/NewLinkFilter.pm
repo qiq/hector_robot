@@ -1,5 +1,5 @@
 # SaveNewUrl.pm, simple, perl
-# Check that we are first saving a WebResource, set status to 0, otherwise
+# Check that we are first to save a WebResource, set status to 0, otherwise
 # delete it (set DELETED flag).
 # 
 # Dependencies: none
