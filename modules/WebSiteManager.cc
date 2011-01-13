@@ -401,6 +401,8 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 			LOG_ERROR(this, "Error reading resource");
 			break;
 		}
+		// so that no path is locked
+		wsr->ClearPathsRefreshing();
 		sites[wsr] = wsr;
 	}
 	delete stream;
