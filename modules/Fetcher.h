@@ -50,7 +50,8 @@ typedef struct CurlResourceInfo_ {
 	struct curl_slist *headers; // headers to be set
 	struct ev_io event;	// io event associated with the socket
 	bool evSet;		// whether event was set or not
-	uint32_t time;		// last request completion time
+	uint32_t time;		// request start time (for running request) or
+				// next request allowed time (for waiting resources)
 	struct CurlInfo_ *info; // parent
 } CurlResourceInfo;
 

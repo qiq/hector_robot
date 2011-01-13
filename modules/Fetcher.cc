@@ -361,13 +361,12 @@ void Fetcher::QueueResource(WebResource *wr) {
 	}
 	ObjectLockRead();
 	int hash = ip_sum % maxRequests;
-	uint32_t wait = minServerRelax;
 	ObjectUnlock();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[hash];
 
 	// busy: just append to the bucket
 	curlInfo.resources++;
-	if (ri->current || (curlInfo.currentTime < ri->time + wait)) {
+	if (ri->current || (curlInfo.currentTime < ri->time)) {
 		ri->waiting.push_back(wr);
 		curlInfo.waiting++;
 		LOG_TRACE_R(this, wr, "waiting (h: " << hash << ")");
@@ -384,10 +383,7 @@ void Fetcher::QueueResource(WebResource *wr) {
 
 // check resources in the heap and start fetch of resources that waited long enough
 void Fetcher::StartQueuedResourcesFetch() {
-	ObjectLockRead();
-	int wait = minServerRelax;
-	ObjectUnlock();
-	while (curlInfo.waitingHeap.size() > 0 && curlInfo.currentTime >= curlInfo.waitingHeap[0]->time+wait) {
+	while (curlInfo.waitingHeap.size() > 0 && curlInfo.currentTime >= curlInfo.waitingHeap[0]->time) {
 		CurlResourceInfo *ri = curlInfo.waitingHeap[0];
 		LOG_TRACE(this, "waking up, h: " << ri->index);
 		pop_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end(), CurlResourceInfo_compare());
@@ -433,12 +429,15 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	ri->maxContentLength = maxContentLength;
 	ObjectUnlock();
 	ri->contentIsText = false;
+	ri->time = curlInfo.currentTime;	// start time
 
 	// start!
 	LOG_TRACE_R(this, ri->current, "Fetching " << ri->current->getUrl());
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
-	if (rc != CURLM_OK)
+	if (rc != CURLM_OK) {
 		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc << " (" << ri->current->getUrl() << ")");
+		FinishResourceFetch(ri, rc);
+	}
 }
 
 // save resource to the outputQueue, process errors, etc.
@@ -464,7 +463,10 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	// update heap info
 	ri->current = NULL;
 	ri->content = NULL; // to be safe :)
-	ri->time = curlInfo.currentTime;
+	ObjectLockRead();
+	int wait = (int)(curlInfo.currentTime-ri->time)*10 > minServerRelax ? (curlInfo.currentTime-ri->time)*10 : minServerRelax;
+	ObjectUnlock();
+	ri->time = curlInfo.currentTime + wait;
 	curlInfo.resources--;
 
 	// add resource to the heap again
