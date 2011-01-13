@@ -150,7 +150,9 @@ sub ProcessInput() {
 	}
 	$resource = HectorRobot::WebResource->new();
 	$resource->setId($self->{'_threadIndex'}*10000+$self->{'items'});
-	$resource->setUrl(shift(@{$self->{'_url'}}));
+	my $url = shift(@{$self->{'_url'}});
+	$url = "http://".$url if ($url !~ /^[[:alpha:]]+:\/\//);
+	$resource->setUrl($url);
 	$self->{'items'}++;
 	return $resource;
 }
