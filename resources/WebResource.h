@@ -107,8 +107,8 @@ protected:
 	hector::resources::WebResource r;
 
 	std::tr1::unordered_map<std::string, std::string> headers;
-	int header_map_ready:1;
-	int header_map_dirty:1;
+	unsigned int header_map_ready:1;
+	unsigned int header_map_dirty:1;
 	void LoadHeaders();
 	void SaveHeaders();
 
@@ -117,8 +117,8 @@ protected:
 	void SaveIpAddr();
 
 	ParsedUrl url;
-	int parsed_url_ready:1;
-	int parsed_url_dirty:1;	
+	unsigned int parsed_url_ready:1;
+	unsigned int parsed_url_dirty:1;	
 	void LoadParsedUrl();
 	void SaveParsedUrl();
 
