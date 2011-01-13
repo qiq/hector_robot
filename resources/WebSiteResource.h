@@ -128,6 +128,9 @@ public:
 	int getRobotsRedirectCount();
 	void clearRobotsRedirectCount();
 
+	// helper methods
+	void ClearPathsRefreshing();
+
 	static const int typeId = 11;
 
 protected:

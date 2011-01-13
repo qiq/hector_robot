@@ -140,6 +140,20 @@ vector<string> *WebSiteResource::getPathList() {
 	return result;
 }
 
+void WebSiteResource::ClearPathsRefreshing() {
+	uint8_t path[MAX_PATH_SIZE];
+	path[0] = '\0';
+	PWord_t PValue;
+	// JSLF(PValue, paths, path);		// get first string
+	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
+	while (PValue) {
+		WebSitePath *wsp = (WebSitePath*)PValue;
+		wsp->setRefreshing(false);
+		// JSLN(PValue, paths, path);	// get next string
+		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
+	}
+}
+
 string WebSiteResource::toString(Object::LogLevel logLevel) {
 	string s;
 
