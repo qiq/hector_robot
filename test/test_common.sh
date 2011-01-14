@@ -17,6 +17,7 @@ function test_init {
 	base=`readlink -f "$base"`
 	export LD_LIBRARY_PATH=$base/resources:$base/modules:$base/servers:$base/perl/.libs:$LD_LIBRARY_PATH
 	export PERL5LIB=$base/perl:$base/modules/perl:$PERL5LIB
+	HECTOR_HOST=localhost:1101
 
 	# hector helper functions
 	. hector_common.sh

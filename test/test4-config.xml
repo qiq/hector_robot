@@ -7,7 +7,7 @@ test4: Create WebResources, parse URLs, resolve DNS and download a web page, the
 	<Server id="test" lib="RobotServer.la">
 		<threads>1</threads>
 		<serverHost>*</serverHost>
-		<serverPort>1100</serverPort>
+		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_input">
