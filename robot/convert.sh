@@ -4,6 +4,7 @@
 # - load checkpoint data
 # - start processing engines
 
+HECTOR_HOST=localhost:1102
 . robot_common.sh
 
 if [ -z "$1" -o -z "$2" ]; then
@@ -12,7 +13,7 @@ if [ -z "$1" -o -z "$2" ]; then
 fi
 
 # start server
-hector_server_start robot.xml robot $1 $2
+hector_server_start convert.xml convert $1 $2
 
 hector_client_set PE_convert.run 1
 hector_client_wait PE_convert.resourceCount 0

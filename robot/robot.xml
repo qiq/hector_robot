@@ -7,36 +7,7 @@
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1100</serverPort>
-		<logConfig>robot.log.props</logConfig>
-		<ProcessingEngine id="PE_convert">
-			<Processor id="P_convert">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_convert_input" type="perl" lib="WebResourceCreator.pm">
-						<param name="urlFile" value="$1"/>
-					</Module>
-					<!--Module id="M_convert_input" type="perl" lib="WebResourceCreator.pm">
-						<param name="urlList">
-							<![CDATA[
-								http://www.mff.cuni.cz/
-								http://ufal.mff.cuni.cz/
-								http://fykos.mff.cuni.cz/
-								http://d3s.mff.cuni.cz/
-								http://skas.mff.cuni.cz/
-								http://kmop.mff.cuni.cz/
-								http://ksvi.mff.cuni.cz/
-								http://www.karlin.mff.cuni.cz/
-								http://www.ms.mff.cuni.cz/
-							]]>
-						</param>
-					</Module-->
-					<Module id="M_convert_save" lib="Save.la">
-						<param name="filename" value="$2"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-
+		<logConfig>robot.log.props.trace</logConfig>
 		<ProcessingEngine id="PE_robot">
 			<Processor id="P_load">
 				<threads>1</threads>
@@ -56,8 +27,8 @@
 			<Processor id="P_main">
 				<threads>1</threads>
 				<input>
-					<queue/>			<!-- default queue -->
-					<queue priority="100"/>		<!-- redirect queue -->
+					<queue maxItems="100"/>	<!-- default queue -->
+					<queue priority="100"/>	<!-- redirect queue -->
 				</input>
 				<modules>
 					<Module id="M_wsm" lib="WebSiteManager.la">
@@ -85,7 +56,7 @@
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
 					<Module id="M_fetch" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
-						<param name="maxRequests" value="10000"/>
+						<param name="maxRequests" value="100"/>
 						<param name="minServerRelax" value="10"/>
 						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
@@ -177,7 +148,7 @@
 					<Module id="M_fetch_robots" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
 						<param name="maxRequests" value="1000"/>
-						<param name="minServerRelax" value="10"/>
+						<param name="minServerRelax" value="5"/>
 						<param name="userAgent" value="Mozilla/5.0 (compatible; HectorBot/0.1; +http://hector.ms.mff.cuni.cz/crawler)"/>
 						<param name="from" value="spousta@ufal.mff.cuni.cz"/>
 						<param name="allowedContentTypes" value="text/plain"/>
