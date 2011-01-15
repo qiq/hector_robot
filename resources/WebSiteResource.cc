@@ -92,7 +92,7 @@ void WebSiteResource::JarrayToProtobuf() {
 	// JSLF(PValue, paths, path);		// get first string
 	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
 	while (PValue) {
-		WebSitePath *wsp = (WebSitePath*)PValue;
+		WebSitePath *wsp = (WebSitePath*)*PValue;
 		// add to protocol-buffers
 		::hector::resources::WebSitePath *p = r.add_paths();
 		p->set_path((char*)path);
@@ -147,7 +147,7 @@ void WebSiteResource::ClearPathsRefreshing() {
 	// JSLF(PValue, paths, path);		// get first string
 	PValue = (PWord_t)JudySLFirst(paths, path, NULL);	// get first string
 	while (PValue) {
-		WebSitePath *wsp = (WebSitePath*)PValue;
+		WebSitePath *wsp = (WebSitePath*)*PValue;
 		wsp->setRefreshing(false);
 		// JSLN(PValue, paths, path);	// get next string
 		PValue = (PWord_t)JudySLNext(paths, path, NULL);	// get next string
