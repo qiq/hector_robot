@@ -33,23 +33,23 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	allowedContentTypes.push_back("application/msword");
 
 	values = new ObjectValues<Fetcher>(this);
-	values->addGetter("items", &Fetcher::getItems);
-	values->addGetter("minServerRelax", &Fetcher::getMinServerRelax);
-	values->addSetter("minServerRelax", &Fetcher::setMinServerRelax);
-	values->addGetter("timeout", &Fetcher::getTimeout);
-	values->addSetter("timeout", &Fetcher::setTimeout);
-	values->addGetter("from", &Fetcher::getFrom);
-	values->addSetter("from", &Fetcher::setFrom, true);
-	values->addGetter("userAgent", &Fetcher::getUserAgent);
-	values->addSetter("userAgent", &Fetcher::setUserAgent, true);
-	values->addGetter("maxRequests", &Fetcher::getMaxRequests);
-	values->addSetter("maxRequests", &Fetcher::setMaxRequests, true);
-	values->addGetter("maxContentLength", &Fetcher::getMaxContentLength);
-	values->addSetter("maxContentLength", &Fetcher::setMaxContentLength);
-	values->addGetter("timeTick", &Fetcher::getTimeTick);
-	values->addSetter("timeTick", &Fetcher::setTimeTick);
-	values->addGetter("allowedContentTypes", &Fetcher::getAllowedContentTypes);
-	values->addSetter("allowedContentTypes", &Fetcher::setAllowedContentTypes);
+	values->AddGetter("items", &Fetcher::getItems);
+	values->AddGetter("minServerRelax", &Fetcher::getMinServerRelax);
+	values->AddSetter("minServerRelax", &Fetcher::setMinServerRelax);
+	values->AddGetter("timeout", &Fetcher::getTimeout);
+	values->AddSetter("timeout", &Fetcher::setTimeout);
+	values->AddGetter("from", &Fetcher::getFrom);
+	values->AddSetter("from", &Fetcher::setFrom, true);
+	values->AddGetter("userAgent", &Fetcher::getUserAgent);
+	values->AddSetter("userAgent", &Fetcher::setUserAgent, true);
+	values->AddGetter("maxRequests", &Fetcher::getMaxRequests);
+	values->AddSetter("maxRequests", &Fetcher::setMaxRequests, true);
+	values->AddGetter("maxContentLength", &Fetcher::getMaxContentLength);
+	values->AddSetter("maxContentLength", &Fetcher::setMaxContentLength);
+	values->AddGetter("timeTick", &Fetcher::getTimeTick);
+	values->AddSetter("timeTick", &Fetcher::setTimeTick);
+	values->AddGetter("allowedContentTypes", &Fetcher::getAllowedContentTypes);
+	values->AddSetter("allowedContentTypes", &Fetcher::setAllowedContentTypes);
 
 	curlInfo.logger = this->logger;
 }
@@ -57,9 +57,9 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 Fetcher::~Fetcher() {
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
-		Resource::ReleaseResource(ri->current);
+		Resource::registry.ReleaseResource(ri->current);
 		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
-			Resource::ReleaseResource(*iter);
+			Resource::registry.ReleaseResource(*iter);
 		curl_multi_remove_handle(curlInfo.multi, ri->easy);
 		curl_easy_cleanup(ri->easy);
 		if (ri->headers)
@@ -359,9 +359,7 @@ void Fetcher::QueueResource(WebResource *wr) {
 		ip6 = ip.getIp6Addr(false);
 		ip_sum += (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
 	}
-	ObjectLockRead();
 	int hash = ip_sum % maxRequests;
-	ObjectUnlock();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[hash];
 
 	// busy: just append to the bucket
@@ -425,9 +423,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	}
 	curl_easy_setopt(ri->easy, CURLOPT_DNS_IP_ADDR, &addr);
 	ri->contentLength = 0;
-	ObjectLockRead();
 	ri->maxContentLength = maxContentLength;
-	ObjectUnlock();
 	ri->contentIsText = false;
 	ri->time = curlInfo.currentTime;	// start time
 
@@ -456,16 +452,12 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 		}
 	}
 	outputResources->push(ri->current);
-	ObjectLockWrite();
 	++items;
-	ObjectUnlock();
 
 	// update heap info
 	ri->current = NULL;
 	ri->content = NULL; // to be safe :)
-	ObjectLockRead();
 	int wait = (int)(curlInfo.currentTime-ri->time)*10 > minServerRelax ? (curlInfo.currentTime-ri->time)*10 : minServerRelax;
-	ObjectUnlock();
 	ri->time = curlInfo.currentTime + wait;
 	curlInfo.resources--;
 
@@ -478,7 +470,6 @@ void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 
 bool Fetcher::CheckContentType(string *contentType) {
 	bool allowed = false;
-	ObjectLockRead();
 	if (allowedContentTypes.size() > 0) {
 		for (vector<string>::iterator iter = allowedContentTypes.begin(); iter != allowedContentTypes.end(); ++iter) {
 			if (!contentType->compare(0, iter->length(), *iter)) {
@@ -487,7 +478,6 @@ bool Fetcher::CheckContentType(string *contentType) {
 			}
 		}
 	}
-	ObjectUnlock();
 	return allowed;
 }
 
@@ -543,12 +533,9 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 		}
 		if (userAgent && strcmp(userAgent, ""))
 			curl_easy_setopt(ri->easy, CURLOPT_USERAGENT, userAgent);
-		ObjectLockRead();
-		long t = timeout;
-		ObjectUnlock();
 		curl_easy_setopt(ri->easy, CURLOPT_PRIVATE, ri);
 		curl_easy_setopt(ri->easy, CURLOPT_NOPROGRESS, 1L);
-		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_TIME, t);
+		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_TIME, timeout);
 		curl_easy_setopt(ri->easy, CURLOPT_LOW_SPEED_LIMIT, 100L);
 		curl_easy_setopt(ri->easy, CURLOPT_SSL_VERIFYPEER, 0L);
 
@@ -563,7 +550,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	curlInfo.currentTime = time(NULL);
 	this->outputResources = outputResources;
 
@@ -600,10 +587,7 @@ int Fetcher::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *ou
 	}
 
 	// set timer for the timerTick
-	ObjectLockRead();
-	int tick = timeTick;
-	ObjectUnlock();
-	ev_timer_init(&curlInfo.tickTimer, TimeTickCallback, (double)tick/1000000, 0.);
+	ev_timer_init(&curlInfo.tickTimer, TimeTickCallback, (double)timeTick/1000000, 0.);
 	ev_timer_start(curlInfo.loop, &curlInfo.tickTimer);
 	curlInfo.tickTimer.data = &curlInfo;
 

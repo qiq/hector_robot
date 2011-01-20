@@ -29,17 +29,17 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	negativeTTL = 86400;
 
 	values = new ObjectValues<DnsResolver>(this);
-	values->addGetter("items", &DnsResolver::getItems);
-	values->addGetter("maxRequests", &DnsResolver::getMaxRequests);
-	values->addSetter("maxRequests", &DnsResolver::setMaxRequests, true);
-	values->addGetter("timeTick", &DnsResolver::getTimeTick);
-	values->addSetter("timeTick", &DnsResolver::setTimeTick);
-	values->addGetter("forwardServer", &DnsResolver::getForwardServer);
-	values->addSetter("forwardServer", &DnsResolver::setForwardServer);
-	values->addGetter("forwardPort", &DnsResolver::getForwardPort);
-	values->addSetter("forwardPort", &DnsResolver::setForwardPort);
-	values->addGetter("negativeTTL", &DnsResolver::getNegativeTTL);
-	values->addSetter("negativeTTL", &DnsResolver::setNegativeTTL);
+	values->AddGetter("items", &DnsResolver::getItems);
+	values->AddGetter("maxRequests", &DnsResolver::getMaxRequests);
+	values->AddSetter("maxRequests", &DnsResolver::setMaxRequests, true);
+	values->AddGetter("timeTick", &DnsResolver::getTimeTick);
+	values->AddSetter("timeTick", &DnsResolver::setTimeTick);
+	values->AddGetter("forwardServer", &DnsResolver::getForwardServer);
+	values->AddSetter("forwardServer", &DnsResolver::setForwardServer);
+	values->AddGetter("forwardPort", &DnsResolver::getForwardPort);
+	values->AddSetter("forwardPort", &DnsResolver::setForwardPort);
+	values->AddGetter("negativeTTL", &DnsResolver::getNegativeTTL);
+	values->AddSetter("negativeTTL", &DnsResolver::setNegativeTTL);
 }
 
 DnsResolver::~DnsResolver() {
@@ -189,9 +189,7 @@ void DnsResolver::FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4
 		ip4 = 0;
 		struct timeval currentTime;
 		gettimeofday(&currentTime, NULL);
-		ObjectLockRead();
 		ipAddrExpire = currentTime.tv_sec + negativeTTL;
-		ObjectUnlock();
 	}
 	IpAddr addr;
 	addr.setIp4Addr(ip4);
@@ -215,9 +213,7 @@ void DnsResolver::UpdateResource(Resource *resource, int status, IpAddr *addr, u
 	}
 	LOG_DEBUG_R(this, resource, "DNS " << host << ": " << addr->toString());
 	outputResources->push(resource);
-	ObjectLockWrite();
 	items++;
-	ObjectUnlock();
 }
 
 bool DnsResolver::Init(vector<pair<string, string> > *params) {
@@ -274,7 +270,7 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	this->outputResources = outputResources;
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && (int)running.size() < maxRequests) {
@@ -295,10 +291,7 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 
 	struct timeval startTime;
 	gettimeofday(&startTime, NULL);
-	ObjectLockRead();
-	int timeoutFull = timeTick;
-	ObjectUnlock();
-	int timeout = timeoutFull;
+	int timeout = timeTick;
 	struct timeval currentTime;
 	while (running.size() > 0 && timeout > 0) {
 		// wait for results
@@ -325,7 +318,7 @@ int DnsResolver::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*>
 			}
 		}
 		gettimeofday(&currentTime, NULL);
-		timeout = timeoutFull - (currentTime.tv_sec - startTime.tv_sec) * 1000000 + (currentTime.tv_usec - startTime.tv_usec);
+		timeout = timeTick - (currentTime.tv_sec - startTime.tv_sec) * 1000000 + (currentTime.tv_usec - startTime.tv_usec);
 	}
 
 	// finished resources are already appended to the outputResources queue

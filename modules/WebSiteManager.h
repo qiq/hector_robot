@@ -82,7 +82,7 @@ public:
 	~WebSiteManager();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 	bool SaveCheckpointSync(const char *path);
 	bool RestoreCheckpointSync(const char *path);
 
@@ -115,10 +115,9 @@ private:
 	void setRobotsNegativeTTL(const char *name, const char *value);
 
 	ObjectValues<WebSiteManager> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	uint32_t currentTime;
 	MemoryPool<WebSiteResource, true> *pool;
@@ -153,20 +152,16 @@ inline Module::Type WebSiteManager::getType() {
 	return MULTI;
 }
 
-inline char *WebSiteManager::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *WebSiteManager::GetValueSync(const char *name) {
+	return values->GetValue(name);
 }
 
-inline bool WebSiteManager::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool WebSiteManager::SetValueSync(const char *name, const char *value) {
+	return values->SetValue(name, value);
 }
 
-inline bool WebSiteManager::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
-}
-
-inline std::vector<std::string> *WebSiteManager::listNamesSync() {
-	return values->listNamesSync();
+inline std::vector<std::string> *WebSiteManager::ListNamesSync() {
+	return values->ListNames();
 }
 
 #endif

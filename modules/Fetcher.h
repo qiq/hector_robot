@@ -88,7 +88,7 @@ public:
 	~Fetcher();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	CurlInfo curlInfo;
 	void QueueResource(WebResource *wr);
@@ -127,10 +127,9 @@ private:
 	void setAllowedContentTypes(const char *name, const char *value);
 
 	ObjectValues<Fetcher> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	std::queue<Resource*> *outputResources;
 };
@@ -139,20 +138,16 @@ inline Module::Type Fetcher::getType() {
 	return MULTI;
 }
 
-inline char *Fetcher::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *Fetcher::GetValueSync(const char *name) {
+	return values->GetValue(name);
 }
 
-inline bool Fetcher::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool Fetcher::SetValueSync(const char *name, const char *value) {
+	return values->SetValue(name, value);
 }
 
-inline bool Fetcher::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
-}
-
-inline std::vector<std::string> *Fetcher::listNamesSync() {
-	return values->listNamesSync();
+inline std::vector<std::string> *Fetcher::ListNamesSync() {
+	return values->ListNames();
 }
 
 #endif

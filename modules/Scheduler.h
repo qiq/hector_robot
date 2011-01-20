@@ -33,7 +33,7 @@ public:
 	~Scheduler();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	Resource *ProcessSimple(Resource *resource);
+	Resource *ProcessSimpleSync(Resource *resource);
 
 private:
 	int items;		// ObjectLock, items processed
@@ -44,10 +44,9 @@ private:
 	void setOutputDir(const char *name, const char *value);
 
 	ObjectValues<Scheduler> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	struct OpenFile {
 		int fd;
@@ -65,20 +64,16 @@ inline Module::Type Scheduler::getType() {
 	return SIMPLE;
 }
 
-inline char *Scheduler::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *Scheduler::GetValueSync(const char *name) {
+	return values->GetValue(name);
 }
 
-inline bool Scheduler::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool Scheduler::SetValueSync(const char *name, const char *value) {
+	return values->SetValue(name, value);
 }
 
-inline bool Scheduler::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
-}
-
-inline std::vector<std::string> *Scheduler::listNamesSync() {
-	return values->listNamesSync();
+inline std::vector<std::string> *Scheduler::ListNamesSync() {
+	return values->ListNames();
 }
 
 #endif

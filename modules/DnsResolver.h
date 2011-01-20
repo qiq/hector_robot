@@ -43,7 +43,7 @@ public:
 	~DnsResolver();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	void StartResolution(Resource *reesource);
 	void FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4, uint32_t ipAddrExpire);
@@ -68,10 +68,9 @@ private:
 	void setNegativeTTL(const char *name, const char *value);
 
 	ObjectValues<DnsResolver> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	struct ub_ctx* ctx;	// unbound context
 	int fd;			// file descriptor we are waiting for read
@@ -87,20 +86,16 @@ inline Module::Type DnsResolver::getType() {
 	return MULTI;
 }
 
-inline char *DnsResolver::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *DnsResolver::GetValueSync(const char *name) {
+	return values->GetValue(name);
 }
 
-inline bool DnsResolver::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool DnsResolver::SetValueSync(const char *name, const char *value) {
+	return values->SetValue(name, value);
 }
 
-inline bool DnsResolver::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
-}
-
-inline std::vector<std::string> *DnsResolver::listNamesSync() {
-	return values->listNamesSync();
+inline std::vector<std::string> *DnsResolver::ListNamesSync() {
+	return values->ListNames();
 }
 
 #endif

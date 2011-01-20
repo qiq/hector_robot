@@ -29,7 +29,7 @@ public:
 	~WebResourceGenerator();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	Resource *ProcessInput(bool sleep);
+	Resource *ProcessInputSync(bool sleep);
 
 private:
 	int items;		// ObjectLock
@@ -45,7 +45,6 @@ private:
 	ObjectValues<WebResourceGenerator> *values;
 	char *getValueSync(const char *name);
 	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
 	std::vector<std::string> *listNamesSync();
 
 	int typeId;		// type of resource to generate (WebResource)
@@ -56,19 +55,15 @@ inline Module::Type WebResourceGenerator::getType() {
 }
 
 inline char *WebResourceGenerator::getValueSync(const char *name) {
-	return values->getValueSync(name);
+	return values->GetValue(name);
 }
 
 inline bool WebResourceGenerator::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
-}
-
-inline bool WebResourceGenerator::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
+	return values->SetValue(name, value);
 }
 
 inline std::vector<std::string> *WebResourceGenerator::listNamesSync() {
-	return values->listNamesSync();
+	return values->ListNames();
 }
 
 #endif

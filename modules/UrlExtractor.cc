@@ -18,13 +18,13 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	allowedSchemesSet.insert("http");
 
 	values = new ObjectValues<UrlExtractor>(this);
-	values->addGetter("items", &UrlExtractor::getItems);
-	values->addGetter("newUrlStatus", &UrlExtractor::getNewUrlStatus);
-	values->addSetter("newUrlStatus", &UrlExtractor::setNewUrlStatus);
-	values->addGetter("imageLinks", &UrlExtractor::getImageLinks);
-	values->addSetter("imageLinks", &UrlExtractor::setImageLinks);
-	values->addGetter("allowedSchemes", &UrlExtractor::getAllowedSchemes);
-	values->addSetter("allowedSchemes", &UrlExtractor::setAllowedSchemes);
+	values->AddGetter("items", &UrlExtractor::getItems);
+	values->AddGetter("newUrlStatus", &UrlExtractor::getNewUrlStatus);
+	values->AddSetter("newUrlStatus", &UrlExtractor::setNewUrlStatus);
+	values->AddGetter("imageLinks", &UrlExtractor::getImageLinks);
+	values->AddSetter("imageLinks", &UrlExtractor::setImageLinks);
+	values->AddGetter("allowedSchemes", &UrlExtractor::getAllowedSchemes);
+	values->AddSetter("allowedSchemes", &UrlExtractor::setAllowedSchemes);
 
 	scanner_create(&state, &scanner);
 }
@@ -96,10 +96,7 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
-	ObjectLockRead();
-	bool images = imageLinks;
-	ObjectUnlock();
+int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	while (inputResources->size() > 0) {
 		if (inputResources->front()->getTypeId() != WebResource::typeId) {
 			outputResources->push(inputResources->front());
@@ -123,7 +120,7 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 					}
 					break;
 				case TOK_IMG_URL:
-					if (!images)
+					if (!imageLinks)
 						break;
 				case TOK_URL:
 				case TOK_REDIRECT: {
@@ -137,10 +134,8 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 							size_t colon = url.find_first_of(':');
 							assert(colon != string::npos);
 							string scheme = url.substr(0, colon);
-							ObjectLockRead();
 							if (allowedSchemesSet.find(scheme) != allowedSchemesSet.end())
 								urls.insert(url);
-							ObjectUnlock();
 						}
 					}
 					break;
@@ -154,19 +149,14 @@ int UrlExtractor::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*
 		inputResources->pop();
 	}
 
-	ObjectLockRead();
-	int newStatus = newUrlStatus;
-	ObjectUnlock();
 	for (tr1::unordered_set<string>::iterator iter = urls.begin(); iter != urls.end(); ++iter) {
 		WebResource *tmp = new WebResource();
 		tmp->setUrl(*iter);
-		tmp->setStatus(newStatus);
+		tmp->setStatus(newUrlStatus);
 		outputResources->push(tmp);
 	}
 	urls.clear();
-	ObjectLockWrite();
 	items++;
-	ObjectUnlock();
 
 	if (expectingResources)
 		*expectingResources = 1000;

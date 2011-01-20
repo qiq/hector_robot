@@ -87,23 +87,23 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	robotsNegativeTTL = 86400;
 
 	values = new ObjectValues<WebSiteManager>(this);
-	values->addGetter("items", &WebSiteManager::getItems);
-	values->addGetter("maxRequests", &WebSiteManager::getMaxRequests);
-	values->addSetter("maxRequests", &WebSiteManager::setMaxRequests, true);
-	values->addGetter("timeTick", &WebSiteManager::getTimeTick);
-	values->addSetter("timeTick", &WebSiteManager::setTimeTick);
-	values->addGetter("dnsEngine", &WebSiteManager::getDnsEngine);
-	values->addSetter("dnsEngine", &WebSiteManager::setDnsEngine);
-	values->addGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
-	values->addSetter("robotsEngine", &WebSiteManager::setRobotsEngine);
-	values->addGetter("load", &WebSiteManager::getLoad);
-	values->addSetter("load", &WebSiteManager::setLoad);
-	values->addGetter("save", &WebSiteManager::getSave);
-	values->addSetter("save", &WebSiteManager::setSave);
-	values->addGetter("robotsMaxRedirects", &WebSiteManager::getRobotsMaxRedirects);
-	values->addSetter("robotsMaxRedirects", &WebSiteManager::setRobotsMaxRedirects);
-	values->addGetter("robotsNegativeTTL", &WebSiteManager::getRobotsNegativeTTL);
-	values->addSetter("robotsNegativeTTL", &WebSiteManager::setRobotsNegativeTTL);
+	values->AddGetter("items", &WebSiteManager::getItems);
+	values->AddGetter("maxRequests", &WebSiteManager::getMaxRequests);
+	values->AddSetter("maxRequests", &WebSiteManager::setMaxRequests, true);
+	values->AddGetter("timeTick", &WebSiteManager::getTimeTick);
+	values->AddSetter("timeTick", &WebSiteManager::setTimeTick);
+	values->AddGetter("dnsEngine", &WebSiteManager::getDnsEngine);
+	values->AddSetter("dnsEngine", &WebSiteManager::setDnsEngine);
+	values->AddGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
+	values->AddSetter("robotsEngine", &WebSiteManager::setRobotsEngine);
+	values->AddGetter("load", &WebSiteManager::getLoad);
+	values->AddSetter("load", &WebSiteManager::setLoad);
+	values->AddGetter("save", &WebSiteManager::getSave);
+	values->AddSetter("save", &WebSiteManager::setSave);
+	values->AddGetter("robotsMaxRedirects", &WebSiteManager::getRobotsMaxRedirects);
+	values->AddSetter("robotsMaxRedirects", &WebSiteManager::setRobotsMaxRedirects);
+	values->AddGetter("robotsNegativeTTL", &WebSiteManager::getRobotsNegativeTTL);
+	values->AddSetter("robotsNegativeTTL", &WebSiteManager::setRobotsNegativeTTL);
 
 	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
@@ -196,14 +196,14 @@ void WebSiteManager::setRobotsNegativeTTL(const char *name, const char *value) {
 bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 	// second stage?
 	if (!params) {
-		ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->getObject(dnsEngine));
+		ProcessingEngine *engine = dynamic_cast<ProcessingEngine*>(objects->GetObject(dnsEngine));
 		if (!engine) {
 			LOG_ERROR(this, "Invalid dnsEngine parameter: " << dnsEngine);
 			return false;
 		}
 		callDns->setProcessingEngine(engine);
 
-		engine = dynamic_cast<ProcessingEngine*>(objects->getObject(robotsEngine));
+		engine = dynamic_cast<ProcessingEngine*>(objects->GetObject(robotsEngine));
 		if (!engine) {
 			LOG_ERROR(this, "Invalid robotsEngine parameter: " << robotsEngine);
 			return false;
@@ -301,10 +301,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 		assert(v->size() == 1);
 		string url = v->front();
 		delete v;
-		ObjectLockRead();
-		int maxRedirects = robotsMaxRedirects;
-		ObjectUnlock();
-		if (redirects < maxRedirects) {
+		if (redirects < robotsMaxRedirects) {
 			WebResource wr;
 			wr.setUrl(url);
 			WebSiteResource *next = getWebSiteResource(&wr);
@@ -313,10 +310,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 				LOG_DEBUG_R(this, wsr, "Redirect to self: " << url);
 				vector<string> allow;
 				vector<string> disallow;
-				ObjectLockRead();
-				int ttl = robotsNegativeTTL;
-				ObjectUnlock();
-				wsr->setRobots(allow, disallow, ttl);
+				wsr->setRobots(allow, disallow, robotsNegativeTTL);
 			} else {
 				if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
 					// WSR not up-to-date: recursively resolve WSR
@@ -334,10 +328,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			LOG_DEBUG_R(this, wsr, "Too many redirects: " << url);
 			vector<string> allow;
 			vector<string> disallow;
-			ObjectLockRead();
-			int ttl = robotsNegativeTTL;
-			ObjectUnlock();
-			wsr->setRobots(allow, disallow, ttl);
+			wsr->setRobots(allow, disallow, robotsNegativeTTL);
 		}
 	}
 	// WSR is now refreshed
@@ -351,9 +342,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			r->setStatus(0);
 			outputResources->push(r);
 			waitingResourcesCount--;
-			ObjectLockWrite();
 			items++;
-			ObjectUnlock();
 		} else {
 			LOG_TRACE_R(this, r, "finish WSR (recurse)");
 			// WebSiteResource: resolve robots.txt redirection
@@ -434,11 +423,8 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 	return result;
 }
 
-int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	currentTime = time(NULL);
-	ObjectLockRead();
-	int tick = timeTick/2;
-	ObjectUnlock();
 	LOG_TRACE(this, "waitingResourcesCount: " << waitingResourcesCount << ", maxRequests: " << maxRequests);
 	while (inputResources->size() > 0 && waitingResourcesCount < maxRequests) {
 		if (inputResources->front()->getTypeId() == WebResource::typeId) {
@@ -468,7 +454,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	}
 
 	int dnsN;
-	(void)callDns->Process(&callDnsInput, &callDnsOutput, &dnsN, tick);
+	(void)callDns->Process(&callDnsInput, &callDnsOutput, &dnsN, timeTick/2);
 	dnsN -= callDnsInput.size();
 	while (callDnsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
@@ -481,7 +467,7 @@ int WebSiteManager::ProcessMulti(queue<Resource*> *inputResources, queue<Resourc
 	}
 
 	int robotsN;
-        (void)callRobots->Process(&callRobotsInput, &callRobotsOutput, &robotsN, tick);
+        (void)callRobots->Process(&callRobotsInput, &callRobotsOutput, &robotsN, timeTick/2);
 	robotsN -= callRobotsInput.size();
 	while (callRobotsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callRobotsOutput.front());

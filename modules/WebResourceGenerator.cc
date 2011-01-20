@@ -16,11 +16,11 @@ WebResourceGenerator::WebResourceGenerator(ObjectRegistry *objects, const char *
 	idPrefix = NULL;
 
 	values = new ObjectValues<WebResourceGenerator>(this);
-	values->addGetter("items", &WebResourceGenerator::getItems);
-	values->addGetter("maxItems", &WebResourceGenerator::getMaxItems);
-	values->addSetter("maxItems", &WebResourceGenerator::setMaxItems, true);
-	values->addGetter("idPrefix", &WebResourceGenerator::getIdPrefix);
-	values->addSetter("idPrefix", &WebResourceGenerator::setIdPrefix);
+	values->AddGetter("items", &WebResourceGenerator::getItems);
+	values->AddGetter("maxItems", &WebResourceGenerator::getMaxItems);
+	values->AddSetter("maxItems", &WebResourceGenerator::setMaxItems, true);
+	values->AddGetter("idPrefix", &WebResourceGenerator::getIdPrefix);
+	values->AddSetter("idPrefix", &WebResourceGenerator::setIdPrefix);
 }
 
 WebResourceGenerator::~WebResourceGenerator() {
@@ -59,7 +59,7 @@ bool WebResourceGenerator::Init(vector<pair<string, string> > *params) {
 		return false;
 	if (maxItems)
 		LOG_INFO(this, "Going to produce " << maxItems << " WebResources.");
-	typeId = Resource::NameToId("WebResource");
+	typeId = Resource::registry.NameToId("WebResource");
 	if (typeId < 0) {
 		LOG_ERROR(this, "Cannot load WebResource library");
 		return false;
@@ -67,21 +67,16 @@ bool WebResourceGenerator::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *WebResourceGenerator::ProcessInput(bool sleep) {
-	ObjectLockRead();
-	int it = items;
-	ObjectUnlock();
-	if (maxItems && it >= maxItems)
+Resource *WebResourceGenerator::ProcessInputSync(bool sleep) {
+	if (maxItems && items >= maxItems)
 		return NULL;
 	// we can use just new WebResource(), we use Resources::AcquireResource() for demo purpose
-	WebResource *wr = static_cast<WebResource*>(Resource::AcquireResource(typeId));
+	WebResource *wr = static_cast<WebResource*>(Resource::registry.AcquireResource(typeId));
 	wr->setId(getThreadIndex()*10000+items);
 	char s[1024];
 	snprintf(s, sizeof(s), "http://test.org/%s%d-%d", idPrefix ? idPrefix : "", getThreadIndex(), items);
 	wr->setUrl(s);
-	ObjectLockWrite();
 	items++;
-	ObjectUnlock();
 	LOG_INFO_R(this, wr, "Created (" << wr->getUrl() << ")");
 	return wr;
 }

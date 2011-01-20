@@ -16,9 +16,9 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 	outputDir = NULL;
 
 	values = new ObjectValues<Scheduler>(this);
-	values->addGetter("items", &Scheduler::getItems);
-	values->addGetter("outputDir", &Scheduler::getOutputDir);
-	values->addSetter("outputDir", &Scheduler::setOutputDir);
+	values->AddGetter("items", &Scheduler::getItems);
+	values->AddGetter("outputDir", &Scheduler::getOutputDir);
+	values->AddSetter("outputDir", &Scheduler::setOutputDir);
 
 	currentTime = 0;
 }
@@ -77,7 +77,7 @@ bool Scheduler::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-Resource *Scheduler::ProcessSimple(Resource *resource) {
+Resource *Scheduler::ProcessSimpleSync(Resource *resource) {
 	if (resource->getTypeId() != WebResource::typeId)
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
@@ -107,9 +107,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 	if (iter == openFiles.end()) {
 		// construct filename and open file
 		char filename[1024];
-		ObjectLockRead();
 		snprintf(filename, sizeof(filename), "%s%d", outputDir, now+next);
-		ObjectUnlock();
 		int fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 		if (fd < 0) {
 			LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
@@ -132,9 +130,7 @@ Resource *Scheduler::ProcessSimple(Resource *resource) {
 		return resource;
 	}
 	delete other;
-	ObjectLockWrite();
 	items++;
-	ObjectUnlock();
 	LOG_DEBUG_R(this, wr, "Scheduling " << wr->getUrl() << " " << next << " (" << now+next << ")");
 
 	return resource;

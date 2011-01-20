@@ -34,7 +34,7 @@ public:
 	~UrlExtractor();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type getType();
-	int ProcessMulti(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 private:
 	int items;		// ObjectLock, items processed
@@ -52,10 +52,9 @@ private:
 	void setAllowedSchemes(const char *name, const char *value);
 
 	ObjectValues<UrlExtractor> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	std::tr1::unordered_set<std::string> urls;
 	// for flex
@@ -67,20 +66,16 @@ inline Module::Type UrlExtractor::getType() {
 	return MULTI;
 }
 
-inline char *UrlExtractor::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *UrlExtractor::GetValueSync(const char *name) {
+	return values->GetValue(name);
 }
 
-inline bool UrlExtractor::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool UrlExtractor::SetValueSync(const char *name, const char *value) {
+	return values->SetValue(name, value);
 }
 
-inline bool UrlExtractor::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
-}
-
-inline std::vector<std::string> *UrlExtractor::listNamesSync() {
-	return values->listNamesSync();
+inline std::vector<std::string> *UrlExtractor::ListNamesSync() {
+	return values->ListNames();
 }
 
 #endif
