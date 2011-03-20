@@ -27,22 +27,22 @@ public:
 	int NextRefresh();
 
 	// low-level API
-	void setPathStatus(PathStatus pathStatus);
-	PathStatus getPathStatus() const;
-	void setLastPathStatusUpdate(uint32_t time);
-	uint32_t getLastPathStatusUpdate() const;
-	void setErrorCount(int count);
-	int getErrorCount() const;
-	void setRefreshing(bool refreshing);
-	bool getRefreshing() const;
-	void setSize(uint32_t);
-	uint32_t getSize() const;
-	void setCksum(uint32_t);
-	uint32_t getCksum() const;
-	void setLastModified(uint32_t);
-	uint32_t getLastModified() const;
-	void setModificationHistory(uint32_t history);
-	uint32_t getModificationHistory() const;
+	void SetPathStatus(PathStatus pathStatus);
+	PathStatus GetPathStatus() const;
+	void SetLastPathStatusUpdate(uint32_t time);
+	uint32_t GetLastPathStatusUpdate() const;
+	void SetErrorCount(int count);
+	int GetErrorCount() const;
+	void SetRefreshing(bool refreshing);
+	bool GetRefreshing() const;
+	void SetSize(uint32_t);
+	uint32_t GetSize() const;
+	void SetCksum(uint32_t);
+	uint32_t GetCksum() const;
+	void SetLastModified(uint32_t);
+	uint32_t GetLastModified() const;
+	void SetModificationHistory(uint32_t history);
+	uint32_t GetModificationHistory() const;
 
 private:
 	uint32_t pathStatus;		// status(2B) + inRefresh(1B) + error count(1B)
@@ -53,70 +53,70 @@ private:
 	uint32_t modificationHistory;	// 4x1B period of modification (2^n minutes)
 };
 
-inline void WebSitePath::setPathStatus(PathStatus pathStatus) {
+inline void WebSitePath::SetPathStatus(PathStatus pathStatus) {
 	this->pathStatus = (this->pathStatus & 0xFFFF0000) | pathStatus;
 }
 
-inline WebSitePath::PathStatus WebSitePath::getPathStatus() const {
+inline WebSitePath::PathStatus WebSitePath::GetPathStatus() const {
 	return (PathStatus)(pathStatus & 0x0000FFFF);
 }
 
-inline void WebSitePath::setLastPathStatusUpdate(uint32_t time) {
+inline void WebSitePath::SetLastPathStatusUpdate(uint32_t time) {
 	lastPathStatusUpdate = time;
 }
 
-inline uint32_t WebSitePath::getLastPathStatusUpdate() const {
+inline uint32_t WebSitePath::GetLastPathStatusUpdate() const {
 	return lastPathStatusUpdate;
 }
 
-inline void WebSitePath::setErrorCount(int count) {
+inline void WebSitePath::SetErrorCount(int count) {
 	pathStatus = (pathStatus & 0x0000FFFF) | ((count & 0xFF) << 24);
 }
 
-inline int WebSitePath::getErrorCount() const {
+inline int WebSitePath::GetErrorCount() const {
 	return pathStatus >> 24;
 }
 
-inline void WebSitePath::setRefreshing(bool refreshing) {
+inline void WebSitePath::SetRefreshing(bool refreshing) {
 	if (refreshing)
 		pathStatus |= 0x00010000;
 	else
 		pathStatus &= 0xFF00FFFF;
 }
 
-inline bool WebSitePath::getRefreshing() const {
+inline bool WebSitePath::GetRefreshing() const {
 	return (pathStatus & 0x00FF0000);
 }
 
-inline void WebSitePath::setSize(uint32_t size) {
+inline void WebSitePath::SetSize(uint32_t size) {
 	this->size = size;
 }
 
-inline uint32_t WebSitePath::getSize() const {
+inline uint32_t WebSitePath::GetSize() const {
 	return size;
 }
 
-inline void WebSitePath::setCksum(uint32_t cksum) {
+inline void WebSitePath::SetCksum(uint32_t cksum) {
 	this->cksum = cksum;
 }
 
-inline uint32_t WebSitePath::getCksum() const {
+inline uint32_t WebSitePath::GetCksum() const {
 	return cksum;
 }
 
-inline void WebSitePath::setLastModified(uint32_t time) {
+inline void WebSitePath::SetLastModified(uint32_t time) {
 	lastModified = time;
 }
 
-inline uint32_t WebSitePath::getLastModified() const {
+inline uint32_t WebSitePath::GetLastModified() const {
 	return lastModified;
 }
 
-inline void WebSitePath::setModificationHistory(uint32_t history) {
+inline void WebSitePath::SetModificationHistory(uint32_t history) {
 	this->modificationHistory = history;
 }
 
-inline uint32_t WebSitePath::getModificationHistory() const {
+inline uint32_t WebSitePath::GetModificationHistory() const {
 	return modificationHistory;
 }
 

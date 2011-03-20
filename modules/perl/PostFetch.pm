@@ -51,12 +51,12 @@ sub Init {
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -66,7 +66,7 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -77,7 +77,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -95,15 +95,15 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->getTypeStr() ne 'WebResource') {
-		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	if ($resource->GetTypeString() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
-	if ($wsr->getTypeStr() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->toStringShort()." Invalid type: ".$wsr->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
+	if ($wsr->GetTypeString() ne 'WebSiteResource') {
+		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	
@@ -112,38 +112,38 @@ sub ProcessSimple() {
 	my $currentTime = time();
 	# check result of the Fetcher module
 	my $error = 0;
-	my $rs = $resource->getStatus();
+	my $rs = $resource->GetStatus();
 	if ($rs == 0) {
 		# get "real" status code
-		my $status = $resource->getHeaderValue("X-Status");
+		my $status = $resource->GetHeaderValue("X-Status");
 		if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
-			$self->{'_object'}->log_error($resource->toStringShort()." Invalid status: ".$resource->getHeaderValue("X-Status"));
+			$self->{'_object'}->log_error($resource->ToStringShort()." Invalid status: ".$resource->GetHeaderValue("X-Status"));
 			$error = 1;
 		} else {
-			$self->{'_object'}->log_debug($resource->toStringShort().' Status: '.$status.' '.$resource->getUrl());
+			$self->{'_object'}->log_debug($resource->ToStringShort().' Status: '.$status.' '.$resource->GetUrl());
 			if ($status >= 100 and $status < 300) {
 				# 1xx, 2xx: OK
-				my $content = $resource->getContent();
+				my $content = $resource->GetContent();
 				my $size = length($content);
 				my $cksum = 0;
-				$cksum = CountCksum($content, $size) if ($size == $wsr->getSize());
-				$wsr->PathUpdateOK($resource->getUrlPath(), $currentTime, $size, $cksum);
-				$resource->setStatus(0);
+				$cksum = CountCksum($content, $size) if ($size == $wsr->GetSize());
+				$wsr->PathUpdateOK($resource->GetUrlPath(), $currentTime, $size, $cksum);
+				$resource->SetStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
-				if (not defined $resource->getHeaderValue("Location")) {
-					$self->{'_object'}->log_error($resource->toStringShort()." Redirect with no location: ".$resource->getUrl());
+				if (not defined $resource->GetHeaderValue("Location")) {
+					$self->{'_object'}->log_error($resource->ToStringShort()." Redirect with no location: ".$resource->GetUrl());
 					$error = 1;
 				} else {
-					my $redirects = $resource->getRedirectCount();
+					my $redirects = $resource->GetRedirectCount();
 					if ($redirects > $self->{'maxRedirects'}) {
-						$self->{'_object'}->log_error($resource->toStringShort()." Too many redirects: ".$resource->getUrl());
+						$self->{'_object'}->log_error($resource->ToStringShort()." Too many redirects: ".$resource->GetUrl());
 						$error = 1;
 					} else {
 						# correct redirects
-						$resource->setRedirectCount($redirects+1);
-						$wsr->PathUpdateRedirect($resource->getUrlPath(), $currentTime, $status == 301);
-						$resource->setStatus(1);	# mark resource, so that we can filter redirection later
+						$resource->SetRedirectCount($redirects+1);
+						$wsr->PathUpdateRedirect($resource->GetUrlPath(), $currentTime, $status == 301);
+						$resource->SetStatus(1);	# mark resource, so that we can filter redirection later
 					}
 				}
 			} else {
@@ -153,23 +153,39 @@ sub ProcessSimple() {
 		}
 	} elsif ($rs == 1) {
 		# error fetching object (temoporary error)
-		$self->{'_object'}->log_error($resource->toStringShort()." Cannot fetch object: ".$resource->getUrl());
-		$resource->setStatus(0);
+		$self->{'_object'}->log_error($resource->ToStringShort()." Cannot fetch object: ".$resource->GetUrl());
+		$resource->SetStatus(0);
 		$error = 1;
 	} elsif ($rs == 2) {
 		# error fetching object (permanent error)
-		$self->{'_object'}->log_error($resource->toStringShort()." Invalid object: ".$resource->getUrl());
-		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, 1);
-		$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
-		$resource->setStatus(0);
+		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid object: ".$resource->GetUrl());
+		my $ok = $wsr->PathUpdateError($resource->GetUrlPath(), $currentTime, 1);
+		$resource->SetFlag($Hector::Resource::DELETED) if (not $ok);
+		$resource->SetStatus(0);
 	}
 
 	if ($error == 1) {
-		my $ok = $wsr->PathUpdateError($resource->getUrlPath(), $currentTime, $self->{'maxErrors'});
-		$resource->setFlag($Hector::Resource::DELETED) if (not $ok);
+		my $ok = $wsr->PathUpdateError($resource->GetUrlPath(), $currentTime, $self->{'maxErrors'});
+		$resource->SetFlag($Hector::Resource::DELETED) if (not $ok);
 	}
 
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

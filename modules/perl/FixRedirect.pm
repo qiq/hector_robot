@@ -45,12 +45,12 @@ sub Init {
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -60,7 +60,7 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -71,7 +71,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -89,19 +89,35 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->getTypeStr() ne 'WebResource') {
-		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	if ($resource->GetTypeString() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	
-	if ($resource->getStatus() == $self->{'redirectStatus'}) {
-		my $location = HectorRobot::AbsolutizeUrl($resource->getUrl(), $resource->getHeaderValue("Location"));
-		$resource->setUrl($location);
-		$self->{'_object'}->log_debug($resource->toStringShort()." New location: ".$location);
+	if ($resource->GetStatus() == $self->{'redirectStatus'}) {
+		my $location = HectorRobot::AbsolutizeUrl($resource->GetUrl(), $resource->GetHeaderValue("Location"));
+		$resource->SetUrl($location);
+		$self->{'_object'}->log_debug($resource->ToStringShort()." New location: ".$location);
 		$self->{'items'}++;
 	}
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

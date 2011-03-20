@@ -42,7 +42,7 @@ public:
 	DnsResolver(ObjectRegistry *objects, const char *id, int threadIndex);
 	~DnsResolver();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
-	Module::Type getType();
+	Module::Type GetType();
 	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	void StartResolution(Resource *reesource);
@@ -55,17 +55,17 @@ private:
 	int forwardPort;	// initOnly, port number of the DNS server
 	int negativeTTL;	// ObjectLock, number of seconds to keep info about DNS failure/NXdomain
 
-	char *getItems(const char *name);
-	char *getMaxRequests(const char *name);
-	void setMaxRequests(const char *name, const char *value);
-	char *getTimeTick(const char *name);
-	void setTimeTick(const char *name, const char *value);
-	char *getForwardServer(const char *name);
-	void setForwardServer(const char *name, const char *value);
-	char *getForwardPort(const char *name);
-	void setForwardPort(const char *name, const char *value);
-	char *getNegativeTTL(const char *name);
-	void setNegativeTTL(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetMaxRequests(const char *name);
+	void SetMaxRequests(const char *name, const char *value);
+	char *GetTimeTick(const char *name);
+	void SetTimeTick(const char *name, const char *value);
+	char *GetForwardServer(const char *name);
+	void SetForwardServer(const char *name, const char *value);
+	char *GetForwardPort(const char *name);
+	void SetForwardPort(const char *name, const char *value);
+	char *GetNegativeTTL(const char *name);
+	void SetNegativeTTL(const char *name, const char *value);
 
 	ObjectValues<DnsResolver> *values;
 	char *GetValueSync(const char *name);
@@ -82,7 +82,7 @@ private:
 	void UpdateResource(Resource *resource, int status, IpAddr *addr, uint32_t ipAddrExpire);
 };
 
-inline Module::Type DnsResolver::getType() {
+inline Module::Type DnsResolver::GetType() {
 	return MULTI;
 }
 

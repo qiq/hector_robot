@@ -48,12 +48,12 @@ sub Init {
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -63,7 +63,7 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -74,7 +74,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -92,21 +92,21 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->getTypeStr() ne 'WebResource') {
-		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	if ($resource->GetTypeString() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->getAttachedResource());
-	if ($wsr->getTypeStr() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->toStringShort()." Invalid type: ".$wsr->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
+	if ($wsr->GetTypeString() ne 'WebSiteResource') {
+		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 
-	my $path = $resource->getUrlPath();
+	my $path = $resource->GetUrlPath();
 	my $allowed = 0;
-	my $au = $wsr->getAllowUrls();
+	my $au = $wsr->GetAllowUrls();
 	my $prefix;
 	for (my $i = 0; $i < $au->size(); $i++) {
 		$prefix = $au->get($i);
@@ -126,7 +126,7 @@ sub ProcessSimple() {
 	HectorRobot::DeleteVectorOfString($au);
 	if (not $allowed) {
 		my $disallowed = 0;
-		my $du = $wsr->getDisallowUrls();
+		my $du = $wsr->GetDisallowUrls();
 		for (my $i = 0; $i < $du->size(); $i++) {
 			$prefix = $du->get($i);
 			if ($self->{'wildcards'}) {
@@ -144,13 +144,29 @@ sub ProcessSimple() {
 		}
 		HectorRobot::DeleteVectorOfString($du);
 		if ($disallowed) {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Disallowed by robots.txt policy ($prefix): ".$resource->getUrl());
-			$resource->setFlag($Hector::Resource::DELETED);
+			$self->{'_object'}->log_debug($resource->ToStringShort()." Disallowed by robots.txt policy ($prefix): ".$resource->GetUrl());
+			$resource->SetFlag($Hector::Resource::DELETED);
 		}
 	}
 	
 	$self->{'items'}++;
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

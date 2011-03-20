@@ -29,7 +29,18 @@ ProtobufResource *WebResource::Clone() {
 	return new WebResource(*this);
 }
 
-void WebResource::setHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values) {
+void WebResource::Clear() {
+	Resource::Clear();
+	r.Clear();
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	headers.clear();
+	addr.SetEmpty();
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
+}
+
+void WebResource::SetHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values) {
 	r.clear_header_names();
 	r.clear_header_values();
 	assert(names.size() == values.size());
@@ -39,10 +50,18 @@ void WebResource::setHeaderFields(const std::vector<std::string> &names, const s
 	}
 }
 
-vector<string> *WebResource::getHeaderNames() {
+vector<string> *WebResource::GetHeaderNames() {
 	vector<string> *result = new vector<string>();
 	for (int i = 0; i < r.header_names_size(); i++) {
 		result->push_back(r.header_names(i));
+	}
+	return result;
+}
+
+vector<string> *WebResource::GetHeaderValues() {
+	vector<string> *result = new vector<string>();
+	for (int i = 0; i < r.header_values_size(); i++) {
+		result->push_back(r.header_values(i));
 	}
 	return result;
 }
@@ -67,23 +86,23 @@ void WebResource::SaveHeaders() {
 void WebResource::LoadIpAddr() {
 	uint32_t a = r.ip4_addr();
 	if (a != 0) {
-		addr.setIp4Addr(r.ip4_addr());
+		addr.SetIp4Addr(r.ip4_addr());
 	} else {
 		uint64_t a1 = r.ip6_addr_1();
 		uint64_t a2 = r.ip6_addr_2();
 		if (a1 != 0 || a2 != 0) {
-			addr.setIp6Addr(a1, true);
-			addr.setIp6Addr(a2, false);
+			addr.SetIp6Addr(a1, true);
+			addr.SetIp6Addr(a2, false);
 		} else {
-			addr.setEmpty();
+			addr.SetEmpty();
 		}
 	}
 }
 
 void WebResource::SaveIpAddr() {
-	if (addr.isIp4Addr()) {
-		if (!addr.isEmpty()) {
-			r.set_ip4_addr(addr.getIp4Addr());
+	if (addr.IsIp4Addr()) {
+		if (!addr.IsEmpty()) {
+			r.set_ip4_addr(addr.GetIp4Addr());
 		} else {
 			r.clear_ip4_addr();
 		}
@@ -91,9 +110,9 @@ void WebResource::SaveIpAddr() {
 		r.clear_ip6_addr_2();
 	
 	} else {
-		if (!addr.isEmpty()) {
-			r.set_ip6_addr_1(addr.getIp6Addr(true));
-			r.set_ip6_addr_2(addr.getIp6Addr(false));
+		if (!addr.IsEmpty()) {
+			r.set_ip6_addr_1(addr.GetIp6Addr(true));
+			r.set_ip6_addr_2(addr.GetIp6Addr(false));
 		} else {
 			r.clear_ip6_addr_1();
 			r.clear_ip6_addr_2();
@@ -163,14 +182,14 @@ void WebResource::SaveParsedUrl() {
 	parsed_url_dirty = 0;
 }
 
-void WebResource::setHeaderValue(const std::string &name, const std::string &value) {
+void WebResource::SetHeaderValue(const std::string &name, const std::string &value) {
 	if (!header_map_ready)
 		LoadHeaders();
 	headers[name] = value;
 	header_map_dirty = 1;
 }
 
-const std::string &WebResource::getHeaderValue(const std::string &name) {
+const std::string WebResource::GetHeaderValue(const std::string &name) {
 	if (!header_map_ready)
 		LoadHeaders();
 	tr1::unordered_map<string, string>::iterator iter = headers.find(name);
@@ -179,21 +198,21 @@ const std::string &WebResource::getHeaderValue(const std::string &name) {
 	return iter->second;
 }
 
-int WebResource::getHeaderCount() {
+int WebResource::GetHeaderCount() {
 	if (header_map_ready)
 		return headers.size();
 	else
 		return r.header_names_size();
 }
 
-void WebResource::clearHeaderField(const std::string &name) {
+void WebResource::ClearHeaderField(const std::string &name) {
 	if (!header_map_ready)
 		LoadHeaders();
 	headers.erase(name);
 	header_map_dirty = 1;
 }
 
-void WebResource::clearHeaderFields() {
+void WebResource::ClearHeader() {
 	r.clear_header_names();
 	r.clear_header_values();
 	headers.clear();
@@ -201,33 +220,33 @@ void WebResource::clearHeaderFields() {
 	header_map_dirty = 1;
 }
 
-string WebResource::toString(Object::LogLevel logLevel) {
+string WebResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[WR %d %d] url: %s", this->getId(), this->getStatus(), this->getUrl().c_str());
+	snprintf(buf, sizeof(buf), "[WR %d %d] url: %s", this->GetId(), this->GetStatus(), this->GetUrl().c_str());
 	s = buf;
-	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->getUrlScheme()).c_str());
+	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->GetUrlScheme()).c_str());
 	s += buf;
-	if (this->getUrlUsername().length() > 0) {
-		snprintf(buf, sizeof(buf), " %s:%s", this->getUrlUsername().c_str(), this->getUrlPassword().c_str());
+	if (this->GetUrlUsername().length() > 0) {
+		snprintf(buf, sizeof(buf), " %s:%s", this->GetUrlUsername().c_str(), this->GetUrlPassword().c_str());
 		s += buf;
 	}
-	snprintf(buf, sizeof(buf), " %s:%d %s)", this->getUrlHost().c_str(), this->getUrlPort(), this->getUrlPath().c_str());
+	snprintf(buf, sizeof(buf), " %s:%d %s)", this->GetUrlHost().c_str(), this->GetUrlPort(), this->GetUrlPath().c_str());
 	s += buf;
-	snprintf(buf, sizeof(buf), ", size: %d", (int)this->getContent().length());
+	snprintf(buf, sizeof(buf), ", size: %d", (int)this->GetContent().length());
 	s += buf;
 	s += ", ip: ";
-	s += addr.toString();
-	snprintf(buf, sizeof(buf), ", scheduled: %ld", this->getScheduled());
+	s += addr.ToString();
+	snprintf(buf, sizeof(buf), ", scheduled: %ld", this->GetScheduled());
 	s += buf;
 	if (header_map_dirty)
 		SaveHeaders();
-	vector<string> *v = this->getHeaderNames();
+	vector<string> *v = this->GetHeaderNames();
 	if (v->size() > 0) {
 		s += "\nheaders: ";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			const std::string &value = this->getHeaderValue(iter->c_str());
+			const std::string &value = this->GetHeaderValue(iter->c_str());
 			if (first)
 				first = false;
 			else
@@ -238,87 +257,72 @@ string WebResource::toString(Object::LogLevel logLevel) {
 		}
 	}
 	delete v;
-	if (this->getContent().length() > 0) {
+	if (this->GetContent().length() > 0) {
 		s += "\ncontent:\n";
-		s += this->getContent();
+		s += this->GetContent();
 	}
 	return s;
 }
 
-template<class T>
-ResourceFieldInfoT<T>::ResourceFieldInfoT(const std::string &name) {
-	if (name == "id") {
-		type = INT;
-		get_u.i = &WebResource::getId;
-		set_u.i = &WebResource::setId;
-		clear_all = NULL;
-	} else if (name == "status") {
-		type = INT;
-		get_u.i = &WebResource::getStatus;
-		set_u.i = &WebResource::setStatus;
-		clear_all = NULL;
-	} else if (name == "url") {
-		type = STRING;
-		get_u.s = &WebResource::getUrl;
-		set_u.s = &WebResource::setUrl;
-		clear_all = &WebResource::clearUrl;
-	} else if (name == "ipAddr") {
-		type = IP;
-		get_u.ip = &WebResource::getIpAddr;
-		set_u.ip = &WebResource::setIpAddr;
-		clear_all = &WebResource::clearIpAddr;
-	} else if (name == "header") {
-		type = HASH_STRING;
-		get_u.hs = &WebResource::getHeaderValue;
-		set_u.hs = &WebResource::setHeaderValue;
-		count = &WebResource::getHeaderCount;
-		get_all_keys = &WebResource::getHeaderNames;
-		delete_hash_item = &WebResource::clearHeaderField;
-		clear_all = &WebResource::clearHeaderFields;
-	} else if (name == "redirectCount") {
-		type = INT;
-		get_u.i = &WebResource::getRedirectCount;
-		set_u.i = &WebResource::setRedirectCount;
-		clear_all = &WebResource::clearRedirectCount;
-	} else if (name == "content") {
-		type = STRING;
-		get_u.s = &WebResource::getContent;
-		set_u.s = &WebResource::setContent;
-		clear_all = &WebResource::clearContent;
-	} else if (name == "scheduled") {
-		type = LONG;
-		get_u.l = &WebResource::getScheduled;
-		set_u.l = &WebResource::setScheduled;
-		clear_all = &WebResource::clearScheduled;
-	} else if (name == "urlScheme") {
-		type = INT;
-		get_u.i = &WebResource::getUrlScheme;
-		set_u.i = &WebResource::setUrlScheme;
-		clear_all = &WebResource::clearUrlScheme;
-	} else if (name == "urlUsername") {
-		type = STRING;
-		get_u.s = &WebResource::getUrlUsername;
-		set_u.s = &WebResource::setUrlUsername;
-		clear_all = &WebResource::clearUrlUsername;
-	} else if (name == "urlPassword") {
-		type = STRING;
-		get_u.s = &WebResource::getUrlPassword;
-		set_u.s = &WebResource::setUrlPassword;
-		clear_all = &WebResource::clearUrlPassword;
-	} else if (name == "urlHost") {
-		type = STRING;
-		get_u.s = &WebResource::getUrlHost;
-		set_u.s = &WebResource::setUrlHost;
-		clear_all = &WebResource::clearUrlHost;
-	} else if (name == "urlPort") {
-		type = INT;
-		get_u.i = &WebResource::getUrlPort;
-		set_u.i = &WebResource::setUrlPort;
-		clear_all = &WebResource::clearUrlPort;
-	} else if (name == "urlPath") {
-		type = STRING;
-		get_u.s = &WebResource::getUrlPath;
-		set_u.s = &WebResource::setUrlPath;
-		clear_all = &WebResource::clearUrlPath;
-	}
+vector<ResourceAttrInfo*> *WebResource::GetAttrInfoList() {
+	vector<ResourceAttrInfo*> *result = new vector<ResourceAttrInfo*>();
+	ResourceAttrInfoT<WebResource> *ai;
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitInt("id", &WebResource::GetId, &WebResource::SetId);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitInt("status", &WebResource::GetStatus, &WebResource::SetStatus);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("url", &WebResource::GetUrl, &WebResource::SetUrl);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitIpAddr("ipAddr", &WebResource::GetIpAddr, &WebResource::SetIpAddr);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitHashString("header", &WebResource::GetHeaderValue, &WebResource::SetHeaderValue, &WebResource::ClearHeader, &WebResource::ClearHeaderField, &WebResource::GetHeaderCount, &WebResource::GetHeaderNames, &WebResource::GetHeaderValues);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitInt("redirectCount", &WebResource::GetRedirectCount, &WebResource::SetRedirectCount);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("content", &WebResource::GetContent, &WebResource::SetContent);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitLong("scheduled", &WebResource::GetScheduled, &WebResource::SetScheduled);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitInt("urlScheme", &WebResource::GetUrlScheme, &WebResource::SetUrlScheme);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("urlUsername", &WebResource::GetUrlUsername, &WebResource::SetUrlUsername);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("urlPassword", &WebResource::GetUrlPassword, &WebResource::SetUrlPassword);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("urlHost", &WebResource::GetUrlHost, &WebResource::SetUrlHost);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitInt("urlPort", &WebResource::GetUrlPort, &WebResource::SetUrlPort);
+	result->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(typeId);
+	ai->InitString("urlPath", &WebResource::GetUrlPath, &WebResource::SetUrlPath);
+	result->push_back(ai);
+
+	return result;
 }

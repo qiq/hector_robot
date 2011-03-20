@@ -16,11 +16,11 @@ Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module
 	ruleList = NULL;
 
 	values = new ObjectValues<Filter>(this);
-	values->addGetter("items", &Filter::getItems);
-	values->addGetter("ruleList", &Filter::getRuleList);
-	values->addSetter("ruleList", &Filter::setRuleList, true);
-	values->addGetter("ruleFile", &Filter::getRuleFile);
-	values->addSetter("ruleFile", &Filter::setRuleFile, true);
+	values->addGetter("items", &Filter::GetItems);
+	values->addGetter("ruleList", &Filter::GetRuleList);
+	values->addSetter("ruleList", &Filter::SetRuleList, true);
+	values->addGetter("ruleFile", &Filter::GetRuleFile);
+	values->addSetter("ruleFile", &Filter::SetRuleFile, true);
 }
 
 Filter::~Filter() {
@@ -36,24 +36,24 @@ Filter::~Filter() {
 	}
 }
 
-char *Filter::getItems(const char *name) {
+char *Filter::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *Filter::getRuleList(const char *name) {
+char *Filter::GetRuleList(const char *name) {
 	return ruleList ? strdup(ruleList) : NULL;
 }
 
-void Filter::setRuleList(const char *name, const char *value) {
+void Filter::SetRuleList(const char *name, const char *value) {
 	free(ruleList);
 	ruleList = strdup(value);
 }
 
-char *Filter::getRuleFile(const char *name) {
+char *Filter::GetRuleFile(const char *name) {
 	return ruleFile ? strdup(ruleFile) : NULL;
 }
 
-void Filter::setRuleFile(const char *name, const char *value) {
+void Filter::SetRuleFile(const char *name, const char *value) {
 	free(ruleFile);
 	ruleFile = strdup(value);
 }
@@ -140,19 +140,19 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 	ObjectLockWrite();
 	items++;
 	ObjectUnlock();
-	std::tr1::unordered_map<int, vector<Filter::Rule*>*>::iterator iter = rules.find(resource->getTypeId());
+	std::tr1::unordered_map<int, vector<Filter::Rule*>*>::iterator iter = rules.find(resource->GetTypeId());
 	vector<Filter::Rule*> *rs;
 	if (iter != rules.end()) {
 		rs = iter->second;
 	} else {
 		rs = InitResource(resource);
-		rules[resource->getTypeId()] = rs;
+		rules[resource->GetTypeId()] = rs;
 		if (!rs)
-			LOG_ERROR(this, "Cannot initialize Resource filter: " << resource->getTypeStr());
-		iter = rules.find(resource->getTypeId());
+			LOG_ERROR(this, "Cannot initialize Resource filter: " << resource->GetTypeStr());
+		iter = rules.find(resource->GetTypeId());
 	}
 	if (!rs) {
-		LOG_ERROR(this, "Cannot process Resource: " << resource->getId());
+		LOG_ERROR(this, "Cannot process Resource: " << resource->GetId());
 		return resource;
 	}
 	
@@ -161,10 +161,10 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 	for (vector<Rule*>::iterator iter = rs->begin(); iter != rs->end(); ++iter) {
 		switch ((*iter)->Apply(resource)) {
 		case Filter::Action::ACCEPT:
-			LOG_DEBUG(this, "[" << resource->getId() << "]: ACCEPT #" << i);
+			LOG_DEBUG(this, "[" << resource->GetId() << "]: ACCEPT #" << i);
 			return resource;
 		case Filter::Action::DROP:
-			LOG_DEBUG(this, "[" << resource->getId() << "]: DROP #" << i);
+			LOG_DEBUG(this, "[" << resource->GetId() << "]: DROP #" << i);
 				// FIXME
 				engine->DeleteResource(resource);
 				return NULL;
@@ -212,8 +212,8 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 
 	bool ParseArray(yyscan_t *scanner, scanner_state *state, Operand *o, const char *name) {
 		// a[]
-		o->info = resource->getFieldInfo(name);
-		int type = o->info->getType();
+		o->info = resource->GetFieldInfo(name);
+		int type = o->info->GetType();
 		if (type == ResourceFieldInfo::UNKNOWN) {
 			LOG4CXX_ERROR(logger, "Invalid array name: " << text << " (line " << state->line << ")");
 			return false;
@@ -284,8 +284,8 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 			}
 			switch (scanner_scan(&text, scanner)) {
 			case TOK_LABEL:
-				o->info = Resource::getFieldInfo(text);
-				int type = o->info->getType();
+				o->info = Resource::GetFieldInfo(text);
+				int type = o->info->GetType();
 				if (type != ResourceFieldInfo::ARRAY_) {
 				}
 				break;
@@ -297,8 +297,8 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 		case TOK_FUNCTION_DELETE:
 			switch (scanner_scan(&text, scanner)) {
 			case TOK_ARRAY:
-				o->info = Resource::getFieldInfo(text);
-				int type = o->info->getType();
+				o->info = Resource::GetFieldInfo(text);
+				int type = o->info->GetType();
 				if (type != ResourceFieldInfo::ARRAY_) {
 				}
 				break;
@@ -321,8 +321,8 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				// length(var)
 				o->op = SCALAR:
 				o->opType = STRING;
-				o->info = resource->getFieldInfo(text);
-				if (o->info->getType() != ResourceFieldInfo::STRING) {
+				o->info = resource->GetFieldInfo(text);
+				if (o->info->GetType() != ResourceFieldInfo::STRING) {
 					LOG4CXX_ERROR(logger, "Invalid length() variable: " << text << " (line " << state->line << ")");
 					return false;
 				}
@@ -356,8 +356,8 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 		case TOK_LABEL:
 			// var
 			o->op = SCALAR:
-			o->info = resource->getFieldInfo(text);
-			op->opType = FieldInfoToOpType(o->info->getType());
+			o->info = resource->GetFieldInfo(text);
+			op->opType = FieldInfoToOpType(o->info->GetType());
 			if (op->opType == UNKNOWN)
 				return false;
 			break;
@@ -495,12 +495,12 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 			LOG4CXX_ERROR(logger, "No label: " << data);
 			return false;
 		}
-		info = resource->getFieldInfo(label.c_str());
-		if (info->getType() == ResourceFieldInfo::UNKNOWN) {
+		info = resource->GetFieldInfo(label.c_str());
+		if (info->GetType() == ResourceFieldInfo::UNKNOWN) {
 			LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 			return false;
 		}
-		if (info->getType() == ResourceFieldInfo::STRING2) {
+		if (info->GetType() == ResourceFieldInfo::STRING2) {
 			// header: consume [, label2, ]
 			if (data->length() == 0 || data->at(0) != '[') {
 				LOG4CXX_ERROR(logger, "Invalid format: [ expected" << *data << " (line " << lineNo << ")");
@@ -535,7 +535,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 
 		bool error = false;
 		if (op == "==") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_EQ;
 				break;
@@ -549,7 +549,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == "!=" || op == "<>") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_NE;
 				break;
@@ -563,7 +563,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == "<") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_LT;
 				break;
@@ -577,7 +577,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == ">") {
-			switch(info->getType()) {
+			switch(info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_GT;
 				break;
@@ -591,7 +591,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == "<=") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::INT:
 				this->op = INT_LE;
 				break;
@@ -602,7 +602,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == ">=") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::INT:
 				this->op = INT_GE;
 				break;
@@ -613,7 +613,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == "=~") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_REGEX;
 				break;
@@ -627,7 +627,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				error = true;
 			}
 		} else if (op == "!~") {
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
 				this->op = STRING_NREGEX;
 				break;
@@ -759,26 +759,26 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 		int iValue;
 		ip4_addr_t a4Value;
 		ip6_addr_t a6Value;
-		switch (info->getType()) {
+		switch (info->GetType()) {
 		case ResourceFieldInfo::STRING:
-			sValue = info->getString(resource);
+			sValue = info->GetString(resource);
 			if (!sValue)
 				return false;
 			break;
 		case ResourceFieldInfo::INT:
-			iValue = info->getInt(resource);
+			iValue = info->GetInt(resource);
 			break;
 		case ResourceFieldInfo::LONG:
-			lValue = info->getLong(resource);
+			lValue = info->GetLong(resource);
 			break;
 		case ResourceFieldInfo::IP4:
-			a4Value = info->getIp4Addr(resource);
+			a4Value = info->GetIp4Addr(resource);
 			if (prefix)
 				a4Value.addr &= ((uint32_t)0xffffffff) << (32-prefix);
 			break;
 		case ResourceFieldInfo::IP6:
 			{
-				a6Value = info->getIp6Addr(resource);
+				a6Value = info->GetIp6Addr(resource);
 				if (!prefix)
 					prefix = 128;
 				int a = prefix / 8;
@@ -790,7 +790,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 			}
 			break;
 		case ResourceFieldInfo::STRING2:
-			sValue = info->getString2(resource, name.c_str());
+			sValue = info->GetString2(resource, name.c_str());
 			if (!sValue)
 				return false;
 		}
@@ -831,10 +831,10 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 					result = this->regex->GlobalReplace(replacement, &s);
 				else
 					result = this->regex->Replace(replacement, &s);
-				if (info->getType() == ResourceFieldInfo::STRING)
-					info->setString(resource, s.c_str());
-				else if (info->getType() == ResourceFieldInfo::STRING2)
-					info->setString2(resource, name.c_str(), s.c_str());
+				if (info->GetType() == ResourceFieldInfo::STRING)
+					info->SetString(resource, s.c_str());
+				else if (info->GetType() == ResourceFieldInfo::STRING2)
+					info->SetString2(resource, name.c_str(), s.c_str());
 				return result;
 			}
 		case IP4_EQ:
@@ -884,24 +884,24 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 				LOG4CXX_ERROR(logger, "Invalid label encountered: " << *data << " (line " << lineNo << ")");
 				return false;
 			}
-			info = resource->getFieldInfo(label.c_str());
-			if (info->getType() == ResourceFieldInfo::UNKNOWN) {
+			info = resource->GetFieldInfo(label.c_str());
+			if (info->GetType() == ResourceFieldInfo::UNKNOWN) {
 				LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 				return false;
 			}
 			return true;
 		} else if (label == "STATUS") {
 			this->type = SETVAL;
-			info = resource->getFieldInfo("status");
+			info = resource->GetFieldInfo("status");
 			// to be continued :)
 		} else {
 			this->type = SETVAL;
-			info = resource->getFieldInfo(label.c_str());
-			if (info->getType() == ResourceFieldInfo::UNKNOWN) {
+			info = resource->GetFieldInfo(label.c_str());
+			if (info->GetType() == ResourceFieldInfo::UNKNOWN) {
 				LOG4CXX_ERROR(logger, "Invalid label encountered: " << label << " (line " << lineNo << ")");
 				return false;
 			}
-			if (info->getType() == ResourceFieldInfo::STRING2) {
+			if (info->GetType() == ResourceFieldInfo::STRING2) {
 				// header: consume [, label2, ]
 				if (data->length() == 0 || data->at(0) != '[') {
 					LOG4CXX_ERROR(logger, "Invalid format: [ expected" << *data << " (line " << lineNo << ")");
@@ -929,7 +929,7 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 
 		// third part, value
 		bool error = false;
-		switch (info->getType()) {
+		switch (info->GetType()) {
 		case ResourceFieldInfo::STRING:
 		case ResourceFieldInfo::STRING2:
 			if (!parseString(data, &this->sValue, '"'))
@@ -971,24 +971,24 @@ Resource *Filter::ProcessSimple(Resource *resource) {
 			info->clear(resource);
 			return CLEAR;
 		case SETVAL:
-			switch (info->getType()) {
+			switch (info->GetType()) {
 			case ResourceFieldInfo::STRING:
-				info->setString(resource, sValue.c_str());
+				info->SetString(resource, sValue.c_str());
 				break;
 			case ResourceFieldInfo::INT:
-				info->setInt(resource, iValue);
+				info->SetInt(resource, iValue);
 				break;
 			case ResourceFieldInfo::LONG:
-				info->setLong(resource, lValue);
+				info->SetLong(resource, lValue);
 				break;
 			case ResourceFieldInfo::IP4:
-				info->setIp4Addr(resource, a4Value);
+				info->SetIp4Addr(resource, a4Value);
 				break;
 			case ResourceFieldInfo::IP6:
-				info->setIp6Addr(resource, a6Value);
+				info->SetIp6Addr(resource, a6Value);
 				break;
 			case ResourceFieldInfo::STRING2:
-				info->setString2(resource, name.c_str(), sValue.c_str());
+				info->SetString2(resource, name.c_str(), sValue.c_str());
 				break;
 			default:
 				LOG4CXX_ERROR(logger, "No value setter to use");

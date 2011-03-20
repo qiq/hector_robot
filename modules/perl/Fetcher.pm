@@ -41,18 +41,18 @@ sub new {
 sub DESTROY {
 }
 
-sub createUrlList {
-	my ($self, $s) = @_;
-	return [] if (not defined $s);
-	my @a;
-	foreach my $url (split(/[\n\r]+/, $s)) {
-		$url =~ s/^\s+//;
-		$url =~ s/\s+$//;
-		next if ($url eq '');
-		push(@a, $url);
-	}
-	return \@a;
-}
+#sub CreateUrlList {
+#	my ($self, $s) = @_;
+#	return [] if (not defined $s);
+#	my @a;
+#	foreach my $url (split(/[\n\r]+/, $s)) {
+#		$url =~ s/^\s+//;
+#		$url =~ s/\s+$//;
+#		next if ($url eq '');
+#		push(@a, $url);
+#	}
+#	return \@a;
+#}
 
 sub Init {
 	my ($self, $params) = @_;
@@ -74,12 +74,12 @@ sub Init {
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -89,7 +89,7 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -100,7 +100,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -118,9 +118,9 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	my $url = $resource->getUrl();
+	my $url = $resource->GetUrl();
 	if (not defined $url) {
-		$self->{'_object'}->log_error($resource->toStringShort()." No URL found");
+		$self->{'_object'}->log_error($resource->ToStringShort()." No URL found");
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
@@ -129,17 +129,33 @@ sub ProcessSimple() {
 	foreach my $name (@names) {
 		push(@values, "".$response->header($name));	# N.B.: force conversion to string
 	}
-	$resource->setHeaderFields(\@names, \@values);
-	$resource->setHeaderValue("X-Status", $response->status_line);
+	$resource->SetHeaderFields(\@names, \@values);
+	$resource->SetHeaderValue("X-Status", $response->status_line);
 	if ($response->is_success) {
-		$resource->setContent($response->decoded_content);
-		$resource->setStatus(0);
+		$resource->SetContent($response->decoded_content);
+		$resource->SetStatus(0);
 	} else {
-		$resource->setContent('');
-		$resource->setStatus(1);
+		$resource->SetContent('');
+		$resource->SetStatus(1);
 	}
 	$self->{'items'}++;
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

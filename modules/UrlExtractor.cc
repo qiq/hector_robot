@@ -18,15 +18,17 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	allowedSchemesSet.insert("http");
 
 	values = new ObjectValues<UrlExtractor>(this);
-	values->AddGetter("items", &UrlExtractor::getItems);
-	values->AddGetter("newUrlStatus", &UrlExtractor::getNewUrlStatus);
-	values->AddSetter("newUrlStatus", &UrlExtractor::setNewUrlStatus);
-	values->AddGetter("imageLinks", &UrlExtractor::getImageLinks);
-	values->AddSetter("imageLinks", &UrlExtractor::setImageLinks);
-	values->AddGetter("allowedSchemes", &UrlExtractor::getAllowedSchemes);
-	values->AddSetter("allowedSchemes", &UrlExtractor::setAllowedSchemes);
+	values->AddGetter("items", &UrlExtractor::GetItems);
+	values->AddGetter("newUrlStatus", &UrlExtractor::GetNewUrlStatus);
+	values->AddSetter("newUrlStatus", &UrlExtractor::SetNewUrlStatus);
+	values->AddGetter("imageLinks", &UrlExtractor::GetImageLinks);
+	values->AddSetter("imageLinks", &UrlExtractor::SetImageLinks);
+	values->AddGetter("allowedSchemes", &UrlExtractor::GetAllowedSchemes);
+	values->AddSetter("allowedSchemes", &UrlExtractor::SetAllowedSchemes);
 
 	scanner_create(&state, &scanner);
+
+	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");
 }
 
 UrlExtractor::~UrlExtractor() {
@@ -35,31 +37,31 @@ UrlExtractor::~UrlExtractor() {
 	delete values;
 }
 
-char *UrlExtractor::getItems(const char *name) {
+char *UrlExtractor::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *UrlExtractor::getNewUrlStatus(const char *name) {
+char *UrlExtractor::GetNewUrlStatus(const char *name) {
 	return int2str(newUrlStatus);
 }
 
-void UrlExtractor::setNewUrlStatus(const char *name, const char *value) {
+void UrlExtractor::SetNewUrlStatus(const char *name, const char *value) {
 	newUrlStatus = str2int(value);
 }
 
-char *UrlExtractor::getImageLinks(const char *name) {
+char *UrlExtractor::GetImageLinks(const char *name) {
 	return bool2str(imageLinks);
 }
 
-void UrlExtractor::setImageLinks(const char *name, const char *value) {
+void UrlExtractor::SetImageLinks(const char *name, const char *value) {
 	imageLinks = str2bool(value);
 }
 
-char *UrlExtractor::getAllowedSchemes(const char *name) {
+char *UrlExtractor::GetAllowedSchemes(const char *name) {
 	return strdup(allowedSchemes.c_str());
 }
 
-void UrlExtractor::setAllowedSchemes(const char *name, const char *value) {
+void UrlExtractor::SetAllowedSchemes(const char *name, const char *value) {
 	allowedSchemes = value;
 	allowedSchemesSet.clear();
         char *s = strdup(value);
@@ -98,13 +100,13 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 
 int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	while (inputResources->size() > 0) {
-		if (inputResources->front()->getTypeId() != WebResource::typeId) {
+		if (!WebResource::IsInstance(inputResources->front())) {
 			outputResources->push(inputResources->front());
 		} else {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
 			outputResources->push(wr);
-			GURL *base = new GURL(wr->getUrl());
-			string *content = wr->getContentMutable();
+			GURL *base = new GURL(wr->GetUrl());
+			string *content = wr->GetContentMutable();
 			scanner_set_buffer(content->data(), content->size(), &state, scanner);
 			char *text;
 			token_type tok;
@@ -150,9 +152,9 @@ int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 	}
 
 	for (tr1::unordered_set<string>::iterator iter = urls.begin(); iter != urls.end(); ++iter) {
-		WebResource *tmp = new WebResource();
-		tmp->setUrl(*iter);
-		tmp->setStatus(newUrlStatus);
+		WebResource *tmp = static_cast<WebResource*>(Resource::GetRegistry()->AcquireResource(webResourceTypeId));
+		tmp->SetUrl(*iter);
+		tmp->SetStatus(newUrlStatus);
 		outputResources->push(tmp);
 	}
 	urls.clear();

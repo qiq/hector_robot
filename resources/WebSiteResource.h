@@ -30,7 +30,7 @@
 #include "common.h"
 #include "MemoryPool.h"
 #include "ProtobufResource.h"
-#include "ResourceFieldInfo.h"
+#include "ResourceAttrInfoT.h"
 #include "RWLock.h"
 #include "WebSiteResource.pb.h"
 #include "WebSitePath.h"
@@ -48,6 +48,7 @@ public:
 	~WebSiteResource();
 	// create copy of a resource
 	Resource *Clone();
+	void Clear();
 	// save and restore resource
 	std::string *Serialize();
 	int GetSerializedSize();
@@ -55,37 +56,36 @@ public:
 	bool Deserialize(const char *data, int size);
 	bool Deserialize(google::protobuf::io::CodedInputStream *input);
 	// get info about a resource field
-	ResourceFieldInfo *getFieldInfo(const char *name);
-	// type id of a resource (to be used by Resources::CreateResource(typeid))
-	int getTypeId();
+	std::vector<ResourceAttrInfo*> *GetAttrInfoList();
+	// type id of a resource (to be used by ResourceRegistry::CreateResource(typeid))
+	int GetTypeId();
 	// type string of a resource
-	const char *getTypeStr();
-	const char *getTypeStrShort();
-	// module prefix (e.g. Hector for Hector::TestResource)
-	const char *getModuleStr();
+	const char *GetTypeString(bool terse = false);
+	// object name (for construction of an object or a reference)
+	const char *GetObjectName();
 	// id should be unique across all in-memory resources
-	int getId();
-	void setId(int id);
+	int GetId();
+	void SetId(int id);
 	// status may be tested in Processor to select target queue
-	int getStatus();
-	void setStatus(int status);
+	int GetStatus();
+	void SetStatus(int status);
 	// resource may contain link to other resource, it is only kept only in the memory
-	Resource *getAttachedResource();
-	void setAttachedResource(Resource *attachedResource);
-	void clearAttachedResource();
+	Resource *GetAttachedResource();
+	void SetAttachedResource(Resource *attachedResource);
+	void ClearAttachedResource();
 	// used by queues in case there is limit on queue size
-	int getSize();
+	int GetSize();
 	// return string representation of the resource (e.g. for debugging purposes)
-	std::string toString(Object::LogLevel = Object::INFO);
+	std::string ToString(Object::LogLevel = Object::INFO);
 
 	// WebSiteResource-specific
 	// preferred way: locks WSR and sets everything at once
-	void setUrl(int urlScheme, const std::string &urlHost, int urlPort);
-	void getUrl(int &urlScheme, std::string &urlHost, int &urlPort);
-	void setIpAddrExpire(IpAddr &addr, long time);
-	void getIpAddrExpire(IpAddr &addr, long &time);
-	void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
-	void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
+	void SetUrl(int urlScheme, const std::string &urlHost, int urlPort);
+	void GetUrl(int &urlScheme, std::string &urlHost, int &urlPort);
+	void SetIpAddrExpire(IpAddr &addr, long time);
+	void GetIpAddrExpire(IpAddr &addr, long &time);
+	void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
+	void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
 	int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
 	bool PathNewLinkReady(const char *path, long currentTime);
 	bool PathUpdateError(const char *path, long currentTime, int maxCount);
@@ -94,46 +94,48 @@ public:
 	long PathNextRefresh(const char *path);
 
 	// change on-item methods
-	void setUrlScheme(int urlScheme);
-	int getUrlScheme();
-	void clearUrlScheme();
-	void setUrlHost(const std::string &urlHost);
-	const std::string &getUrlHost();
-	void clearUrlHost();
-	void setUrlPort(int urlPort);
-	int getUrlPort();
-	void clearUrlPort();
-	void setIpAddr(IpAddr &addr);
-	IpAddr &getIpAddr();
-	void clearIpAddr();
-	void setIpAddrExpire(long time);
-	long getIpAddrExpire();
-	void clearIpAddrExpire();
-	void setAllowUrls(const std::vector<std::string> &allow_urls);
-	void setAllowUrl(int index, const std::string &url);
-	std::vector<std::string> *getAllowUrls();
-	const std::string &getAllowUrl(int index);
-	int countAllowUrls();
-	void clearAllowUrls();
-	void setDisallowUrls(const std::vector<std::string> &disallow_urls);
-	void setDisallowUrl(int index, const std::string &url);
-	std::vector<std::string> *getDisallowUrls();
-	const std::string &getDisallowUrl(int index);
-	int countDisallowUrls();
-	void clearDisallowUrls();
-	void setRobotsExpire(long time);
-	long getRobotsExpire();
-	void clearRobotsExpire();
-	void setRobotsRedirectCount(int redirects);
-	int getRobotsRedirectCount();
-	void clearRobotsRedirectCount();
+	void SetUrlScheme(int urlScheme);
+	int GetUrlScheme();
+	void ClearUrlScheme();
+	void SetUrlHost(const std::string &urlHost);
+	const std::string GetUrlHost();
+	void ClearUrlHost();
+	void SetUrlPort(int urlPort);
+	int GetUrlPort();
+	void ClearUrlPort();
+	void SetIpAddr(IpAddr &addr);
+	IpAddr GetIpAddr();
+	void ClearIpAddr();
+	void SetIpAddrExpire(long time);
+	long GetIpAddrExpire();
+	void ClearIpAddrExpire();
+	void SetAllowUrls(const std::vector<std::string> &allow_urls);
+	void SetAllowUrl(int index, const std::string &url);
+	std::vector<std::string> *GetAllowUrls();
+	const std::string GetAllowUrl(int index);
+	int CountAllowUrls();
+	void ClearAllowUrls();
+	void SetDisallowUrls(const std::vector<std::string> &disallow_urls);
+	void SetDisallowUrl(int index, const std::string &url);
+	std::vector<std::string> *GetDisallowUrls();
+	const std::string GetDisallowUrl(int index);
+	int CountDisallowUrls();
+	void ClearDisallowUrls();
+	void SetRobotsExpire(long time);
+	long GetRobotsExpire();
+	void ClearRobotsExpire();
+	void SetRobotsRedirectCount(int redirects);
+	int GetRobotsRedirectCount();
+	void ClearRobotsRedirectCount();
 
 	// helper methods
 	void ClearPathsRefreshing();
 
-	static const int typeId = 11;
+	static bool IsInstance(Resource *resource);
 
 protected:
+	static const int typeId = 11;
+
 	// this is a shared resource: all methods need to take the lock
 	RWLock lock;
 	// saved properties
@@ -153,8 +155,8 @@ protected:
 	void JarrayToProtobuf();
 
 	// path info get/set
-	WebSitePath *getPathInfo(const char *path, bool create);
-	std::vector<std::string> *getPathList();
+	WebSitePath *GetPathInfo(const char *path, bool create);
+	std::vector<std::string> *GetPathList();
 
 	static log4cxx::LoggerPtr logger;
 };
@@ -162,80 +164,72 @@ protected:
 struct WebSiteResource_hash: public std::unary_function<WebSiteResource*, size_t> {
         /** hash function for the WebSiteResource& type */
         size_t operator() (WebSiteResource *wsr) const {
-                return std::tr1::hash<std::string>()(wsr->getUrlHost())+13*wsr->getUrlPort()+373*wsr->getUrlScheme();
+                return std::tr1::hash<std::string>()(wsr->GetUrlHost())+13*wsr->GetUrlPort()+373*wsr->GetUrlScheme();
         }
 };
 
 struct WebSiteResource_equal {
 	bool operator()(WebSiteResource* wsr1, WebSiteResource* wsr2) const {
-		return (wsr1->getUrlHost() == wsr2->getUrlHost() && wsr1->getUrlPort() == wsr2->getUrlPort() && wsr1->getUrlScheme() == wsr2->getUrlScheme());
+		return (wsr1->GetUrlHost() == wsr2->GetUrlHost() && wsr1->GetUrlPort() == wsr2->GetUrlPort() && wsr1->GetUrlScheme() == wsr2->GetUrlScheme());
 	}
 };
 
-inline ResourceFieldInfo *WebSiteResource::getFieldInfo(const char *name) {
-	return new ResourceFieldInfoT<WebSiteResource>(name);
-}
-
-inline int WebSiteResource::getTypeId() {
+inline int WebSiteResource::GetTypeId() {
 	return typeId;
 }
 
-inline const char *WebSiteResource::getTypeStr() {
+inline const char *WebSiteResource::GetTypeString(bool terse) {
+	return terse ? "WSR" : "WebSiteResource";
+}
+
+inline const char *WebSiteResource::GetObjectName() {
 	return "WebSiteResource";
 }
 
-inline const char *WebSiteResource::getTypeStrShort() {
-	return "WSR";
-}
-
-inline const char *WebSiteResource::getModuleStr() {
-	return "HectorRobot";
-}
-
-inline int WebSiteResource::getSize() {
+inline int WebSiteResource::GetSize() {
 	return 1; //FIXME
 }
 
-inline int WebSiteResource::getId() {
+inline int WebSiteResource::GetId() {
 	lock.LockRead();
 	int result = id;
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::setId(int id) {
+inline void WebSiteResource::SetId(int id) {
 	lock.LockWrite();
 	r.set_id(id);
 	lock.Unlock();
 }
 
-inline int WebSiteResource::getStatus() {
+inline int WebSiteResource::GetStatus() {
 	lock.LockRead();
 	int result = status;
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::setStatus(int status) {
+inline void WebSiteResource::SetStatus(int status) {
 	lock.LockWrite();
 	this->status = status;
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setAttachedResource(Resource *attachedResource) {
+inline void WebSiteResource::SetAttachedResource(Resource *attachedResource) {
 	lock.LockWrite();
         this->attachedResource = attachedResource;
 	lock.Unlock();
 }
 
-inline Resource *WebSiteResource::getAttachedResource() {
+inline Resource *WebSiteResource::GetAttachedResource() {
 	lock.LockRead();
         Resource *result = attachedResource;
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::clearAttachedResource() {
+inline void WebSiteResource::ClearAttachedResource() {
 	lock.LockWrite();
         attachedResource = NULL;
 	lock.Unlock();
@@ -246,8 +240,8 @@ inline std::string *WebSiteResource::Serialize() {
 	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
-	r.set_id(getId());
-	r.set_status(getStatus());
+	r.set_id(GetId());
+	r.set_status(GetStatus());
 
 	std::string *result = new std::string();
 	r.SerializeToString(result);
@@ -262,8 +256,8 @@ inline int WebSiteResource::GetSerializedSize() {
 	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
-	r.set_id(getId());
-	r.set_status(getStatus());
+	r.set_id(GetId());
+	r.set_status(GetStatus());
 
 	int result = r.ByteSize();
 
@@ -286,7 +280,7 @@ inline bool WebSiteResource::Deserialize(const char *data, int size) {
 	bool result = r.ParseFromArray((void*)data, size);
 
 	// we keep id
-	setStatus(r.status());
+	SetStatus(r.status());
 	ProtobufToJarray();
 	r.clear_paths();
 	LoadIpAddr();
@@ -297,14 +291,14 @@ inline bool WebSiteResource::Deserialize(google::protobuf::io::CodedInputStream 
 	bool result = r.ParseFromCodedStream(input);
 
 	// we keep id
-	setStatus(r.status());
+	SetStatus(r.status());
 	ProtobufToJarray();
 	r.clear_paths();
 	LoadIpAddr();
 	return result;
 }
 
-inline void WebSiteResource::setUrl(int urlScheme, const std::string &urlHost, int urlPort) {
+inline void WebSiteResource::SetUrl(int urlScheme, const std::string &urlHost, int urlPort) {
 	lock.LockWrite();
 	r.set_url_scheme((Scheme)urlScheme);
 	r.set_url_host(urlHost);
@@ -312,7 +306,7 @@ inline void WebSiteResource::setUrl(int urlScheme, const std::string &urlHost, i
 	lock.Unlock();
 }
 
-inline void WebSiteResource::getUrl(int &urlScheme, std::string &urlHost, int &urlPort) {
+inline void WebSiteResource::GetUrl(int &urlScheme, std::string &urlHost, int &urlPort) {
 	lock.LockRead();
 	urlScheme = (int)r.url_scheme();
 	urlHost = r.url_host();
@@ -320,21 +314,21 @@ inline void WebSiteResource::getUrl(int &urlScheme, std::string &urlHost, int &u
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setIpAddrExpire(IpAddr &addr, long time) {
+inline void WebSiteResource::SetIpAddrExpire(IpAddr &addr, long time) {
 	lock.LockWrite();
 	this->addr = addr;
 	r.set_ip_addr_expire(time);
 	lock.Unlock();
 }
 
-inline void WebSiteResource::getIpAddrExpire(IpAddr &addr, long &time) {
+inline void WebSiteResource::GetIpAddrExpire(IpAddr &addr, long &time) {
 	lock.LockRead();
 	addr = this->addr;
 	time = (long)r.ip_addr_expire();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time) {
+inline void WebSiteResource::SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time) {
 	lock.LockWrite();
 	r.clear_allow_urls();
 	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
@@ -348,7 +342,7 @@ inline void WebSiteResource::setRobots(const std::vector<std::string> &allow_url
 	lock.Unlock();
 }
 
-inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time) {
+inline void WebSiteResource::GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time) {
 	lock.LockRead();
 	for (int i = 0; i < r.allow_urls_size(); i++) {
 		allow_urls.push_back(r.allow_urls(i));
@@ -364,24 +358,24 @@ inline void WebSiteResource::getRobots(std::vector<std::string> &allow_urls, std
 // return: 0: OK, 1: invalid status, 2: status updated recently, 3: currently refreshing (locked)
 inline int WebSiteResource::PathReadyToFetch(const char *path, long currentTime, long lastScheduled) {
 	lock.LockWrite();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	int result = 1;
 	if (wsp) {
-		WebSitePath::PathStatus status = wsp->getPathStatus();
+		WebSitePath::PathStatus status = wsp->GetPathStatus();
 		if (status != WebSitePath::OK && status != WebSitePath::NEW_LINK && status != WebSitePath::NONE) {
 			result = 1;
 		// NEW_LINK saved, but we want to download WR now anyway
-		} else if (status != WebSitePath::NEW_LINK && wsp->getLastPathStatusUpdate() > (uint32_t)lastScheduled) {
+		} else if (status != WebSitePath::NEW_LINK && wsp->GetLastPathStatusUpdate() > (uint32_t)lastScheduled) {
 			result = 2;
-		} else if  (wsp->getRefreshing()) {
+		} else if  (wsp->GetRefreshing()) {
 			result = 3;
 		} else {
 			// previously we did not want to 
-			if (wsp->getPathStatus() == WebSitePath::NONE) {
-				wsp->setPathStatus(WebSitePath::NEW_LINK);
-				wsp->setLastPathStatusUpdate(currentTime);
+			if (wsp->GetPathStatus() == WebSitePath::NONE) {
+				wsp->SetPathStatus(WebSitePath::NEW_LINK);
+				wsp->SetLastPathStatusUpdate(currentTime);
 			}
-			wsp->setRefreshing(true);
+			wsp->SetRefreshing(true);
 			result = 0;
 		}
 	}
@@ -392,12 +386,12 @@ inline int WebSiteResource::PathReadyToFetch(const char *path, long currentTime,
 // test whether the path is new and ready to be scheduled for a fetch
 inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime) {
 	lock.LockWrite();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		if (wsp->getPathStatus() == WebSitePath::NONE && wsp->getLastPathStatusUpdate() == 0) {
-			wsp->setPathStatus(WebSitePath::NEW_LINK);
-			wsp->setLastPathStatusUpdate(currentTime);
+		if (wsp->GetPathStatus() == WebSitePath::NONE && wsp->GetLastPathStatusUpdate() == 0) {
+			wsp->SetPathStatus(WebSitePath::NEW_LINK);
+			wsp->SetLastPathStatusUpdate(currentTime);
 			result = true;
 		}
 	}
@@ -407,19 +401,19 @@ inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime
 
 inline bool WebSiteResource::PathUpdateError(const char *path, long currentTime, int maxCount) {
 	lock.LockWrite();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		int c = wsp->getErrorCount()+1;
+		int c = wsp->GetErrorCount()+1;
 		if (c < maxCount) {
-			wsp->setPathStatus(WebSitePath::ERROR);
+			wsp->SetPathStatus(WebSitePath::ERROR);
 			result = true;
 		} else {
-			wsp->setPathStatus(WebSitePath::DISABLED);
+			wsp->SetPathStatus(WebSitePath::DISABLED);
 		}
-		wsp->setLastPathStatusUpdate(currentTime);
-		wsp->setErrorCount(c);
-		wsp->setRefreshing(false);
+		wsp->SetLastPathStatusUpdate(currentTime);
+		wsp->SetErrorCount(c);
+		wsp->SetRefreshing(false);
 	}
 	lock.Unlock();
 	return result;
@@ -427,18 +421,18 @@ inline bool WebSiteResource::PathUpdateError(const char *path, long currentTime,
 
 inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent) {
 	lock.LockWrite();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
 		if (!redirectPermanent) {
-			wsp->setPathStatus(WebSitePath::OK);
+			wsp->SetPathStatus(WebSitePath::OK);
 			result = true;
 		} else {
-			wsp->setPathStatus(WebSitePath::REDIRECT);
+			wsp->SetPathStatus(WebSitePath::REDIRECT);
 		}
-		wsp->setErrorCount(0);
-		wsp->setLastPathStatusUpdate(currentTime);
-		wsp->setRefreshing(false);
+		wsp->SetErrorCount(0);
+		wsp->SetLastPathStatusUpdate(currentTime);
+		wsp->SetRefreshing(false);
 		result = true;
 	}
 	lock.Unlock();
@@ -447,15 +441,15 @@ inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTi
 
 inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, long size, long cksum) {
 	lock.LockWrite();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
 	if (wsp) {
-		if (wsp->getSize() != (uint32_t)size || wsp->getCksum() != (uint32_t)cksum) {
-			wsp->setSize(size);
-			wsp->setCksum(cksum);
-			uint32_t lastModified = wsp->getLastModified();
+		if (wsp->GetSize() != (uint32_t)size || wsp->GetCksum() != (uint32_t)cksum) {
+			wsp->SetSize(size);
+			wsp->SetCksum(cksum);
+			uint32_t lastModified = wsp->GetLastModified();
 			if (lastModified != (uint32_t)currentTime) {
-				wsp->setLastModified(currentTime);
+				wsp->SetLastModified(currentTime);
 				int l;
 				if (lastModified > 0) {
 					l = floor(log((double)currentTime-lastModified)/log(1.5));
@@ -466,15 +460,15 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 				} else {
 					l = DEFAULT_MODIFICATION_HISTORY;
 				}
-				uint32_t history = wsp->getModificationHistory();
+				uint32_t history = wsp->GetModificationHistory();
 				history = (history << 8) | (l & 0xFF);
-				wsp->setModificationHistory(history);
+				wsp->SetModificationHistory(history);
 			}
 		}
-		wsp->setPathStatus(WebSitePath::OK);
-		wsp->setErrorCount(0);
-		wsp->setLastPathStatusUpdate(currentTime);
-		wsp->setRefreshing(false);
+		wsp->SetPathStatus(WebSitePath::OK);
+		wsp->SetErrorCount(0);
+		wsp->SetLastPathStatusUpdate(currentTime);
+		wsp->SetRefreshing(false);
 		result = true;
 	}
 	lock.Unlock();
@@ -484,14 +478,14 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 // result < 0: do not schedule
 inline long WebSiteResource::PathNextRefresh(const char *path) {
 	lock.LockRead();
-	WebSitePath *wsp = getPathInfo(path, true);
+	WebSitePath *wsp = GetPathInfo(path, true);
 	long result = -1;
 	if (wsp) {
-		WebSitePath::PathStatus status = wsp->getPathStatus();
+		WebSitePath::PathStatus status = wsp->GetPathStatus();
 		if (status == WebSitePath::OK || status == WebSitePath::ERROR) {
-			int errors = wsp->getErrorCount();
+			int errors = wsp->GetErrorCount();
 			if (!errors) {
-				uint32_t history = wsp->getModificationHistory();
+				uint32_t history = wsp->GetModificationHistory();
 				int a = history >> 24;
 				if (!a)
 					a = DEFAULT_MODIFICATION_HISTORY;
@@ -515,102 +509,102 @@ inline long WebSiteResource::PathNextRefresh(const char *path) {
 	return result;
 }
 
-inline void WebSiteResource::setUrlScheme(int urlScheme) {
+inline void WebSiteResource::SetUrlScheme(int urlScheme) {
 	lock.LockWrite();
 	r.set_url_scheme((Scheme)urlScheme);
 	lock.Unlock();
 }
 
-inline int WebSiteResource::getUrlScheme() {
+inline int WebSiteResource::GetUrlScheme() {
 	lock.LockRead();
 	int result = (int)r.url_scheme();
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::clearUrlScheme() {
+inline void WebSiteResource::ClearUrlScheme() {
 	lock.LockWrite();
 	r.clear_url_scheme();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setUrlHost(const std::string &urlHost) {
+inline void WebSiteResource::SetUrlHost(const std::string &urlHost) {
 	lock.LockWrite();
 	r.set_url_host(urlHost);
 	lock.Unlock();
 }
 
-inline const std::string &WebSiteResource::getUrlHost() {
+inline const std::string WebSiteResource::GetUrlHost() {
 	lock.LockRead();
 	const std::string &urlHost = r.url_host();
 	lock.Unlock();
 	return urlHost;
 }
 
-inline void WebSiteResource::clearUrlHost() {
+inline void WebSiteResource::ClearUrlHost() {
 	lock.LockWrite();
 	r.clear_url_host();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setUrlPort(int urlPort) {
+inline void WebSiteResource::SetUrlPort(int urlPort) {
 	lock.LockWrite();
 	r.set_url_port(urlPort);
 	lock.Unlock();
 }
 
-inline int WebSiteResource::getUrlPort() {
+inline int WebSiteResource::GetUrlPort() {
 	lock.LockRead();
 	int result = r.url_port();
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::clearUrlPort() {
+inline void WebSiteResource::ClearUrlPort() {
 	lock.LockWrite();
 	r.clear_url_port();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setIpAddr(IpAddr &addr) {
+inline void WebSiteResource::SetIpAddr(IpAddr &addr) {
 	lock.LockWrite();
 	this->addr = addr;
 	lock.Unlock();
 }
 
-inline IpAddr &WebSiteResource::getIpAddr() {
+inline IpAddr WebSiteResource::GetIpAddr() {
 	lock.LockRead();
 	IpAddr &a = addr;
 	lock.Unlock();
 	return a;
 }
 
-inline void WebSiteResource::clearIpAddr() {
+inline void WebSiteResource::ClearIpAddr() {
 	lock.LockWrite();
-	addr.setEmpty();
+	addr.SetEmpty();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setIpAddrExpire(long time) {
+inline void WebSiteResource::SetIpAddrExpire(long time) {
 	lock.LockWrite();
 	r.set_ip_addr_expire(time);
 	lock.Unlock();
 }
 
-inline long WebSiteResource::getIpAddrExpire() {
+inline long WebSiteResource::GetIpAddrExpire() {
 	lock.LockRead();
 	long expire = (long)r.ip_addr_expire();
 	lock.Unlock();
 	return expire;
 }
 
-inline void WebSiteResource::clearIpAddrExpire() {
+inline void WebSiteResource::ClearIpAddrExpire() {
 	lock.LockWrite();
 	r.clear_ip_addr_expire();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_urls) {
+inline void WebSiteResource::SetAllowUrls(const std::vector<std::string> &allow_urls) {
 	lock.LockWrite();
 	r.clear_allow_urls();
 	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
@@ -619,13 +613,13 @@ inline void WebSiteResource::setAllowUrls(const std::vector<std::string> &allow_
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setAllowUrl(int index, const std::string &url) {
+inline void WebSiteResource::SetAllowUrl(int index, const std::string &url) {
 	lock.LockWrite();
 	r.set_allow_urls(index, url);
 	lock.Unlock();
 }
 
-inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
+inline std::vector<std::string> *WebSiteResource::GetAllowUrls() {
 	std::vector<std::string> *result = new std::vector<std::string>();
 	lock.LockRead();
 	for (int i = 0; i < r.allow_urls_size(); i++) {
@@ -635,27 +629,27 @@ inline std::vector<std::string> *WebSiteResource::getAllowUrls() {
 	return result;
 }
 
-inline const std::string &WebSiteResource::getAllowUrl(int index) {
+inline const std::string WebSiteResource::GetAllowUrl(int index) {
 	lock.LockRead();
 	std::string &result = *r.mutable_allow_urls(index);
 	lock.Unlock();
 	return result;
 }
 
-inline int WebSiteResource::countAllowUrls() {
+inline int WebSiteResource::CountAllowUrls() {
 	lock.LockRead();
 	int result = r.allow_urls_size();
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::clearAllowUrls() {
+inline void WebSiteResource::ClearAllowUrls() {
 	lock.LockWrite();
 	r.clear_allow_urls();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &disallow_urls) {
+inline void WebSiteResource::SetDisallowUrls(const std::vector<std::string> &disallow_urls) {
 	lock.LockWrite();
 	r.clear_disallow_urls();
 	for (std::vector<std::string>::const_iterator iter = disallow_urls.begin(); iter != disallow_urls.end(); ++iter) {
@@ -664,13 +658,13 @@ inline void WebSiteResource::setDisallowUrls(const std::vector<std::string> &dis
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setDisallowUrl(int index, const std::string &url) {
+inline void WebSiteResource::SetDisallowUrl(int index, const std::string &url) {
 	lock.LockWrite();
 	r.set_disallow_urls(index, url);
 	lock.Unlock();
 }
 
-inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
+inline std::vector<std::string> *WebSiteResource::GetDisallowUrls() {
 	std::vector<std::string> *result = new std::vector<std::string>();
 	lock.LockRead();
 	for (int i = 0; i < r.disallow_urls_size(); i++) {
@@ -680,62 +674,66 @@ inline std::vector<std::string> *WebSiteResource::getDisallowUrls() {
 	return result;
 }
 
-inline const std::string &WebSiteResource::getDisallowUrl(int index) {
+inline const std::string WebSiteResource::GetDisallowUrl(int index) {
 	lock.LockRead();
 	std::string &result = *r.mutable_disallow_urls(index);
 	lock.Unlock();
 	return result;
 }
 
-inline int WebSiteResource::countDisallowUrls() {
+inline int WebSiteResource::CountDisallowUrls() {
 	lock.LockRead();
 	int result = r.disallow_urls_size();
 	lock.Unlock();
 	return result;
 }
 
-inline void WebSiteResource::clearDisallowUrls() {
+inline void WebSiteResource::ClearDisallowUrls() {
 	lock.LockWrite();
 	r.clear_disallow_urls();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setRobotsExpire(long time) {
+inline void WebSiteResource::SetRobotsExpire(long time) {
 	lock.LockWrite();
 	r.set_robots_expire(time);
 	lock.Unlock();
 }
 
-inline long WebSiteResource::getRobotsExpire() {
+inline long WebSiteResource::GetRobotsExpire() {
 	lock.LockRead();
 	long expire = (long)r.robots_expire();
 	lock.Unlock();
 	return expire;
 }
 
-inline void WebSiteResource::clearRobotsExpire() {
+inline void WebSiteResource::ClearRobotsExpire() {
 	lock.LockWrite();
 	r.clear_robots_expire();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::setRobotsRedirectCount(int redirects) {
+inline void WebSiteResource::SetRobotsRedirectCount(int redirects) {
 	lock.LockWrite();
 	r.set_robots_redirect_count(redirects);
 	lock.Unlock();
 }
 
-inline int WebSiteResource::getRobotsRedirectCount() {
+inline int WebSiteResource::GetRobotsRedirectCount() {
 	lock.LockRead();
 	int redirects = r.robots_redirect_count();
 	lock.Unlock();
 	return redirects;
 }
 
-inline void WebSiteResource::clearRobotsRedirectCount() {
+inline void WebSiteResource::ClearRobotsRedirectCount() {
 	lock.LockWrite();
 	r.clear_robots_redirect_count();
 	lock.Unlock();
+}
+
+inline bool WebSiteResource::IsInstance(Resource *resource) {
+	return resource->GetTypeId() == typeId;
 }
 
 #endif

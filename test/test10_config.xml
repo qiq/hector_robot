@@ -11,6 +11,10 @@ Run Scheduler.
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+			<Resource id="R_test2" lib="WebSiteResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_load">
 				<threads>1</threads>

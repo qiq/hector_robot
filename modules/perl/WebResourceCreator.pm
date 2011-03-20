@@ -24,6 +24,7 @@ sub new {
 		'_object' => $object,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
+		'_registry' => undef,
 		'items' => 0,
 		'urlList' => undef,
 		'urlFile' => undef,
@@ -37,7 +38,7 @@ sub new {
 sub DESTROY {
 }
 
-sub createUrlList {
+sub CreateUrlList {
 	my ($self, $s) = @_;
 	return [] if (not defined $s);
 	my @a;
@@ -55,7 +56,7 @@ sub loadFile {
 	if (defined open(my $fh, '<'.$file)) {
 		my @lines = <$fh>;
 		close($fh);
-		push(@{$self->{'_url'}}, @{$self->createUrlList(join("\n", @lines))});
+		push(@{$self->{'_url'}}, @{$self->CreateUrlList(join("\n", @lines))});
 		$self->{'urlFile'} = $file;
 		$self->{'_finished'} = 0;
 		return 1;
@@ -78,21 +79,25 @@ sub Init {
 	}
 	my @url;
 	if (defined $self->{'urlList'}) {
-		push(@{$self->{'_url'}}, @{$self->createUrlList($self->{'urlList'})});
+		push(@{$self->{'_url'}}, @{$self->CreateUrlList($self->{'urlList'})});
 		$self->{'_finished'} = 0;
 	}
 	if (defined $self->{'urlFile'}) {
 		return 0 if (not $self->loadFile($self->{'urlFile'}));
 	}
+
+	$self->{'_registry'} = &Hector::Resource::GetRegistry();
+	$self->{'_webResourceTypeId'} = $self->{'_registry'}->NameToId("WebResource");
+
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::INPUT;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -102,12 +107,12 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
 		if ($name eq 'urlList') {
-			push(@{$self->{'_url'}}, @{$self->createUrlList($value)});
+			push(@{$self->{'_url'}}, @{$self->CreateUrlList($value)});
 			$self->{'_finished'} = 0;
 		} elsif ($name eq 'urlFile') {
 			return 0 if (not $self->loadFile($value));
@@ -119,7 +124,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -138,7 +143,7 @@ sub ProcessInput() {
 	my ($self, $resource) = @_;
 
 	if (defined $resource) {
-		$self->{'_object'}->log_error($resource->toStringShort()." Resource is already defined.");
+		$self->{'_object'}->log_error($resource->ToStringShort()." Resource is already defined.");
 		return undef;
 	}
 	if (@{$self->{'_url'}} == 0) {
@@ -148,13 +153,34 @@ sub ProcessInput() {
 		}
 		return undef;
 	}
-	$resource = HectorRobot::WebResource->new();
-	$resource->setId($self->{'_threadIndex'}*10000+$self->{'items'});
+	$resource = $self->{'_registry'}->AcquireResource($self->{'_webResourceTypeId'});
+	if (not defined $resource) {
+		$self->{'_object'}->log_error("Cannot create resource type: WebResource (".$self->{'_webResourceTypeId'}.")");
+		return undef;
+	}
+	$resource = &HectorRobot::ResourceToWebResource($resource);
+	$resource->SetId($self->{'_threadIndex'}*10000+$self->{'items'});
 	my $url = shift(@{$self->{'_url'}});
 	$url = "http://".$url if ($url !~ /^[[:alpha:]]+:\/\//);
-	$resource->setUrl($url);
+	$resource->SetUrl($url);
 	$self->{'items'}++;
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

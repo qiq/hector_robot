@@ -35,7 +35,7 @@ sub new {
 sub DESTROY {
 }
 
-sub loadFile {
+sub LoadFile {
 	my ($self, $file) = @_;
 	if (defined open(my $fh, '<'.$file)) {
 		my @lines = <$fh>;
@@ -61,17 +61,17 @@ sub Init {
 		}
 	}
 	if (defined $self->{'filterFile'}) {
-		return 0 if (not $self->loadFile($self->{'filterFile'}));
+		return 0 if (not $self->LoadFile($self->{'filterFile'}));
 	}
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -81,12 +81,12 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
 		if ($name eq 'filterFile') {
-			return 0 if (not $self->loadFile($value));
+			return 0 if (not $self->LoadFile($value));
 		}
 	} else {
 		$self->{'_object'}->log_error("Invalid value name: $name");
@@ -95,7 +95,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -115,27 +115,27 @@ $Filter::object = undef;
 
 sub log_trace {
 	my ($msg) = @_;
-	$Filter::object->log_trace($Filter::resource->toStringShort." ".$msg);
+	$Filter::object->log_trace($Filter::resource->ToStringShort." ".$msg);
 }
 
 sub log_debug {
 	my ($msg) = @_;
-	$Filter::object->log_debug($Filter::resource->toStringShort." ".$msg);
+	$Filter::object->log_debug($Filter::resource->ToStringShort." ".$msg);
 }
 
 sub log_info {
 	my ($msg) = @_;
-	$Filter::object->log_info($Filter::resource->toStringShort." ".$msg);
+	$Filter::object->log_info($Filter::resource->ToStringShort." ".$msg);
 }
 
 sub log_error {
 	my ($msg) = @_;
-	$Filter::object->log_error($Filter::resource->toStringShort." ".$msg);
+	$Filter::object->log_error($Filter::resource->ToStringShort." ".$msg);
 }
 
 sub log_fatal {
 	my ($msg) = @_;
-	$Filter::object->log_fatal($Filter::resource->toStringShort." ".$msg);
+	$Filter::object->log_fatal($Filter::resource->ToStringShort." ".$msg);
 }
 
 sub ProcessSimple {

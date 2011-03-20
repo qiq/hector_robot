@@ -32,16 +32,16 @@ public:
 	Scheduler(ObjectRegistry *objects, const char *id, int threadIndex);
 	~Scheduler();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
-	Module::Type getType();
+	Module::Type GetType();
 	Resource *ProcessSimpleSync(Resource *resource);
 
 private:
 	int items;		// ObjectLock, items processed
 	char *outputDir;	// ObjectLock, where to save resource files
 
-	char *getItems(const char *name);
-	char *getOutputDir(const char *name);
-	void setOutputDir(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetOutputDir(const char *name);
+	void SetOutputDir(const char *name, const char *value);
 
 	ObjectValues<Scheduler> *values;
 	char *GetValueSync(const char *name);
@@ -58,9 +58,11 @@ private:
 	std::tr1::unordered_map<int, OpenFile*> openFiles;
 
 	void CloseFiles();
+
+	int webResourceTypeId;	// WebResource typeId
 };
 
-inline Module::Type Scheduler::getType() {
+inline Module::Type Scheduler::GetType() {
 	return SIMPLE;
 }
 

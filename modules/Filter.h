@@ -14,7 +14,7 @@
 #include "Module.h"
 #include "ObjectValues.h"
 #include "Resource.h"
-#include "ResourceFieldInfo.h"
+#include "ResourceAttrInfoT.h"
 
 class Filter : public Module {
 public:
@@ -26,7 +26,7 @@ public:
 	~Filter();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	std::vector<Filter::Rule*> *InitResource(Resource *resource);
-	Module::Type getType();
+	Module::Type GetType();
 	Resource *ProcessSimple(Resource *resource);
 
 private:
@@ -34,17 +34,17 @@ private:
 	char *ruleList;		// initOnly
 	char *ruleFile;		// initOnly
 
-	char *getItems(const char *name);
-	char *getRuleList(const char *name);
-	void setRuleList(const char *name, const char *value);
-	char *getRuleFile(const char *name);
-	void setRuleFile(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetRuleList(const char *name);
+	void SetRuleList(const char *name, const char *value);
+	char *GetRuleFile(const char *name);
+	void SetRuleFile(const char *name, const char *value);
 
 	ObjectValues<Filter> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	bool isInitOnly(const char *name);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	bool IsInitOnly(const char *name);
+	std::vector<std::string> *ListNamesSync();
 
 	std::tr1::unordered_map<int, std::vector<Filter::Rule*>*> rules;
 
@@ -148,16 +148,16 @@ public:
 	};
 };
 
-inline Module::Type Filter::getType() {
+inline Module::Type Filter::GetType() {
 	return SIMPLE;
 }
 
-inline char *Filter::getValueSync(const char *name) {
-	return values->getValueSync(name);
+inline char *Filter::GetValueSync(const char *name) {
+	return values->GetValueSync(name);
 }
 
-inline bool Filter::setValueSync(const char *name, const char *value) {
-	return values->setValueSync(name, value);
+inline bool Filter::SetValueSync(const char *name, const char *value) {
+	return values->SetValueSync(name, value);
 }
 
 inline bool Filter::isInitOnly(const char *name) {

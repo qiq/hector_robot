@@ -28,7 +28,7 @@ public:
 	WebResourceGenerator(ObjectRegistry *objects, const char *id, int threadIndex);
 	~WebResourceGenerator();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
-	Module::Type getType();
+	Module::Type GetType();
 	Resource *ProcessInputSync(bool sleep);
 
 private:
@@ -36,33 +36,33 @@ private:
 	int maxItems;		// initOnly
 	char *idPrefix;		// ObjectLock
 
-	char *getItems(const char *name);
-	char *getMaxItems(const char *name);
-	void setMaxItems(const char *name, const char *value);
-	char *getIdPrefix(const char *name);
-	void setIdPrefix(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetMaxItems(const char *name);
+	void SetMaxItems(const char *name, const char *value);
+	char *GetIdPrefix(const char *name);
+	void SetIdPrefix(const char *name, const char *value);
 
 	ObjectValues<WebResourceGenerator> *values;
-	char *getValueSync(const char *name);
-	bool setValueSync(const char *name, const char *value);
-	std::vector<std::string> *listNamesSync();
+	char *GetValueSync(const char *name);
+	bool SetValueSync(const char *name, const char *value);
+	std::vector<std::string> *ListNamesSync();
 
 	int typeId;		// type of resource to generate (WebResource)
 };
 
-inline Module::Type WebResourceGenerator::getType() {
+inline Module::Type WebResourceGenerator::GetType() {
 	return INPUT;
 }
 
-inline char *WebResourceGenerator::getValueSync(const char *name) {
+inline char *WebResourceGenerator::GetValueSync(const char *name) {
 	return values->GetValue(name);
 }
 
-inline bool WebResourceGenerator::setValueSync(const char *name, const char *value) {
+inline bool WebResourceGenerator::SetValueSync(const char *name, const char *value) {
 	return values->SetValue(name, value);
 }
 
-inline std::vector<std::string> *WebResourceGenerator::listNamesSync() {
+inline std::vector<std::string> *WebResourceGenerator::ListNamesSync() {
 	return values->ListNames();
 }
 

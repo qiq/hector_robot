@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test3: Create WebResources, parse urls, resolve DNS and dump result
+test2: Create WebResources, parse urls, resolve DNS and dump result
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -9,6 +9,9 @@ test3: Create WebResources, parse urls, resolve DNS and dump result
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_input">
 				<threads>1</threads>
@@ -23,7 +26,7 @@ test3: Create WebResources, parse urls, resolve DNS and dump result
 						</param>
 					</Module>
 					<Module id="M_dump1" lib="Dump.la"/>
-					<Module id="M_dns" lib="DnsResolver.la">
+					<Module id="M_dns" lib="DnsResolver.pm" type="perl">
 						<param name="forwardServer" value="127.0.0.1"/>
 						<param name="forwardPort" value="5354"/>
 					</Module>

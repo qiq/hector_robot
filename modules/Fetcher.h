@@ -87,7 +87,7 @@ public:
 	Fetcher(ObjectRegistry *objects, const char *id, int threadIndex);
 	~Fetcher();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
-	Module::Type getType();
+	Module::Type GetType();
 	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	CurlInfo curlInfo;
@@ -108,23 +108,23 @@ private:
 	int timeTick;		// ObjectLock, max time to spend in ProcessMulti()
 	std::vector<std::string> allowedContentTypes;	// ObjectLock, list of mime-types that are allowed to be downloaded
 
-	char *getItems(const char *name);
-	char *getMinServerRelax(const char *name);
-	void setMinServerRelax(const char *name, const char *value);
-	char *getTimeout(const char *name);
-	void setTimeout(const char *name, const char *value);
-	char *getFrom(const char *name);
-	void setFrom(const char *name, const char *value);
-	char *getUserAgent(const char *name);
-	void setUserAgent(const char *name, const char *value);
-	char *getMaxRequests(const char *name);
-	void setMaxRequests(const char *name, const char *value);
-	char *getMaxContentLength(const char *name);
-	void setMaxContentLength(const char *name, const char *value);
-	char *getTimeTick(const char *name);
-	void setTimeTick(const char *name, const char *value);
-	char *getAllowedContentTypes(const char *name);
-	void setAllowedContentTypes(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetMinServerRelax(const char *name);
+	void SetMinServerRelax(const char *name, const char *value);
+	char *GetTimeout(const char *name);
+	void SetTimeout(const char *name, const char *value);
+	char *GetFrom(const char *name);
+	void SetFrom(const char *name, const char *value);
+	char *GetUserAgent(const char *name);
+	void SetUserAgent(const char *name, const char *value);
+	char *GetMaxRequests(const char *name);
+	void SetMaxRequests(const char *name, const char *value);
+	char *GetMaxContentLength(const char *name);
+	void SetMaxContentLength(const char *name, const char *value);
+	char *GetTimeTick(const char *name);
+	void SetTimeTick(const char *name, const char *value);
+	char *GetAllowedContentTypes(const char *name);
+	void SetAllowedContentTypes(const char *name, const char *value);
 
 	ObjectValues<Fetcher> *values;
 	char *GetValueSync(const char *name);
@@ -134,7 +134,7 @@ private:
 	std::queue<Resource*> *outputResources;
 };
 
-inline Module::Type Fetcher::getType() {
+inline Module::Type Fetcher::GetType() {
 	return MULTI;
 }
 

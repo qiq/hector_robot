@@ -57,12 +57,12 @@ sub Init {
 	return 1;
 }
 
-sub getType {
+sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
 }
 
-sub getValueSync {
+sub GetValueSync {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -72,7 +72,7 @@ sub getValueSync {
 	}
 }
 
-sub setValueSync {
+sub SetValueSync {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -83,7 +83,7 @@ sub setValueSync {
 	return 1;
 }
 
-sub listNamesSync {
+sub ListNamesSync {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }
@@ -101,49 +101,65 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->getTypeStr() ne 'WebSiteResource' and $resource->getTypeStr() ne 'WebResource') {
-		$self->{'_object'}->log_error($resource->toStringShort()." Invalid type: ".$resource->getTypeStr());
-		$resource->setFlag($Hector::Resource::DELETED);
+	if ($resource->GetTypeString() ne 'WebSiteResource' and $resource->GetTypeString() ne 'WebResource') {
+		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $host = $resource->getUrlHost();
+	my $host = $resource->GetUrlHost();
 	if (not defined $host) {
-		$self->{'_object'}->log_error($resource->toStringShort()." Resource does not contain URL host");
-		$resource->setFlag($Hector::Resource::DELETED);
+		$self->{'_object'}->log_error($resource->ToStringShort()." Resource does not contain URL host");
+		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	if ($host =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$/ and $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256) {
 		my $ip = Hector::IpAddr->new();
 		$ip->ParseIp4Addr($host);
-		$resource->setIpAddr($ip);
+		$resource->SetIpAddr($ip);
 	} elsif ($host =~ /^\[[0-9A-Fa-f:]+\]$/) {
 		my $ip = Hector::IpAddr->new();
 		$ip->ParseIp6Addr($host);
-		$resource->setIpAddr($ip);
+		$resource->SetIpAddr($ip);
 	} else {
 		my $answer = $self->{'_resolver'}->search($host, 'A');
 		if (defined $answer) {
 			foreach my $rr ($answer->answer) {
 				next unless $rr->type eq "A";
-				$self->{'_object'}->log_debug($resource->toStringShort()." $host: ".$rr->address.' ('.$rr->ttl.')');
+				$self->{'_object'}->log_debug($resource->ToStringShort()." $host: ".$rr->address.' ('.$rr->ttl.')');
 				my $ip = Hector::IpAddr->new();
 				$ip->ParseIp4Addr($rr->address);
-				$resource->setIpAddr($ip);
-				$resource->setIpAddrExpire(time() + $rr->ttl) if ($resource->getTypeStr() eq 'WebSiteResource');
-				$resource->setStatus(0);
+				$resource->SetIpAddr($ip);
+				$resource->SetIpAddrExpire(time() + $rr->ttl) if ($resource->GetTypeString() eq 'WebSiteResource');
+				$resource->SetStatus(0);
 				last;
 			}
 		} else {
-			$self->{'_object'}->log_debug($resource->toStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
+			$self->{'_object'}->log_debug($resource->ToStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
 			my $ip = Hector::IpAddr->new();
-			$resource->setIpAddr($ip);
-			$resource->setIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->getTypeStr() eq 'WebSiteResource');
-			$resource->setStatus(1);
+			$resource->SetIpAddr($ip);
+			$resource->SetIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->GetTypeString() eq 'WebSiteResource');
+			$resource->SetStatus(1);
 		}
 	}
 
 	$self->{'items'}++;
 	return $resource;
+}
+
+sub Start() {
+	my ($self) = @_;
+}
+
+sub Stop() {
+	my ($self) = @_;
+}
+
+sub Pause() {
+	my ($self) = @_;
+}
+
+sub Resume() {
+	my ($self) = @_;
 }
 
 1;

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test7: Create WebResource, pass them through WebSiteManager to obtain IP
-address and robots info. Save WebSiteResource and then dump it.
+test8: Load and save WebSiteResources in the WebSiteManager.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -10,6 +9,10 @@ address and robots info. Save WebSiteResource and then dump it.
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+			<Resource id="R_test2" lib="WebSiteResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_main">
 				<threads>1</threads>
@@ -39,12 +42,6 @@ address and robots info. Save WebSiteResource and then dump it.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_dns_dump1" lib="Dump.la"/>
-					<Module id="M_dns" lib="DnsResolver.la">
-						<param name="forwardServer" value="127.0.0.1"/>
-						<param name="forwardPort" value="5354"/>
-						<param name="negativeTTL" value="86400"/>
-					</Module>
-					<Module id="M_dns_dump2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>
@@ -61,15 +58,6 @@ address and robots info. Save WebSiteResource and then dump it.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_robots_dump1" lib="Dump.la"/>
-					<Module id="M_robots_fetch" lib="Fetcher.la">
-						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="1"/>
-					</Module>
-					<Module id="M_robots_parse" type="perl" lib="RobotsParser.pm">
-						<param name="TTL" value="86400"/>
-						<param name="negativeTTL" value="86400"/>
-					</Module>
-					<Module id="M_robots_dump2" lib="Dump.la"/>
 				</modules>
                                 <input>
                                         <queue/>

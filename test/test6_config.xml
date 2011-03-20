@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test11: Process WebResources: download them, pass them through WebSiteManager,
-PreFetch, Fetch and PostFetch. Process redirects correctly.
-Run UrlExtractor.
+test6: Create WebResource, pass them through WebSiteManager to obtain IP
+address and robots info.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -11,8 +10,12 @@ Run UrlExtractor.
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+			<Resource id="R_test2" lib="WebSiteResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
-			<Processor id="P_load">
+			<Processor id="P_main">
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
@@ -24,50 +27,11 @@ Run UrlExtractor.
 						</param>
 					</Module>
 					<Module id="M_dump1" lib="Dump.la"/>
-				</modules>
-				<output>
-					<nextProcessor ref="P_main"/>
-				</output>
-			</Processor>
-			<Processor id="P_main">
-				<threads>1</threads>
-				<input>
-					<queue/>			<!-- default queue -->
-					<queue priority="100"/>		<!-- redirect queue -->
-				</input>
-				<modules>
 					<Module id="M_wsm" lib="WebSiteManager.la">
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
-					<Module id="M_filter" type="perl" lib="Filter.pm">
-						<param name="filterFile" value="test12.filter"/>
-					</Module>
-					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
-					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>
 					<Module id="M_dump2" lib="Dump.la"/>
-					<Module id="M_fetch" lib="Fetcher.la">
-						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="0"/>
-					</Module>
-					<Module id="M_dump3" lib="Dump.la"/>
-					<Module id="M_postfetch" type="perl" lib="PostFetch.pm"/>
-					<Module id="M_fixredirect" type="perl" lib="FixRedirect.pm"/>
-					<Module id="M_dump4" lib="Dump.la"/>
-				</modules>
-				<output>
-					<nextProcessor ref="P_main" filter="1" priority="100"/>
-					<nextProcessor ref="P_save"/>
-				</output>
-			</Processor>
-			<Processor id="P_save">
-				<threads>1</threads>
-				<input>
-					<queue/>
-				</input>
-				<modules>
-					<Module id="M_extractor" lib="UrlExtractor.la"/>
-					<Module id="M_dump5" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>
 			</Processor>
@@ -103,7 +67,7 @@ Run UrlExtractor.
 					<Module id="M_dump_robots1" lib="Dump.la"/>
 					<Module id="M_fetch_robots" lib="Fetcher.la">
 						<param name="timeTick" value="100000"/>
-						<param name="minServerRelax" value="0"/>
+						<param name="minServerRelax" value="1"/>
 					</Module>
 					<Module id="M_parse_robots" type="perl" lib="RobotsParser.pm">
 						<param name="TTL" value="86400"/>

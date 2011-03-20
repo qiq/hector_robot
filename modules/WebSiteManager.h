@@ -74,6 +74,8 @@ protected:
 private:
 	// WebResource cache
 	std::vector<WebResource*> unused;
+
+	int webResourceTypeId;	// WebResource typeId
 };
 
 class WebSiteManager : public Module {
@@ -81,7 +83,7 @@ public:
 	WebSiteManager(ObjectRegistry *objects, const char *id, int threadIndex);
 	~WebSiteManager();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
-	Module::Type getType();
+	Module::Type GetType();
 	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 	bool SaveCheckpointSync(const char *path);
 	bool RestoreCheckpointSync(const char *path);
@@ -96,23 +98,23 @@ private:
 	int robotsMaxRedirects;	// ObjectLock
 	int robotsNegativeTTL;	// ObjectLock
 
-	char *getItems(const char *name);
-	char *getMaxRequests(const char *name);
-	void setMaxRequests(const char *name, const char *value);
-	char *getTimeTick(const char *name);
-	void setTimeTick(const char *name, const char *value);
-	char *getDnsEngine(const char *name);
-	void setDnsEngine(const char *name, const char *value);
-	char *getRobotsEngine(const char *name);
-	void setRobotsEngine(const char *name, const char *value);
-	char *getLoad(const char *name);
-	void setLoad(const char *name, const char *value);
-	char *getSave(const char *name);
-	void setSave(const char *name, const char *value);
-	char *getRobotsMaxRedirects(const char *name);
-	void setRobotsMaxRedirects(const char *name, const char *value);
-	char *getRobotsNegativeTTL(const char *name);
-	void setRobotsNegativeTTL(const char *name, const char *value);
+	char *GetItems(const char *name);
+	char *GetMaxRequests(const char *name);
+	void SetMaxRequests(const char *name, const char *value);
+	char *GetTimeTick(const char *name);
+	void SetTimeTick(const char *name, const char *value);
+	char *GetDnsEngine(const char *name);
+	void SetDnsEngine(const char *name, const char *value);
+	char *GetRobotsEngine(const char *name);
+	void SetRobotsEngine(const char *name, const char *value);
+	char *GetLoad(const char *name);
+	void SetLoad(const char *name, const char *value);
+	char *GetSave(const char *name);
+	void SetSave(const char *name, const char *value);
+	char *GetRobotsMaxRedirects(const char *name);
+	void SetRobotsMaxRedirects(const char *name, const char *value);
+	char *GetRobotsNegativeTTL(const char *name);
+	void SetRobotsNegativeTTL(const char *name, const char *value);
 
 	ObjectValues<WebSiteManager> *values;
 	char *GetValueSync(const char *name);
@@ -139,7 +141,7 @@ private:
 	std::tr1::unordered_map<WebSiteResource*, std::vector<Resource*>* > waitingResources;
 	int waitingResourcesCount;
 
-	WebSiteResource *getWebSiteResource(WebResource *wr);
+	WebSiteResource *GetWebSiteResource(WebResource *wr);
 	void CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst);
 	void StartProcessing(Resource *r, WebSiteResource *wsr, bool robotsOnly);
 	bool IsRedirectCycle(WebSiteResource *current, WebSiteResource *wsr);
@@ -148,7 +150,7 @@ private:
 	bool SaveWebSiteResources(const char *filename);
 };
 
-inline Module::Type WebSiteManager::getType() {
+inline Module::Type WebSiteManager::GetType() {
 	return MULTI;
 }
 

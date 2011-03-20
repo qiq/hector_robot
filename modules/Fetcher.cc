@@ -33,23 +33,23 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	allowedContentTypes.push_back("application/msword");
 
 	values = new ObjectValues<Fetcher>(this);
-	values->AddGetter("items", &Fetcher::getItems);
-	values->AddGetter("minServerRelax", &Fetcher::getMinServerRelax);
-	values->AddSetter("minServerRelax", &Fetcher::setMinServerRelax);
-	values->AddGetter("timeout", &Fetcher::getTimeout);
-	values->AddSetter("timeout", &Fetcher::setTimeout);
-	values->AddGetter("from", &Fetcher::getFrom);
-	values->AddSetter("from", &Fetcher::setFrom, true);
-	values->AddGetter("userAgent", &Fetcher::getUserAgent);
-	values->AddSetter("userAgent", &Fetcher::setUserAgent, true);
-	values->AddGetter("maxRequests", &Fetcher::getMaxRequests);
-	values->AddSetter("maxRequests", &Fetcher::setMaxRequests, true);
-	values->AddGetter("maxContentLength", &Fetcher::getMaxContentLength);
-	values->AddSetter("maxContentLength", &Fetcher::setMaxContentLength);
-	values->AddGetter("timeTick", &Fetcher::getTimeTick);
-	values->AddSetter("timeTick", &Fetcher::setTimeTick);
-	values->AddGetter("allowedContentTypes", &Fetcher::getAllowedContentTypes);
-	values->AddSetter("allowedContentTypes", &Fetcher::setAllowedContentTypes);
+	values->AddGetter("items", &Fetcher::GetItems);
+	values->AddGetter("minServerRelax", &Fetcher::GetMinServerRelax);
+	values->AddSetter("minServerRelax", &Fetcher::SetMinServerRelax);
+	values->AddGetter("timeout", &Fetcher::GetTimeout);
+	values->AddSetter("timeout", &Fetcher::SetTimeout);
+	values->AddGetter("from", &Fetcher::GetFrom);
+	values->AddSetter("from", &Fetcher::SetFrom, true);
+	values->AddGetter("userAgent", &Fetcher::GetUserAgent);
+	values->AddSetter("userAgent", &Fetcher::SetUserAgent, true);
+	values->AddGetter("maxRequests", &Fetcher::GetMaxRequests);
+	values->AddSetter("maxRequests", &Fetcher::SetMaxRequests, true);
+	values->AddGetter("maxContentLength", &Fetcher::GetMaxContentLength);
+	values->AddSetter("maxContentLength", &Fetcher::SetMaxContentLength);
+	values->AddGetter("timeTick", &Fetcher::GetTimeTick);
+	values->AddSetter("timeTick", &Fetcher::SetTimeTick);
+	values->AddGetter("allowedContentTypes", &Fetcher::GetAllowedContentTypes);
+	values->AddSetter("allowedContentTypes", &Fetcher::SetAllowedContentTypes);
 
 	curlInfo.logger = this->logger;
 }
@@ -57,9 +57,9 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 Fetcher::~Fetcher() {
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
-		Resource::registry.ReleaseResource(ri->current);
+		Resource::GetRegistry()->ReleaseResource(ri->current);
 		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
-			Resource::registry.ReleaseResource(*iter);
+			Resource::GetRegistry()->ReleaseResource(*iter);
 		curl_multi_remove_handle(curlInfo.multi, ri->easy);
 		curl_easy_cleanup(ri->easy);
 		if (ri->headers)
@@ -74,73 +74,73 @@ Fetcher::~Fetcher() {
 	delete values;
 }
 
-char *Fetcher::getItems(const char *name) {
+char *Fetcher::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *Fetcher::getMinServerRelax(const char *name) {
+char *Fetcher::GetMinServerRelax(const char *name) {
 	return int2str(minServerRelax);
 }
 
-void Fetcher::setMinServerRelax(const char *name, const char *value) {
+void Fetcher::SetMinServerRelax(const char *name, const char *value) {
 	minServerRelax = str2int(value);
 	if (minServerRelax < 0)
 		minServerRelax = 0;
 }
 
-char *Fetcher::getTimeout(const char *name) {
+char *Fetcher::GetTimeout(const char *name) {
 	return int2str(timeout);
 }
 
-void Fetcher::setTimeout(const char *name, const char *value) {
+void Fetcher::SetTimeout(const char *name, const char *value) {
 	timeout = str2int(value);
 }
 
-char *Fetcher::getFrom(const char *name) {
+char *Fetcher::GetFrom(const char *name) {
 	return from ? strdup(from) : NULL;
 }
 
-void Fetcher::setFrom(const char *name, const char *value) {
+void Fetcher::SetFrom(const char *name, const char *value) {
 	free(from);
 	from = strdup(value);
 }
 
-char *Fetcher::getUserAgent(const char *name) {
+char *Fetcher::GetUserAgent(const char *name) {
 	return userAgent ? strdup(userAgent) : NULL;
 }
 
-void Fetcher::setUserAgent(const char *name, const char *value) {
+void Fetcher::SetUserAgent(const char *name, const char *value) {
 	free(userAgent);
 	userAgent = strdup(value);
 }
 
-char *Fetcher::getMaxRequests(const char *name) {
+char *Fetcher::GetMaxRequests(const char *name) {
 	return int2str(maxRequests);
 }
 
-void Fetcher::setMaxRequests(const char *name, const char *value) {
+void Fetcher::SetMaxRequests(const char *name, const char *value) {
 	maxRequests = str2int(value);
 }
 
-char *Fetcher::getMaxContentLength(const char *name) {
+char *Fetcher::GetMaxContentLength(const char *name) {
 	return int2str(maxContentLength);
 }
 
-void Fetcher::setMaxContentLength(const char *name, const char *value) {
+void Fetcher::SetMaxContentLength(const char *name, const char *value) {
 	maxContentLength = str2long(value);
 	if (maxContentLength < 0)
 		maxContentLength = 0;
 }
 
-char *Fetcher::getTimeTick(const char *name) {
+char *Fetcher::GetTimeTick(const char *name) {
 	return int2str(timeTick);
 }
 
-void Fetcher::setTimeTick(const char *name, const char *value) {
+void Fetcher::SetTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
 }
 
-char *Fetcher::getAllowedContentTypes(const char *name) {
+char *Fetcher::GetAllowedContentTypes(const char *name) {
 	string result;
 	for (int i = 0; i < (int)allowedContentTypes.size(); i++) {
 		if (i > 0)
@@ -150,7 +150,7 @@ char *Fetcher::getAllowedContentTypes(const char *name) {
 	return strdup(result.c_str());
 }
 
-void Fetcher::setAllowedContentTypes(const char *name, const char *value) {
+void Fetcher::SetAllowedContentTypes(const char *name, const char *value) {
 	allowedContentTypes.clear();
 	char *v = strdup(value);
 	char *s = v;
@@ -316,7 +316,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 	if (pos == string::npos) {
 		// status line?
 		if (!s.compare(0, 4, "HTTP")) {
-			ri->current->setHeaderValue("X-Status", s.c_str());
+			ri->current->SetHeaderValue("X-Status", s.c_str());
 		} else {
 			LOG_DEBUG_R(ri->info->parent, ri->current, "Invalid header field: " << s);
 		}
@@ -328,7 +328,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 			i++;
 		s.erase(0, pos+i);
 		if (name != "X-Status")		// we do not want malicious server to overwrite the status :)
-			ri->current->setHeaderValue(name.c_str(), s.c_str());
+			ri->current->SetHeaderValue(name.c_str(), s.c_str());
 		if (name == "Content-Length") {
 			ri->contentLength = atol(s.c_str());
 			if (ri->contentLength > ri->maxContentLength) {
@@ -349,14 +349,14 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 
 void Fetcher::QueueResource(WebResource *wr) {
 	// count hash of the IP address
-	IpAddr &ip = wr->getIpAddr();
+	IpAddr ip = wr->GetIpAddr();
 	uint32_t ip_sum;
-	if (ip.isIp4Addr()) {
-		ip_sum = ntohl(ip.getIp4Addr());
+	if (ip.IsIp4Addr()) {
+		ip_sum = ntohl(ip.GetIp4Addr());
 	} else {
-		uint64_t ip6 = ip.getIp6Addr(true);
+		uint64_t ip6 = ip.GetIp6Addr(true);
 		ip_sum = (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
-		ip6 = ip.getIp6Addr(false);
+		ip6 = ip.GetIp6Addr(false);
 		ip_sum += (ip6 & 0xFFFFFFFF) + ((ip6 >> 32) & 0xFFFFFFFF);
 	}
 	int hash = ip_sum % maxRequests;
@@ -396,30 +396,30 @@ void Fetcher::StartQueuedResourcesFetch() {
 // really start download
 void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	// set URL
-	const string &url = wr->getUrl();
+	const string &url = wr->GetUrl();
 	if (url.empty()) {
 		LOG_ERROR_R(this, wr, "No URL found");
 		outputResources->push(wr);
 		return;
 	}
-	wr->clearHeaderFields();
+	wr->ClearHeader();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[index];
 	ri->current = wr;
-	ri->content = wr->getContentMutable();
+	ri->content = wr->GetContentMutable();
 	ri->content->clear();
 	curl_easy_setopt(ri->easy, CURLOPT_URL, url.c_str());
 
 	// set IP4/6 address
-	IpAddr &ip = wr->getIpAddr();
+	IpAddr ip = wr->GetIpAddr();
 	struct sockaddr_storage addr;
-	if (ip.isIp4Addr()) {
+	if (ip.IsIp4Addr()) {
 		addr.ss_family = AF_INET;
-		((struct sockaddr_in*)&addr)->sin_addr.s_addr = ip.getIp4Addr();
+		((struct sockaddr_in*)&addr)->sin_addr.s_addr = ip.GetIp4Addr();
 	} else {
 		addr.ss_family = AF_INET6;
 		struct sockaddr_in6 *addr6 = (struct sockaddr_in6*)&addr;
-		*((uint64_t*)addr6->sin6_addr.s6_addr) = ip.getIp6Addr(true);
-		*(((uint64_t*)addr6->sin6_addr.s6_addr)+1) = ip.getIp6Addr(false);
+		*((uint64_t*)addr6->sin6_addr.s6_addr) = ip.GetIp6Addr(true);
+		*(((uint64_t*)addr6->sin6_addr.s6_addr)+1) = ip.GetIp6Addr(false);
 	}
 	curl_easy_setopt(ri->easy, CURLOPT_DNS_IP_ADDR, &addr);
 	ri->contentLength = 0;
@@ -428,10 +428,10 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	ri->time = curlInfo.currentTime;	// start time
 
 	// start!
-	LOG_TRACE_R(this, ri->current, "Fetching " << ri->current->getUrl());
+	LOG_TRACE_R(this, ri->current, "Fetching " << ri->current->GetUrl());
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
 	if (rc != CURLM_OK) {
-		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc << " (" << ri->current->getUrl() << ")");
+		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc << " (" << ri->current->GetUrl() << ")");
 		FinishResourceFetch(ri, rc);
 	}
 }
@@ -439,16 +439,16 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 // save resource to the outputQueue, process errors, etc.
 void Fetcher::FinishResourceFetch(CurlResourceInfo *ri, int result) {
 	if (result == CURLE_OK) {
-		LOG_DEBUG_R(this, ri->current, "Fetched " << ri->current->getUrl() << " (" << ri->current->getContent().size() << ")");
-		ri->current->setStatus(0);
+		LOG_DEBUG_R(this, ri->current, "Fetched " << ri->current->GetUrl() << " (" << ri->current->GetContent().size() << ")");
+		ri->current->SetStatus(0);
 	} else {
 		// CURLE_WRITE_ERROR == invalid content-type or too large object
 		if (result == CURLE_WRITE_ERROR) {
-			ri->current->setStatus(2);
+			ri->current->SetStatus(2);
 		} else {
 			// other errors, 404 Not found, etc.
-			LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->getUrl() << ": " << curl_easy_strerror((CURLcode)result));
-			ri->current->setStatus(1);
+			LOG_DEBUG_R(this, ri->current, "Erorr fetching " << ri->current->GetUrl() << ": " << curl_easy_strerror((CURLcode)result));
+			ri->current->SetStatus(1);
 		}
 	}
 	outputResources->push(ri->current);
@@ -561,16 +561,16 @@ int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*>
 
 	// queue/start input resources
 	while (inputResources->size() > 0 && curlInfo.resources < maxRequests) {
-		if (inputResources->front()->getTypeId() != WebResource::typeId) {
+		if (!WebResource::IsInstance(inputResources->front())) {
 			outputResources->push(inputResources->front());
 		} else {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
-			IpAddr &ip = wr->getIpAddr();
-			if (!ip.isEmpty()) {
+			IpAddr ip = wr->GetIpAddr();
+			if (!ip.IsEmpty()) {
 				QueueResource(wr);
 			} else {
 				LOG_DEBUG_R(this, wr, "Empty ip address");
-				wr->setStatus(1);
+				wr->SetStatus(1);
 				outputResources->push(wr);
 			}
 		}

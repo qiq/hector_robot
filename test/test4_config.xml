@@ -9,6 +9,9 @@ test4: Create WebResources, parse URLs, resolve DNS and download a web page, the
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_input">
 				<threads>1</threads>

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test11: Process WebResources: download them, pass them through WebSiteManager,
+test9: Process WebResources: download them, pass them through WebSiteManager,
 PreFetch, Fetch and PostFetch. Process redirects correctly.
-Run UrlExtractor.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -11,6 +10,10 @@ Run UrlExtractor.
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
 		<logConfig>test.log.props</logConfig>
+		<resources>
+			<Resource id="R_test" lib="WebResource.la"/>
+			<Resource id="R_test2" lib="WebSiteResource.la"/>
+		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_load">
 				<threads>1</threads>
@@ -63,7 +66,6 @@ Run UrlExtractor.
 					<queue/>
 				</input>
 				<modules>
-					<Module id="M_extractor" lib="UrlExtractor.la"/>
 					<Module id="M_dump5" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
 				</modules>

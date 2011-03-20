@@ -14,30 +14,33 @@ public:
         WebSiteResource(const WebSiteResource &wsr);
         ~WebSiteResource();
         Resource *Clone();
+        void Clear();
         std::string *Serialize();
         int GetSerializedSize();
         bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
         bool Deserialize(const char *data, int size);
         bool Deserialize(google::protobuf::io::CodedInputStream *input);
-        int getTypeId();
-        const char *getTypeStr();
-        const char *getTypeStrShort();
-        const char *getModuleStr();
-        int getId();
-        void setId(int id);
-        int getStatus();
-        void setStatus(int status);
-        int getSize();
-        std::string toString(Object::LogLevel = Object::INFO);
+        int GetTypeId();
+        const char *GetTypeString(bool terse = false);
+        const char *GetObjectName();
+        int GetId();
+        void SetId(int id);
+        int GetStatus();
+        void SetStatus(int status);
+        Resource *GetAttachedResource();
+        void SetAttachedResource(Resource *attachedResource);
+        void ClearAttachedResource();
+        int GetSize();
+        std::string ToString(Object::LogLevel = Object::INFO);
 
         // WebSiteResource-specific
         // preferred way: locks WSR and sets everything at once
-        void setUrl(int urlScheme, const std::string &urlHost, int urlPort);
-        void getUrl(int &urlScheme, std::string &urlHost, int &urlPort);
-        void setIpAddrExpire(IpAddr &addr, long time);
-        void getIpAddrExpire(IpAddr &addr, long &time);
-        void setRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
-        void getRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
+        void SetUrl(int urlScheme, const std::string &urlHost, int urlPort);
+        void GetUrl(int &urlScheme, std::string &urlHost, int &urlPort);
+        void SetIpAddrExpire(IpAddr &addr, long time);
+        void GetIpAddrExpire(IpAddr &addr, long &time);
+        void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
+        void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
         int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
         bool PathNewLinkReady(const char *path, long currentTime);
         bool PathUpdateError(const char *path, long currentTime, int maxCount);
@@ -46,44 +49,44 @@ public:
         long PathNextRefresh(const char *path);
 
         // change on-item methods
-        void setUrlScheme(int urlScheme);
-        int getUrlScheme();
-        void clearUrlScheme();
-        void setUrlHost(const std::string &urlHost);
-        const std::string &getUrlHost();
-        void clearUrlHost();
-        void setUrlPort(int urlPort);
-        int getUrlPort();
-        void clearUrlPort();
-        void setIpAddr(IpAddr &addr);
-        IpAddr getIpAddr();
-        void clearIpAddr();
-        void setIpAddrExpire(long time);
-        long getIpAddrExpire();
-        void clearIpAddrExpire();
-        void setAllowUrls(const std::vector<std::string> &allow_urls);
-        void setAllowUrl(int index, const std::string &url);
-        std::vector<std::string> *getAllowUrls();
-        const std::string &getAllowUrl(int index);
-        int countAllowUrls();
-        void clearAllowUrls();
-        void setDisallowUrls(const std::vector<std::string> &disallow_urls);
-        void setDisallowUrl(int index, const std::string &url);
-        std::vector<std::string> *getDisallowUrls();
-        const std::string &getDisallowUrl(int index);
-        int countDisallowUrls();
-        void clearDisallowUrls();
-        void setRobotsExpire(long time);
-        long getRobotsExpire();
-        void clearRobotsExpire();
-        void setRobotsRedirectCount(int redirects);
-        int getRobotsRedirectCount();
-        void clearRobotsRedirectCount();
+        void SetUrlScheme(int urlScheme);
+        int GetUrlScheme();
+        void ClearUrlScheme();
+        void SetUrlHost(const std::string &urlHost);
+        const std::string GetUrlHost();
+        void ClearUrlHost();
+        void SetUrlPort(int urlPort);
+        int GetUrlPort();
+        void ClearUrlPort();
+        void SetIpAddr(IpAddr &addr);
+        IpAddr GetIpAddr();
+        void ClearIpAddr();
+        void SetIpAddrExpire(long time);
+        long GetIpAddrExpire();
+        void ClearIpAddrExpire();
+        void SetAllowUrls(const std::vector<std::string> &allow_urls);
+        void SetAllowUrl(int index, const std::string &url);
+        std::vector<std::string> *GetAllowUrls();
+        const std::string GetAllowUrl(int index);
+        int CountAllowUrls();
+        void ClearAllowUrls();
+        void SetDisallowUrls(const std::vector<std::string> &disallow_urls);
+        void SetDisallowUrl(int index, const std::string &url);
+        std::vector<std::string> *GetDisallowUrls();
+        const std::string GetDisallowUrl(int index);
+        int CountDisallowUrls();
+        void ClearDisallowUrls();
+        void SetRobotsExpire(long time);
+        long GetRobotsExpire();
+        void ClearRobotsExpire();
+        void SetRobotsRedirectCount(int redirects);
+        int GetRobotsRedirectCount();
+        void ClearRobotsRedirectCount();
 };
 
 %inline %{
 WebSiteResource *ResourceToWebSiteResource(Resource *r) {
-        return r->getTypeId() == WebSiteResource::typeId ? static_cast<WebSiteResource*>(r) : NULL;
+        return r && WebSiteResource::IsInstance(r) ? static_cast<WebSiteResource*>(r) : NULL;
 }
 
 void DeleteVectorOfString(std::vector<std::string> *v) {

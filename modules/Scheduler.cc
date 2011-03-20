@@ -16,11 +16,12 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 	outputDir = NULL;
 
 	values = new ObjectValues<Scheduler>(this);
-	values->AddGetter("items", &Scheduler::getItems);
-	values->AddGetter("outputDir", &Scheduler::getOutputDir);
-	values->AddSetter("outputDir", &Scheduler::setOutputDir);
+	values->AddGetter("items", &Scheduler::GetItems);
+	values->AddGetter("outputDir", &Scheduler::GetOutputDir);
+	values->AddSetter("outputDir", &Scheduler::SetOutputDir);
 
 	currentTime = 0;
+	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");
 }
 
 Scheduler::~Scheduler() {
@@ -28,15 +29,15 @@ Scheduler::~Scheduler() {
 	delete values;
 }
 
-char *Scheduler::getItems(const char *name) {
+char *Scheduler::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *Scheduler::getOutputDir(const char *name) {
+char *Scheduler::GetOutputDir(const char *name) {
 	return strdup(outputDir);
 }
 
-void Scheduler::setOutputDir(const char *name, const char *value) {
+void Scheduler::SetOutputDir(const char *name, const char *value) {
 	free(outputDir);
 	if (value && strlen(value) > 0 && value[strlen(value)-1] != '/') {
 		outputDir = (char*)malloc(strlen(value)+2);
@@ -78,16 +79,16 @@ bool Scheduler::Init(vector<pair<string, string> > *params) {
 }
 
 Resource *Scheduler::ProcessSimpleSync(Resource *resource) {
-	if (resource->getTypeId() != WebResource::typeId)
+	if (!WebResource::IsInstance(resource))
 		return resource;
 	WebResource *wr = static_cast<WebResource*>(resource);
-	Resource *r = wr->getAttachedResource();
-	if (r->getTypeId() != WebSiteResource::typeId)
+	Resource *r = wr->GetAttachedResource();
+	if (!WebSiteResource::IsInstance(r))
 		return wr;
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(r);
 
 	// next update should be in 'next' seconds
-	long n = wsr->PathNextRefresh(wr->getUrlPath().c_str());
+	long n = wsr->PathNextRefresh(wr->GetUrlPath().c_str());
 	if (n < 0)
 		return resource;
 
@@ -122,16 +123,16 @@ Resource *Scheduler::ProcessSimpleSync(Resource *resource) {
 		of = iter->second;
 	}
 
-	WebResource *other = new WebResource();
-	other->setUrl(wr->getUrl());
-	other->setScheduled(t);
+	WebResource *other = static_cast<WebResource*>(Resource::GetRegistry()->AcquireResource(webResourceTypeId));
+	other->SetUrl(wr->GetUrl());
+	other->SetScheduled(t);
 	if (!Resource::Serialize(other, of->stream)) {
 		LOG_ERROR_R(this, resource, "Error serializing resource");
 		return resource;
 	}
-	delete other;
+	Resource::GetRegistry()->ReleaseResource(other);
 	items++;
-	LOG_DEBUG_R(this, wr, "Scheduling " << wr->getUrl() << " " << next << " (" << now+next << ")");
+	LOG_DEBUG_R(this, wr, "Scheduling " << wr->GetUrl() << " " << next << " (" << now+next << ")");
 
 	return resource;
 }

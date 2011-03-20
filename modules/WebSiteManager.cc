@@ -23,20 +23,21 @@ CallDns::CallDns(int maxRequests) : CallProcessingEngine(maxRequests, true) {
 }
 
 Resource *CallDns::PrepareResource(Resource *src) {
-	assert(src->getTypeId() == WebSiteResource::typeId);
+	assert(WebSiteResource::IsInstance(src));
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(src);
-	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "DNS start: " << wsr->getUrlHost());
+	LOG4CXX_TRACE(logger, wsr->ToStringShort() << " " << "DNS start: " << wsr->GetUrlHost());
 	return src;
 }
 
 Resource *CallDns::FinishResource(Resource *tmp) {
-	assert(tmp->getTypeId() == WebSiteResource::typeId);
+	assert(WebSiteResource::IsInstance(tmp));
 	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp);
-	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "DNS finish: " << wsr->getUrlHost());
+	LOG4CXX_TRACE(logger, wsr->ToStringShort() << " " << "DNS finish: " << wsr->GetUrlHost());
 	return tmp;
 }
 
 CallRobots::CallRobots(int maxRequests) : CallProcessingEngine(maxRequests, true) {
+	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");
 }
 
 Resource *CallRobots::PrepareResource(Resource *src) {
@@ -46,34 +47,35 @@ Resource *CallRobots::PrepareResource(Resource *src) {
 		wr = unused.back();
 		unused.pop_back();
 	} else {
-		wr = new WebResource();
+		wr = static_cast<WebResource*>(Resource::GetRegistry()->AcquireResource(webResourceTypeId));
+
 	}
-	wr->setUrlScheme(wsr->getUrlScheme());
-	wr->setUrlHost(wsr->getUrlHost());
-	wr->setUrlPort(wsr->getUrlPort());
-	wr->setUrlPath("/robots.txt");
-	IpAddr ip = wsr->getIpAddr();
-	wr->setIpAddr(ip);
-	wr->setAttachedResource(wsr);
-	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots start (" << wr->toStringShort() << "): " << wsr->getUrlHost());
+	wr->SetUrlScheme(wsr->GetUrlScheme());
+	wr->SetUrlHost(wsr->GetUrlHost());
+	wr->SetUrlPort(wsr->GetUrlPort());
+	wr->SetUrlPath("/robots.txt");
+	IpAddr ip = wsr->GetIpAddr();
+	wr->SetIpAddr(ip);
+	wr->SetAttachedResource(wsr);
+	LOG4CXX_TRACE(logger, wsr->ToStringShort() << " " << "Robots start (" << wr->ToStringShort() << "): " << wsr->GetUrlHost());
 	return wr;
 }
 
 Resource *CallRobots::FinishResource(Resource *tmp) {
 	WebResource *wr = static_cast<WebResource*>(tmp);
-	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp->getAttachedResource());
-	wr->clearAttachedResource();
-	int status = wr->getStatus();
+	WebSiteResource *wsr = static_cast<WebSiteResource*>(tmp->GetAttachedResource());
+	wr->ClearAttachedResource();
+	int status = wr->GetStatus();
 	// redirect: set allow url to the redirected value
 	if (status == 2) {
 		vector<string> v;
-		v.push_back(wr->getUrl());
-		wsr->clearAllowUrls();
-		wsr->setAllowUrls(v);
+		v.push_back(wr->GetUrl());
+		wsr->ClearAllowUrls();
+		wsr->SetAllowUrls(v);
 	}
 	unused.push_back(wr);
-	wsr->setStatus(status);
-	LOG4CXX_TRACE(logger, wsr->toStringShort() << " " << "Robots finish (" << tmp->toStringShort() << "): " << wsr->getUrlHost() << " (" << status << ")");
+	wsr->SetStatus(status);
+	LOG4CXX_TRACE(logger, wsr->ToStringShort() << " " << "Robots finish (" << tmp->ToStringShort() << "): " << wsr->GetUrlHost() << " (" << status << ")");
 	return wsr;
 }
 
@@ -87,23 +89,23 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	robotsNegativeTTL = 86400;
 
 	values = new ObjectValues<WebSiteManager>(this);
-	values->AddGetter("items", &WebSiteManager::getItems);
-	values->AddGetter("maxRequests", &WebSiteManager::getMaxRequests);
-	values->AddSetter("maxRequests", &WebSiteManager::setMaxRequests, true);
-	values->AddGetter("timeTick", &WebSiteManager::getTimeTick);
-	values->AddSetter("timeTick", &WebSiteManager::setTimeTick);
-	values->AddGetter("dnsEngine", &WebSiteManager::getDnsEngine);
-	values->AddSetter("dnsEngine", &WebSiteManager::setDnsEngine);
-	values->AddGetter("robotsEngine", &WebSiteManager::getRobotsEngine);
-	values->AddSetter("robotsEngine", &WebSiteManager::setRobotsEngine);
-	values->AddGetter("load", &WebSiteManager::getLoad);
-	values->AddSetter("load", &WebSiteManager::setLoad);
-	values->AddGetter("save", &WebSiteManager::getSave);
-	values->AddSetter("save", &WebSiteManager::setSave);
-	values->AddGetter("robotsMaxRedirects", &WebSiteManager::getRobotsMaxRedirects);
-	values->AddSetter("robotsMaxRedirects", &WebSiteManager::setRobotsMaxRedirects);
-	values->AddGetter("robotsNegativeTTL", &WebSiteManager::getRobotsNegativeTTL);
-	values->AddSetter("robotsNegativeTTL", &WebSiteManager::setRobotsNegativeTTL);
+	values->AddGetter("items", &WebSiteManager::GetItems);
+	values->AddGetter("maxRequests", &WebSiteManager::GetMaxRequests);
+	values->AddSetter("maxRequests", &WebSiteManager::SetMaxRequests, true);
+	values->AddGetter("timeTick", &WebSiteManager::GetTimeTick);
+	values->AddSetter("timeTick", &WebSiteManager::SetTimeTick);
+	values->AddGetter("dnsEngine", &WebSiteManager::GetDnsEngine);
+	values->AddSetter("dnsEngine", &WebSiteManager::SetDnsEngine);
+	values->AddGetter("robotsEngine", &WebSiteManager::GetRobotsEngine);
+	values->AddSetter("robotsEngine", &WebSiteManager::SetRobotsEngine);
+	values->AddGetter("load", &WebSiteManager::GetLoad);
+	values->AddSetter("load", &WebSiteManager::SetLoad);
+	values->AddGetter("save", &WebSiteManager::GetSave);
+	values->AddSetter("save", &WebSiteManager::SetSave);
+	values->AddGetter("robotsMaxRedirects", &WebSiteManager::GetRobotsMaxRedirects);
+	values->AddSetter("robotsMaxRedirects", &WebSiteManager::SetRobotsMaxRedirects);
+	values->AddGetter("robotsNegativeTTL", &WebSiteManager::GetRobotsNegativeTTL);
+	values->AddSetter("robotsNegativeTTL", &WebSiteManager::SetRobotsNegativeTTL);
 
 	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
@@ -119,77 +121,77 @@ WebSiteManager::~WebSiteManager() {
 	delete callRobots;
 }
 
-char *WebSiteManager::getItems(const char *name) {
+char *WebSiteManager::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *WebSiteManager::getMaxRequests(const char *name) {
+char *WebSiteManager::GetMaxRequests(const char *name) {
 	return int2str(maxRequests);
 }
 
-void WebSiteManager::setMaxRequests(const char *name, const char *value) {
+void WebSiteManager::SetMaxRequests(const char *name, const char *value) {
 	maxRequests = str2int(value);
 }
 
-char *WebSiteManager::getTimeTick(const char *name) {
+char *WebSiteManager::GetTimeTick(const char *name) {
 	return int2str(timeTick);
 }
 
-void WebSiteManager::setTimeTick(const char *name, const char *value) {
+void WebSiteManager::SetTimeTick(const char *name, const char *value) {
 	timeTick = str2int(value);
 }
 
-char *WebSiteManager::getDnsEngine(const char *name) {
+char *WebSiteManager::GetDnsEngine(const char *name) {
 	return dnsEngine ? strdup(dnsEngine) : NULL;
 }
 
-void WebSiteManager::setDnsEngine(const char *name, const char *value) {
+void WebSiteManager::SetDnsEngine(const char *name, const char *value) {
 	free(dnsEngine);
 	dnsEngine = strdup(value);
 }
 
-char *WebSiteManager::getRobotsEngine(const char *name) {
+char *WebSiteManager::GetRobotsEngine(const char *name) {
 	return robotsEngine ? strdup(robotsEngine) : NULL;
 }
 
-void WebSiteManager::setRobotsEngine(const char *name, const char *value) {
+void WebSiteManager::SetRobotsEngine(const char *name, const char *value) {
 	free(robotsEngine);
 	robotsEngine = strdup(value);
 }
 
-char *WebSiteManager::getLoad(const char *name) {
+char *WebSiteManager::GetLoad(const char *name) {
 	return strdup("");
 }
 
 // actually load all wsr records
-void WebSiteManager::setLoad(const char *name, const char *value) {
+void WebSiteManager::SetLoad(const char *name, const char *value) {
 	if (!LoadWebSiteResources(value))
 		LOG_ERROR(this, "Cannot load WebSiteManager data");
 }
 
-char *WebSiteManager::getSave(const char *name) {
+char *WebSiteManager::GetSave(const char *name) {
 	return strdup("");
 }
 
 // actually save all wsr records
-void WebSiteManager::setSave(const char *name, const char *value) {
+void WebSiteManager::SetSave(const char *name, const char *value) {
 	if (!SaveWebSiteResources(value))
 		LOG_ERROR(this, "Cannot save WebSiteManager data");
 }
 
-char *WebSiteManager::getRobotsMaxRedirects(const char *name) {
+char *WebSiteManager::GetRobotsMaxRedirects(const char *name) {
 	return int2str(robotsMaxRedirects);
 }
 
-void WebSiteManager::setRobotsMaxRedirects(const char *name, const char *value) {
+void WebSiteManager::SetRobotsMaxRedirects(const char *name, const char *value) {
 	robotsMaxRedirects = str2int(value);
 }
 
-char *WebSiteManager::getRobotsNegativeTTL(const char *name) {
+char *WebSiteManager::GetRobotsNegativeTTL(const char *name) {
 	return int2str(robotsNegativeTTL);
 }
 
-void WebSiteManager::setRobotsNegativeTTL(const char *name, const char *value) {
+void WebSiteManager::SetRobotsNegativeTTL(const char *name, const char *value) {
 	robotsNegativeTTL = str2int(value);
 }
 
@@ -201,14 +203,14 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 			LOG_ERROR(this, "Invalid dnsEngine parameter: " << dnsEngine);
 			return false;
 		}
-		callDns->setProcessingEngine(engine);
+		callDns->SetProcessingEngine(engine);
 
 		engine = dynamic_cast<ProcessingEngine*>(objects->GetObject(robotsEngine));
 		if (!engine) {
 			LOG_ERROR(this, "Invalid robotsEngine parameter: " << robotsEngine);
 			return false;
 		}
-		callRobots->setProcessingEngine(engine);
+		callRobots->SetProcessingEngine(engine);
 		return true;
 	}
 
@@ -231,16 +233,16 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 }
 
 // try to get wsr, if not present, create it
-WebSiteResource *WebSiteManager::getWebSiteResource(WebResource *wr) {
-	key.setUrlScheme(wr->getUrlScheme());
-	key.setUrlHost(wr->getUrlHost());
-	key.setUrlPort(wr->getUrlPort());
+WebSiteResource *WebSiteManager::GetWebSiteResource(WebResource *wr) {
+	key.SetUrlScheme(wr->GetUrlScheme());
+	key.SetUrlHost(wr->GetUrlHost());
+	key.SetUrlPort(wr->GetUrlPort());
 	tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.find(&key);
 	if (iter != sites.end())
 		return iter->second;
 	// create, if not found
 	WebSiteResource *wsr = pool->Alloc();
-	wsr->setUrl(wr->getUrlScheme(), wr->getUrlHost(), wr->getUrlPort());
+	wsr->SetUrl(wr->GetUrlScheme(), wr->GetUrlHost(), wr->GetUrlPort());
 	sites[wsr] = wsr;
 	return wsr;
 }
@@ -249,29 +251,29 @@ void WebSiteManager::CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst) 
 	vector<string> allow;
 	vector<string> disallow;
 	long time;
-	src->getRobots(allow, disallow, time);
-	dst->setRobots(allow, disallow, time);
+	src->GetRobots(allow, disallow, time);
+	dst->SetRobots(allow, disallow, time);
 }
 
 void WebSiteManager::StartProcessing(Resource *r, WebSiteResource *wsr, bool robotsOnly) {
 	// wsr is not yet being processed
 	tr1::unordered_map<WebSiteResource*, vector<Resource*> *>::iterator iter = waitingResources.find(wsr);
 	if (iter == waitingResources.end()) {
-		LOG_TRACE_R(this, r, "start (" << wsr->toStringShort() << ")");
+		LOG_TRACE_R(this, r, "start (" << wsr->ToStringShort() << ")");
 		vector<Resource*> *v = new vector<Resource*>();
 		v->push_back(r);
 		waitingResources[wsr] = v;
-		if (r->getTypeId() == WebResource::typeId)
+		if (WebResource::IsInstance(r))
 			waitingResourcesCount++;
 		if (!robotsOnly)
 			callDnsInput.push(wsr);
 		else
 			callRobotsInput.push(wsr);
 	} else {
-		LOG_TRACE_R(this, r, "waiting (" << wsr->toStringShort() << ")");
+		LOG_TRACE_R(this, r, "waiting (" << wsr->ToStringShort() << ")");
 		// append to the waiting resources list
 		iter->second->push_back(r);
-		if (r->getTypeId() == WebResource::typeId)
+		if (WebResource::IsInstance(r))
 			waitingResourcesCount++;
 	}
 }
@@ -282,7 +284,7 @@ bool WebSiteManager::IsRedirectCycle(WebSiteResource *current, WebSiteResource *
 		return false;
 	vector<Resource*> *v = iter->second;
 	for (vector<Resource*>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-		if ((*iter)->getTypeId() == WebSiteResource::typeId) {
+		if (WebSiteResource::IsInstance(*iter)) {
 			WebSiteResource *prev = static_cast<WebSiteResource*>(*iter);
 			if (prev == wsr || IsRedirectCycle(prev, wsr))
 				return true;
@@ -294,52 +296,52 @@ bool WebSiteManager::IsRedirectCycle(WebSiteResource *current, WebSiteResource *
 void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *outputResources) {
 	tr1::unordered_map<WebSiteResource*, vector<Resource*>* >::iterator iter = waitingResources.find(wsr);
 	assert(iter != waitingResources.end());
-	if (wsr->getStatus() == 2) {
+	if (wsr->GetStatus() == 2) {
 		// robots.txt was redirected, redirect target is allowed_urls[0]
-		int redirects = wsr->getRobotsRedirectCount();
-		vector<string> *v = wsr->getAllowUrls();
+		int redirects = wsr->GetRobotsRedirectCount();
+		vector<string> *v = wsr->GetAllowUrls();
 		assert(v->size() == 1);
 		string url = v->front();
 		delete v;
 		if (redirects < robotsMaxRedirects) {
 			WebResource wr;
-			wr.setUrl(url);
-			WebSiteResource *next = getWebSiteResource(&wr);
+			wr.SetUrl(url);
+			WebSiteResource *next = GetWebSiteResource(&wr);
 			// redirect to self? report error and process resources
 			if (IsRedirectCycle(wsr, next)) {
 				LOG_DEBUG_R(this, wsr, "Redirect to self: " << url);
 				vector<string> allow;
 				vector<string> disallow;
-				wsr->setRobots(allow, disallow, robotsNegativeTTL);
+				wsr->SetRobots(allow, disallow, robotsNegativeTTL);
 			} else {
-				if (next->getIpAddrExpire() < (long)currentTime || next->getRobotsExpire() < (long)currentTime) {
+				if (next->GetIpAddrExpire() < (long)currentTime || next->GetRobotsExpire() < (long)currentTime) {
 					// WSR not up-to-date: recursively resolve WSR
 					LOG_TRACE_R(this, wsr, "Recursively resolve WSR");
-					next->setRobotsRedirectCount(redirects+1);
-					StartProcessing(wsr, next, next->getIpAddrExpire() >= (long)currentTime);
+					next->SetRobotsRedirectCount(redirects+1);
+					StartProcessing(wsr, next, next->GetIpAddrExpire() >= (long)currentTime);
 					return;
 				}
 				// WSR is ready, just copy info
 				CopyRobotsInfo(next, wsr);
-				wsr->setStatus(next->getStatus());
+				wsr->SetStatus(next->GetStatus());
 			}
 		} else {
 			// error: too many redirects, make resources
 			LOG_DEBUG_R(this, wsr, "Too many redirects: " << url);
 			vector<string> allow;
 			vector<string> disallow;
-			wsr->setRobots(allow, disallow, robotsNegativeTTL);
+			wsr->SetRobots(allow, disallow, robotsNegativeTTL);
 		}
 	}
 	// WSR is now refreshed
 	vector<Resource*> *v = iter->second;
 	for (vector<Resource*>::iterator iter = v->begin(); iter != v->end(); ++iter) {
 		Resource *r = *iter;
-		if (r->getTypeId() == WebResource::typeId) {
+		if (WebResource::IsInstance(r)) {
 			// WebResource, just put it into the output queue
-			LOG_TRACE_R(this, r, "finish WR (" << wsr->toStringShort() << ")");
-			r->setAttachedResource(wsr);
-			r->setStatus(0);
+			LOG_TRACE_R(this, r, "finish WR (" << wsr->ToStringShort() << ")");
+			r->SetAttachedResource(wsr);
+			r->SetStatus(0);
 			outputResources->push(r);
 			waitingResourcesCount--;
 			items++;
@@ -349,7 +351,7 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 			WebSiteResource *prev = static_cast<WebSiteResource*>(r);
 			// copy robots info from current resource to previous (in the redirection chain)
 			CopyRobotsInfo(wsr, prev);
-			prev->setStatus(wsr->getStatus());
+			prev->SetStatus(wsr->GetStatus());
 			// recursively finish processing of resources
 			FinishProcessing(prev, outputResources);
 		}
@@ -379,7 +381,7 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 		}
 		uint32_t size = *(uint32_t*)buffer;
 		uint8_t typeId = *(uint8_t*)(buffer+4);
-		if (typeId != WebSiteResource::typeId) {
+		if (typeId != wsr->GetTypeId()) {
 			LOG_ERROR(this, "Invalid resource type: " << typeId);
 			break;
 		}
@@ -427,23 +429,23 @@ int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Res
 	currentTime = time(NULL);
 	LOG_TRACE(this, "waitingResourcesCount: " << waitingResourcesCount << ", maxRequests: " << maxRequests);
 	while (inputResources->size() > 0 && waitingResourcesCount < maxRequests) {
-		if (inputResources->front()->getTypeId() == WebResource::typeId) {
+		if (WebResource::IsInstance(inputResources->front())) {
 			WebResource *wr = static_cast<WebResource*>(inputResources->front());
 			// get domain info
-			WebSiteResource *wsr = getWebSiteResource(wr);
+			WebSiteResource *wsr = GetWebSiteResource(wr);
 			// status == 2 -> do not refresh IP address or robots.txt
-			if (wr->getStatus() == 2) {
-				wr->setAttachedResource(wsr);
+			if (wr->GetStatus() == 2) {
+				wr->SetAttachedResource(wsr);
 				outputResources->push(wr);
 			} else {
-				LOG_TRACE_R(this, wr, "Checking WR: " << wr->getUrl());
-				if (wsr->getIpAddrExpire() < (long)currentTime || wsr->getRobotsExpire() < (long)currentTime) {
-					StartProcessing(wr, wsr, wsr->getIpAddrExpire() >= (long)currentTime);
+				LOG_TRACE_R(this, wr, "Checking WR: " << wr->GetUrl());
+				if (wsr->GetIpAddrExpire() < (long)currentTime || wsr->GetRobotsExpire() < (long)currentTime) {
+					StartProcessing(wr, wsr, wsr->GetIpAddrExpire() >= (long)currentTime);
 				} else {
-					LOG_TRACE_R(this, wr, "NOP: " << wr->getUrl());
+					LOG_TRACE_R(this, wr, "NOP: " << wr->GetUrl());
 					// no problem with the WSR, just attach it to WR
-					wr->setAttachedResource(wsr);
-					wr->setStatus(0);
+					wr->SetAttachedResource(wsr);
+					wr->SetStatus(0);
 					outputResources->push(wr);
 				}
 			}
@@ -459,8 +461,8 @@ int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Res
 	while (callDnsOutput.size() > 0) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
 		callDnsOutput.pop();
-		IpAddr ip = wsr->getIpAddr();
-		if (!ip.isEmpty() && wsr->getRobotsExpire() < (long)currentTime)
+		IpAddr ip = wsr->GetIpAddr();
+		if (!ip.IsEmpty() && wsr->GetRobotsExpire() < (long)currentTime)
 			callRobotsInput.push(wsr);
 		else
 			FinishProcessing(wsr, outputResources);
@@ -483,13 +485,13 @@ int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Res
 
 bool WebSiteManager::SaveCheckpointSync(const char *path) {
 	char buffer[1024];
-	snprintf(buffer, sizeof(buffer), "%s.%s", path, getId());
+	snprintf(buffer, sizeof(buffer), "%s.%s", path, GetId());
 	return SaveWebSiteResources(buffer);
 }
 
 bool WebSiteManager::RestoreCheckpointSync(const char *path) {
 	char buffer[1024];
-	snprintf(buffer, sizeof(buffer), "%s.%s", path, getId());
+	snprintf(buffer, sizeof(buffer), "%s.%s", path, GetId());
 	return LoadWebSiteResources(buffer);
 }
 

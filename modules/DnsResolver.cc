@@ -29,17 +29,17 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	negativeTTL = 86400;
 
 	values = new ObjectValues<DnsResolver>(this);
-	values->AddGetter("items", &DnsResolver::getItems);
-	values->AddGetter("maxRequests", &DnsResolver::getMaxRequests);
-	values->AddSetter("maxRequests", &DnsResolver::setMaxRequests, true);
-	values->AddGetter("timeTick", &DnsResolver::getTimeTick);
-	values->AddSetter("timeTick", &DnsResolver::setTimeTick);
-	values->AddGetter("forwardServer", &DnsResolver::getForwardServer);
-	values->AddSetter("forwardServer", &DnsResolver::setForwardServer);
-	values->AddGetter("forwardPort", &DnsResolver::getForwardPort);
-	values->AddSetter("forwardPort", &DnsResolver::setForwardPort);
-	values->AddGetter("negativeTTL", &DnsResolver::getNegativeTTL);
-	values->AddSetter("negativeTTL", &DnsResolver::setNegativeTTL);
+	values->AddGetter("items", &DnsResolver::GetItems);
+	values->AddGetter("maxRequests", &DnsResolver::GetMaxRequests);
+	values->AddSetter("maxRequests", &DnsResolver::SetMaxRequests, true);
+	values->AddGetter("timeTick", &DnsResolver::GetTimeTick);
+	values->AddSetter("timeTick", &DnsResolver::SetTimeTick);
+	values->AddGetter("forwardServer", &DnsResolver::GetForwardServer);
+	values->AddSetter("forwardServer", &DnsResolver::SetForwardServer);
+	values->AddGetter("forwardPort", &DnsResolver::GetForwardPort);
+	values->AddSetter("forwardPort", &DnsResolver::SetForwardPort);
+	values->AddGetter("negativeTTL", &DnsResolver::GetNegativeTTL);
+	values->AddSetter("negativeTTL", &DnsResolver::SetNegativeTTL);
 }
 
 DnsResolver::~DnsResolver() {
@@ -50,48 +50,48 @@ DnsResolver::~DnsResolver() {
 		delete *iter;
 }
 
-char *DnsResolver::getItems(const char *name) {
+char *DnsResolver::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *DnsResolver::getMaxRequests(const char *name) {
+char *DnsResolver::GetMaxRequests(const char *name) {
 	return int2str(maxRequests);
 }
 
-void DnsResolver::setMaxRequests(const char *name, const char *value) {
+void DnsResolver::SetMaxRequests(const char *name, const char *value) {
 	maxRequests = str2int(value);
 }
 
-char *DnsResolver::getTimeTick(const char *name) {
+char *DnsResolver::GetTimeTick(const char *name) {
 	return int2str(timeTick);
 }
 
-void DnsResolver::setTimeTick(const char *name, const char *value) {
+void DnsResolver::SetTimeTick(const char *name, const char *value) {
 	timeTick = str2long(value);
 }
 
-char *DnsResolver::getForwardServer(const char *name) {
+char *DnsResolver::GetForwardServer(const char *name) {
 	return forwardServer ? strdup(forwardServer) : NULL;
 }
 
-void DnsResolver::setForwardServer(const char *name, const char *value) {
+void DnsResolver::SetForwardServer(const char *name, const char *value) {
 	free(forwardServer);
 	forwardServer = strdup(value);
 }
 
-char *DnsResolver::getForwardPort(const char *name) {
+char *DnsResolver::GetForwardPort(const char *name) {
 	return int2str(forwardPort);
 }
 
-void DnsResolver::setForwardPort(const char *name, const char *value) {
+void DnsResolver::SetForwardPort(const char *name, const char *value) {
 	forwardPort = str2long(value);
 }
 
-char *DnsResolver::getNegativeTTL(const char *name) {
+char *DnsResolver::GetNegativeTTL(const char *name) {
 	return int2str(negativeTTL);
 }
 
-void DnsResolver::setNegativeTTL(const char *name, const char *value) {
+void DnsResolver::SetNegativeTTL(const char *name, const char *value) {
 	negativeTTL = str2int(value);
 }
 
@@ -122,12 +122,12 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 			}
 		} else {
 			const char *host;
-			if (ri->current->getTypeId() == WebResource::typeId) {
+			if (WebResource::IsInstance(ri->current)) {
 				WebResource *wr = static_cast<WebResource*>(ri->current);
-				host = wr->getUrlHost().c_str();
+				host = wr->GetUrlHost().c_str();
 			} else {
 				WebSiteResource *wsr = static_cast<WebSiteResource*>(ri->current);
-				host = wsr->getUrlHost().c_str();
+				host = wsr->GetUrlHost().c_str();
 			}
 			if (result->rcode == 0) {
 				LOG_DEBUG_R(ri->parent, ri->current, "No IP address " << host);
@@ -147,14 +147,14 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 
 void DnsResolver::StartResolution(Resource *resource) {
 	const char *host = NULL;
-	if (resource->getTypeId() == WebResource::typeId) {
+	if (WebResource::IsInstance(resource)) {
 		WebResource *wr = static_cast<WebResource*>(resource);
-		host = wr->getUrlHost().c_str();
-	} else if (resource->getTypeId() == WebSiteResource::typeId) {
+		host = wr->GetUrlHost().c_str();
+	} else if (WebSiteResource::IsInstance(resource)) {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
-		host = wsr->getUrlHost().c_str();
+		host = wsr->GetUrlHost().c_str();
 	} else {
-		LOG_ERROR_R(this, resource, "Unknown resource type: " << resource->getTypeStr());
+		LOG_ERROR_R(this, resource, "Unknown resource type: " << resource->GetTypeString());
 		return;
 	}
 
@@ -192,26 +192,26 @@ void DnsResolver::FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4
 		ipAddrExpire = currentTime.tv_sec + negativeTTL;
 	}
 	IpAddr addr;
-	addr.setIp4Addr(ip4);
+	addr.SetIp4Addr(ip4);
 	UpdateResource(ri->current, status, &addr, ipAddrExpire);
 	running.erase(ri->id);
 	unused.push_back(ri);
 }
 
 void DnsResolver::UpdateResource(Resource *resource, int status, IpAddr *addr, uint32_t ipAddrExpire) {
-	resource->setStatus(status);
+	resource->SetStatus(status);
 	const char *host = NULL;
-	if (resource->getTypeId() == WebResource::typeId) {
+	if (WebResource::IsInstance(resource)) {
 		WebResource *wr = static_cast<WebResource*>(resource);
-		wr->setIpAddr(*addr);
+		wr->SetIpAddr(*addr);
 		// WebResource has no ipAddrExpire
-		host = wr->getUrlHost().c_str();
+		host = wr->GetUrlHost().c_str();
 	} else {
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
-		wsr->setIpAddrExpire(*addr, ipAddrExpire);
-		host = wsr->getUrlHost().c_str();
+		wsr->SetIpAddrExpire(*addr, ipAddrExpire);
+		host = wsr->GetUrlHost().c_str();
 	}
-	LOG_DEBUG_R(this, resource, "DNS " << host << ": " << addr->toString());
+	LOG_DEBUG_R(this, resource, "DNS " << host << ": " << addr->ToString());
 	outputResources->push(resource);
 	items++;
 }
@@ -275,7 +275,7 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && (int)running.size() < maxRequests) {
 		Resource *r = inputResources->front();
-		if (r->getTypeId() != WebSiteResource::typeId && r->getTypeId() != WebResource::typeId) {
+		if (!WebSiteResource::IsInstance(r) && !WebResource::IsInstance(r)) {
 			outputResources->push(inputResources->front());
 		} else {
 			StartResolution(r);
