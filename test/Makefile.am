@@ -1,49 +1,49 @@
 TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(PATH)' LD_LIBRARY_PATH=$(HECTOR_CORE_PREFIX)/lib:$(HECTOR_CORE_PREFIX)/lib/hector:$(HECTOR_CORE_PREFIX)/lib/hector/resources:$(HECTOR_CORE_PREFIX)/lib/hector/modules:$(top_builddir)/resources:$(top_builddir)/modules:$(top_builddir)/servers:$(top_builddir)/perl/.libs:$(LD_LIBRARY_PATH) PERL5LIB=$(HECTOR_CORE_PREFIX)/lib/hector/modules/perl:$(top_builddir)/perl:$(top_builddir)/modules/perl $(SHELL)
 
 TESTS =
-EXTRA_DIST = test_common.sh test.log.props
-CLEANFILES = test.log test*.log.valgrind
+EXTRA_DIST = test_common.sh
+CLEANFILES = test*.log.valgrind
 
 TESTS += test1.sh
-EXTRA_DIST += test1.sh test1-config.xml test1.log.correct test1.data.url
-CLEANFILES += test1.log.test
+EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
+CLEANFILES += test1.log test1.log.result
 
 TESTS += test2.sh
-EXTRA_DIST += test2.sh test2-config.xml test2.log.correct
-CLEANFILES += test2.log.test
+EXTRA_DIST += test2.sh test2_config.xml test2.log.correct
+CLEANFILES += test2.log test2.log.result
 
 TESTS += test3.sh
-EXTRA_DIST += test3.sh test3-config.xml test3.log.correct
-CLEANFILES += test3.log.test
+EXTRA_DIST += test3.sh test3_config.xml test3.log.correct
+CLEANFILES += test3.log test3.log.result
 
 TESTS += test4.sh
-EXTRA_DIST += test4.sh test4-config.xml test4.log.correct
-CLEANFILES += test4.log.test
+EXTRA_DIST += test4.sh test4_config.xml test4.log.correct
+CLEANFILES += test4.log test4.log.result
 
 TESTS += test5.sh
-EXTRA_DIST += test5.sh test5-config.xml test5.log.correct
-CLEANFILES += test5.log.test
+EXTRA_DIST += test5.sh test5_config.xml test5.log.correct
+CLEANFILES += test5.log test5.log.result
 
 TESTS += test6.sh
-EXTRA_DIST += test6.sh test6-config.xml test6.log.correct
-CLEANFILES += test6.log.test
+EXTRA_DIST += test6.sh test6_config.xml test6.log.correct
+CLEANFILES += test6.log test6.log.result
 
 TESTS += test7.sh
-EXTRA_DIST += test7.sh test7-config.xml test7.log.correct
-CLEANFILES += test7.log.test test7.data.tmp
+EXTRA_DIST += test7.sh test7_config.xml test7.log.correct
+CLEANFILES += test7.log test7.log.result test7.data.tmp
 
 TESTS += test8.sh
-EXTRA_DIST += test8.sh test8-config.xml test8.log.correct test8.data.in
-CLEANFILES += test8.log.test test8.data.out
+EXTRA_DIST += test8.sh test8_config.xml test8.log.correct test8.data.in
+CLEANFILES += test8.log test8.log.result test8.data.out
 
 TESTS += test9.sh
-EXTRA_DIST += test9.sh test9-config.xml test9.log.correct
-CLEANFILES += test9.log.test
+EXTRA_DIST += test9.sh test9_config.xml test9.log.correct
+CLEANFILES += test9.log test9.log.result
 
 TESTS += test10.sh
-EXTRA_DIST += test10.sh test10-config.xml test10.log.correct
-CLEANFILES += test10.log.test
+EXTRA_DIST += test10.sh test10_config.xml test10.log.correct
+CLEANFILES += test10.log test10.log.result
 
 TESTS += test11.sh
-EXTRA_DIST += test11.sh test11-config.xml test11.log.correct
-CLEANFILES += test11.log.test
+EXTRA_DIST += test11.sh test11_config.xml test11.log.correct
+CLEANFILES += test11.log test11.log.result

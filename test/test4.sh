@@ -2,16 +2,11 @@
 
 . test_common.sh
 
-test_init
-test_server_start
-( ./http_server.pl 8012 & )
-hector_client_set PE_test.run 1
-hector_client_wait M_output[0].items 1
-hector_client_set PE_test.run 0
-hector_server_shutdown
+id=test4
+pkill http_server.pl; ( ./http_server.pl 8012 & )
+test_server_batch $id
 pkill http_server.pl
 
-grep "M_dump[0-9]\[[0-9]\+\]: " test.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[WR .*\)|\1|'|sed -e 's|, ip expire:.*||'|sort >$id.log.test
-test_finish
-test_compare_result
+grep "M_dump[0-9]\[[0-9]\+\]: " $id.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[WR .*\)|\1|'|sed -e 's|, ip expire:.*||'|sort >$id.log.result
+test_compare_result $id
 exit $?

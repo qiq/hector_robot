@@ -51,7 +51,7 @@ sub CreateUrlList {
 	return \@a;
 }
 
-sub loadFile {
+sub LoadFile {
 	my ($self, $file) = @_;
 	if (defined open(my $fh, '<'.$file)) {
 		my @lines = <$fh>;
@@ -83,7 +83,7 @@ sub Init {
 		$self->{'_finished'} = 0;
 	}
 	if (defined $self->{'urlFile'}) {
-		return 0 if (not $self->loadFile($self->{'urlFile'}));
+		return 0 if (not $self->LoadFile($self->{'urlFile'}));
 	}
 
 	$self->{'_registry'} = &Hector::Resource::GetRegistry();
@@ -97,7 +97,7 @@ sub GetType {
 	return $Hector::Module::INPUT;
 }
 
-sub GetValueSync {
+sub GetValue {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -107,7 +107,7 @@ sub GetValueSync {
 	}
 }
 
-sub SetValueSync {
+sub SetValue {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -115,7 +115,7 @@ sub SetValueSync {
 			push(@{$self->{'_url'}}, @{$self->CreateUrlList($value)});
 			$self->{'_finished'} = 0;
 		} elsif ($name eq 'urlFile') {
-			return 0 if (not $self->loadFile($value));
+			return 0 if (not $self->LoadFile($value));
 		}
 	} else {
 		$self->{'_object'}->log_error("Invalid value name: $name");
@@ -124,7 +124,7 @@ sub SetValueSync {
 	return 1;
 }
 
-sub ListNamesSync {
+sub ListNames {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }

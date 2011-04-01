@@ -2,47 +2,49 @@
 # Current directory is writable, directory with this script may be not (VPATH
 # builds -- make distcheck).
 
-function test_init {
-	if [ $0 == '-bash' -o $0 == 'bash' ]; then
-		if [ -z "$id" ]; then
-			echo "No id specified"
-			return
-		fi
-		base=.
-	else
-		base=`dirname "$0"`
-		id=`basename "$0" .sh`
-	fi
-	base=`readlink -f "$base"`'/..'
-	base=`readlink -f "$base"`
-	export LD_LIBRARY_PATH=$base/resources:$base/modules:$base/servers:$base/perl/.libs:$LD_LIBRARY_PATH
-	export PERL5LIB=$base/perl:$base/modules/perl:$PERL5LIB
-	HECTOR_HOST=localhost:1101
+base=$BASH_SOURCE
+base=`dirname "$base"`
+base=`readlink -f "$base"`'/..'
+test_base=`readlink -f "$base"`
 
-	# hector helper functions
-	. hector_common.sh
+export "LD_LIBRARY_PATH=$test_base/resources:$test_base/modules:$test_base/servers:$test_base/perl/.libs:$test_base/python/.libs:$LD_LIBRARY_PATH"
+export "PERL5LIB=$test_base/perl:$test_base/modules/perl:$test_base/resources/perl:$PERL5LIB"
+export "PYTHONPATH=$test_base/python:$test_base/modules/python:$test_base/resource/python:$PYTHONPATH"
+HECTOR_HOST=localhost:1101
 
-	rm -f test.log
-}
-
-function test_finish {
-	if [ -L test.log.props ]; then
-		rm test.log.props;
-	fi
-}
+# hector helper functions
+. hector_common.sh
 
 function test_server_start {
-	ln -s $base/test/test.log.props . 2>/dev/null
-	if [ "$USE_VALGRIND" == 1 ]; then
-		libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --num-callers=20 --trace-children=yes --log-file=hector_server.log.valgrind $base/src/hector_server -c $base/test/${id}_config.xml test &
-                hector_client_wait_dontfail test_processing_engine.run 0
-        else
-		hector_server_start $base/test/${id}_config.xml test
-        fi
+	id=$1
+	if [ -z "$id" ]; then
+		echo "usage: test_server_start id [args]"
+		return
+	fi
+	shift
+	hector_server_start "$test_base/test/${id}_config.xml" test $@
+	hector_client_wait_dontfail PE_test.run 0
+}
 
+function test_server_shutdown {
+	hector_server_shutdown
+}
 
+function test_server_batch {
+	id=$1
+	if [ -z "$id" ]; then
+		echo "usage: test_server_batch id"
+		return
+	fi
+	shift
+	hector_server_start "$test_base/test/${id}_config.xml" -f -b test $@
 }
 
 function test_compare_result {
-	diff -u $base/test/$id.log.correct $id.log.test
+	id=$1
+	if [ -z "$id" ]; then
+		echo "usage: test_compare_result id"
+		return
+	fi
+	diff -u "$test_base/test/${id}.log.correct" "${id}.log.result"
 }

@@ -33,23 +33,15 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	allowedContentTypes.push_back("application/msword");
 
 	values = new ObjectValues<Fetcher>(this);
-	values->AddGetter("items", &Fetcher::GetItems);
-	values->AddGetter("minServerRelax", &Fetcher::GetMinServerRelax);
-	values->AddSetter("minServerRelax", &Fetcher::SetMinServerRelax);
-	values->AddGetter("timeout", &Fetcher::GetTimeout);
-	values->AddSetter("timeout", &Fetcher::SetTimeout);
-	values->AddGetter("from", &Fetcher::GetFrom);
-	values->AddSetter("from", &Fetcher::SetFrom, true);
-	values->AddGetter("userAgent", &Fetcher::GetUserAgent);
-	values->AddSetter("userAgent", &Fetcher::SetUserAgent, true);
-	values->AddGetter("maxRequests", &Fetcher::GetMaxRequests);
-	values->AddSetter("maxRequests", &Fetcher::SetMaxRequests, true);
-	values->AddGetter("maxContentLength", &Fetcher::GetMaxContentLength);
-	values->AddSetter("maxContentLength", &Fetcher::SetMaxContentLength);
-	values->AddGetter("timeTick", &Fetcher::GetTimeTick);
-	values->AddSetter("timeTick", &Fetcher::SetTimeTick);
-	values->AddGetter("allowedContentTypes", &Fetcher::GetAllowedContentTypes);
-	values->AddSetter("allowedContentTypes", &Fetcher::SetAllowedContentTypes);
+	values->Add("items", &Fetcher::GetItems);
+	values->Add("minServerRelax", &Fetcher::GetMinServerRelax, &Fetcher::SetMinServerRelax);
+	values->Add("timeout", &Fetcher::GetTimeout, &Fetcher::SetTimeout);
+	values->Add("from", &Fetcher::GetFrom, &Fetcher::SetFrom, true);
+	values->Add("userAgent", &Fetcher::GetUserAgent, &Fetcher::SetUserAgent, true);
+	values->Add("maxRequests", &Fetcher::GetMaxRequests, &Fetcher::SetMaxRequests, true);
+	values->Add("maxContentLength", &Fetcher::GetMaxContentLength, &Fetcher::SetMaxContentLength);
+	values->Add("timeTick", &Fetcher::GetTimeTick, &Fetcher::SetTimeTick);
+	values->Add("allowedContentTypes", &Fetcher::GetAllowedContentTypes, &Fetcher::SetAllowedContentTypes);
 
 	curlInfo.logger = this->logger;
 }
@@ -308,7 +300,7 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 		return realsize;
 
 	string s((char *)ptr, realsize);
-	chomp(&s);
+	chomp(s);
 	// end of headers
 	if (s.length() == 0)
 		return realsize;

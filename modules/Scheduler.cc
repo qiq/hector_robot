@@ -16,9 +16,8 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 	outputDir = NULL;
 
 	values = new ObjectValues<Scheduler>(this);
-	values->AddGetter("items", &Scheduler::GetItems);
-	values->AddGetter("outputDir", &Scheduler::GetOutputDir);
-	values->AddSetter("outputDir", &Scheduler::SetOutputDir);
+	values->Add("items", &Scheduler::GetItems);
+	values->Add("outputDir", &Scheduler::GetOutputDir, &Scheduler::SetOutputDir);
 
 	currentTime = 0;
 	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");

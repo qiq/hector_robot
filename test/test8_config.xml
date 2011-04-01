@@ -8,7 +8,15 @@ test8: Load and save WebSiteResources in the WebSiteManager.
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
-		<logConfig>test.log.props</logConfig>
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=test8.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
 		<resources>
 			<Resource id="R_test" lib="WebResource.la"/>
 			<Resource id="R_test2" lib="WebSiteResource.la"/>
@@ -72,7 +80,9 @@ test8: Load and save WebSiteResources in the WebSiteManager.
 			<Processor id="P_dump">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_dump_load" lib="Load.la"/>
+					<Module id="M_dump_load" lib="Load.la">
+						<param name="wait" value="true"/>
+					</Module>
 					<Module id="M_dump_dump" lib="Dump.la"/>
 					<Module id="M_dump_output" lib="TestOutput.la"/>
 				</modules>

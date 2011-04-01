@@ -29,17 +29,12 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	negativeTTL = 86400;
 
 	values = new ObjectValues<DnsResolver>(this);
-	values->AddGetter("items", &DnsResolver::GetItems);
-	values->AddGetter("maxRequests", &DnsResolver::GetMaxRequests);
-	values->AddSetter("maxRequests", &DnsResolver::SetMaxRequests, true);
-	values->AddGetter("timeTick", &DnsResolver::GetTimeTick);
-	values->AddSetter("timeTick", &DnsResolver::SetTimeTick);
-	values->AddGetter("forwardServer", &DnsResolver::GetForwardServer);
-	values->AddSetter("forwardServer", &DnsResolver::SetForwardServer);
-	values->AddGetter("forwardPort", &DnsResolver::GetForwardPort);
-	values->AddSetter("forwardPort", &DnsResolver::SetForwardPort);
-	values->AddGetter("negativeTTL", &DnsResolver::GetNegativeTTL);
-	values->AddSetter("negativeTTL", &DnsResolver::SetNegativeTTL);
+	values->Add("items", &DnsResolver::GetItems);
+	values->Add("maxRequests", &DnsResolver::GetMaxRequests, &DnsResolver::SetMaxRequests, true);
+	values->Add("timeTick", &DnsResolver::GetTimeTick, &DnsResolver::SetTimeTick);
+	values->Add("forwardServer", &DnsResolver::GetForwardServer, &DnsResolver::SetForwardServer);
+	values->Add("forwardPort", &DnsResolver::GetForwardPort, &DnsResolver::SetForwardPort);
+	values->Add("negativeTTL", &DnsResolver::GetNegativeTTL, &DnsResolver::SetNegativeTTL);
 }
 
 DnsResolver::~DnsResolver() {

@@ -18,13 +18,10 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	allowedSchemesSet.insert("http");
 
 	values = new ObjectValues<UrlExtractor>(this);
-	values->AddGetter("items", &UrlExtractor::GetItems);
-	values->AddGetter("newUrlStatus", &UrlExtractor::GetNewUrlStatus);
-	values->AddSetter("newUrlStatus", &UrlExtractor::SetNewUrlStatus);
-	values->AddGetter("imageLinks", &UrlExtractor::GetImageLinks);
-	values->AddSetter("imageLinks", &UrlExtractor::SetImageLinks);
-	values->AddGetter("allowedSchemes", &UrlExtractor::GetAllowedSchemes);
-	values->AddSetter("allowedSchemes", &UrlExtractor::SetAllowedSchemes);
+	values->Add("items", &UrlExtractor::GetItems);
+	values->Add("newUrlStatus", &UrlExtractor::GetNewUrlStatus, &UrlExtractor::SetNewUrlStatus);
+	values->Add("imageLinks", &UrlExtractor::GetImageLinks, &UrlExtractor::SetImageLinks);
+	values->Add("allowedSchemes", &UrlExtractor::GetAllowedSchemes, &UrlExtractor::SetAllowedSchemes);
 
 	scanner_create(&state, &scanner);
 

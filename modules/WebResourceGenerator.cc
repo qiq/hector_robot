@@ -16,11 +16,9 @@ WebResourceGenerator::WebResourceGenerator(ObjectRegistry *objects, const char *
 	idPrefix = NULL;
 
 	values = new ObjectValues<WebResourceGenerator>(this);
-	values->AddGetter("items", &WebResourceGenerator::GetItems);
-	values->AddGetter("maxItems", &WebResourceGenerator::GetMaxItems);
-	values->AddSetter("maxItems", &WebResourceGenerator::SetMaxItems, true);
-	values->AddGetter("idPrefix", &WebResourceGenerator::GetIdPrefix);
-	values->AddSetter("idPrefix", &WebResourceGenerator::SetIdPrefix);
+	values->Add("items", &WebResourceGenerator::GetItems);
+	values->Add("maxItems", &WebResourceGenerator::GetMaxItems, &WebResourceGenerator::SetMaxItems, true);
+	values->Add("idPrefix", &WebResourceGenerator::GetIdPrefix, &WebResourceGenerator::SetIdPrefix);
 }
 
 WebResourceGenerator::~WebResourceGenerator() {

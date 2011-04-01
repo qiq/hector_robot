@@ -8,7 +8,15 @@ test1: Create WebResources, dump and consume them.
 		<threads>1</threads>
 		<serverHost>*</serverHost>
 		<serverPort>1101</serverPort>
-		<logConfig>test.log.props</logConfig>
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=test1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
 		<resources>
 			<Resource id="R_test" lib="WebResource.la"/>
 		</resources>
@@ -24,7 +32,7 @@ test1: Create WebResources, dump and consume them.
 							http://www.nicnevime.cz:443/
 							https://www.vimeovine.cz/ ]]>
 						</param>
-						<param name="urlFile" value="test1.data.url"/>
+						<param name="urlFile" value="$1"/>
 					</Module>
 					<Module id="M_dump" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>

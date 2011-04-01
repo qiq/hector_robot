@@ -53,7 +53,7 @@ sub GetType {
 	return $Hector::Module::SIMPLE;
 }
 
-sub GetValueSync {
+sub GetValue {
 	my ($self, $name) = @_;
 	if (exists $self->{$name}) {
 		return $self->{$name};
@@ -63,7 +63,7 @@ sub GetValueSync {
 	}
 }
 
-sub SetValueSync {
+sub SetValue {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
 		$self->{$name} = $value;
@@ -74,7 +74,7 @@ sub SetValueSync {
 	return 1;
 }
 
-sub ListNamesSync {
+sub ListNames {
 	my ($self) = @_;
 	return [ grep { $_ !~ /^_/ } keys %{$self} ];
 }

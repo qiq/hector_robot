@@ -4,12 +4,12 @@
 #include "robot_common.h"
 %}
 
-bool parseLabel(std::string *data, std::string *value);
-bool parseString(std::string *data, std::string *value, char separator);
-bool parseInt(std::string *data, int *value);
-bool parseLong(std::string *data, long *value);
-bool parseIp4(std::string *data, IpAddr *value);
-bool parseIp6(std::string *data, IpAddr *value);
+bool ParseLabel(std::string &data, std::string &value);
+bool ParseString(std::string &data, std::string &value, char separator);
+bool ParseInt(std::string &data, int &value);
+bool ParseLong(std::string &data, long &value);
+bool ParseIp4(std::string &data, IpAddr &value);
+bool ParseIp6(std::string &data, IpAddr &value);
 
 long CountCksum(const char *data, int size);
 

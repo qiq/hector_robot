@@ -89,23 +89,15 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	robotsNegativeTTL = 86400;
 
 	values = new ObjectValues<WebSiteManager>(this);
-	values->AddGetter("items", &WebSiteManager::GetItems);
-	values->AddGetter("maxRequests", &WebSiteManager::GetMaxRequests);
-	values->AddSetter("maxRequests", &WebSiteManager::SetMaxRequests, true);
-	values->AddGetter("timeTick", &WebSiteManager::GetTimeTick);
-	values->AddSetter("timeTick", &WebSiteManager::SetTimeTick);
-	values->AddGetter("dnsEngine", &WebSiteManager::GetDnsEngine);
-	values->AddSetter("dnsEngine", &WebSiteManager::SetDnsEngine);
-	values->AddGetter("robotsEngine", &WebSiteManager::GetRobotsEngine);
-	values->AddSetter("robotsEngine", &WebSiteManager::SetRobotsEngine);
-	values->AddGetter("load", &WebSiteManager::GetLoad);
-	values->AddSetter("load", &WebSiteManager::SetLoad);
-	values->AddGetter("save", &WebSiteManager::GetSave);
-	values->AddSetter("save", &WebSiteManager::SetSave);
-	values->AddGetter("robotsMaxRedirects", &WebSiteManager::GetRobotsMaxRedirects);
-	values->AddSetter("robotsMaxRedirects", &WebSiteManager::SetRobotsMaxRedirects);
-	values->AddGetter("robotsNegativeTTL", &WebSiteManager::GetRobotsNegativeTTL);
-	values->AddSetter("robotsNegativeTTL", &WebSiteManager::SetRobotsNegativeTTL);
+	values->Add("items", &WebSiteManager::GetItems);
+	values->Add("maxRequests", &WebSiteManager::GetMaxRequests, &WebSiteManager::SetMaxRequests, true);
+	values->Add("timeTick", &WebSiteManager::GetTimeTick, &WebSiteManager::SetTimeTick);
+	values->Add("dnsEngine", &WebSiteManager::GetDnsEngine, &WebSiteManager::SetDnsEngine);
+	values->Add("robotsEngine", &WebSiteManager::GetRobotsEngine, &WebSiteManager::SetRobotsEngine);
+	values->Add("load", &WebSiteManager::GetLoad, &WebSiteManager::SetLoad);
+	values->Add("save", &WebSiteManager::GetSave, &WebSiteManager::SetSave);
+	values->Add("robotsMaxRedirects", &WebSiteManager::GetRobotsMaxRedirects, &WebSiteManager::SetRobotsMaxRedirects);
+	values->Add("robotsNegativeTTL", &WebSiteManager::GetRobotsNegativeTTL, &WebSiteManager::SetRobotsNegativeTTL);
 
 	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
