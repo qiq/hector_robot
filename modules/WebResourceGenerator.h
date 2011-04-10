@@ -21,7 +21,7 @@ Status:
 #include <string>
 #include <vector>
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 
 class WebResourceGenerator : public Module {
 public:
@@ -42,10 +42,10 @@ private:
 	char *GetIdPrefix(const char *name);
 	void SetIdPrefix(const char *name, const char *value);
 
-	ObjectValues<WebResourceGenerator> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<WebResourceGenerator> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	int typeId;		// type of resource to generate (WebResource)
 };
@@ -54,16 +54,16 @@ inline Module::Type WebResourceGenerator::GetType() {
 	return INPUT;
 }
 
-inline char *WebResourceGenerator::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *WebResourceGenerator::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool WebResourceGenerator::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool WebResourceGenerator::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *WebResourceGenerator::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *WebResourceGenerator::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

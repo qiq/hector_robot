@@ -29,8 +29,10 @@
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "MemoryPool.h"
-#include "ProtobufResource.h"
+#include "Resource.h"
 #include "ResourceAttrInfoT.h"
+#include "ResourceInputStream.h"
+#include "ResourceOutputStream.h"
 #include "RWLock.h"
 #include "WebSiteResource.pb.h"
 #include "WebSitePath.h"
@@ -41,7 +43,7 @@
 
 #define MAX_PATH_SIZE 2048
 
-class WebSiteResource : public ProtobufResource {
+class WebSiteResource : public Resource {
 public:
 	WebSiteResource();
 	WebSiteResource(const WebSiteResource &wsr);
@@ -50,11 +52,8 @@ public:
 	Resource *Clone();
 	void Clear();
 	// save and restore resource
-	std::string *Serialize();
-	int GetSerializedSize();
-	bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
-	bool Deserialize(const char *data, int size);
-	bool Deserialize(google::protobuf::io::CodedInputStream *input);
+	bool Serialize(ResourceOutputStream &output);
+	bool Deserialize(ResourceInputStream &input);
 	// get info about a resource field
 	std::vector<ResourceAttrInfo*> *GetAttrInfoList();
 	// type id of a resource (to be used by ResourceRegistry::CreateResource(typeid))
@@ -192,106 +191,72 @@ inline int WebSiteResource::GetSize() {
 
 inline int WebSiteResource::GetId() {
 	lock.LockRead();
-	int result = id;
+	int result = Resource::GetId();
 	lock.Unlock();
 	return result;
 }
 
 inline void WebSiteResource::SetId(int id) {
 	lock.LockWrite();
-	r.set_id(id);
+	Resource::SetId(id);
 	lock.Unlock();
 }
 
 inline int WebSiteResource::GetStatus() {
 	lock.LockRead();
-	int result = status;
+	int result = Resource::GetStatus();
 	lock.Unlock();
 	return result;
 }
 
 inline void WebSiteResource::SetStatus(int status) {
 	lock.LockWrite();
-	this->status = status;
+	Resource::SetStatus(status);
 	lock.Unlock();
 }
 
 inline void WebSiteResource::SetAttachedResource(Resource *attachedResource) {
 	lock.LockWrite();
-        this->attachedResource = attachedResource;
+	Resource::SetAttachedResource(attachedResource);
 	lock.Unlock();
 }
 
 inline Resource *WebSiteResource::GetAttachedResource() {
 	lock.LockRead();
-        Resource *result = attachedResource;
+        Resource *result = Resource::GetAttachedResource();
 	lock.Unlock();
 	return result;
 }
 
 inline void WebSiteResource::ClearAttachedResource() {
 	lock.LockWrite();
-        attachedResource = NULL;
+	Resource::SetAttachedResource(NULL);
 	lock.Unlock();
 }
 
-inline std::string *WebSiteResource::Serialize() {
+inline bool WebSiteResource::Serialize(ResourceOutputStream &output) {
 	lock.LockRead();
+	// Save IpAddr and fill paths1
 	SaveIpAddr();
 	// fill protocol-buffers space using JArray
 	JarrayToProtobuf();
-	r.set_id(GetId());
-	r.set_status(GetStatus());
 
-	std::string *result = new std::string();
-	r.SerializeToString(result);
-
-	r.clear_paths();
-	lock.Unlock();
-	return result;
-}
-
-inline int WebSiteResource::GetSerializedSize() {
-	lock.LockRead();
-	SaveIpAddr();
-	// fill protocol-buffers space using JArray
-	JarrayToProtobuf();
-	r.set_id(GetId());
-	r.set_status(GetStatus());
-
-	int result = r.ByteSize();
-
-	lock.Unlock();
-	return result;
-}
-
-inline bool WebSiteResource::SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output) {
-	lock.LockRead();
-	// IpAddr is already saved, paths are filled
-
-	r.SerializeWithCachedSizes(output);
+	output.WriteVarint32(r.ByteSize());
+	r.SerializeWithCachedSizes(output.GetCodedOutputStream());
 
 	r.clear_paths();
 	lock.Unlock();
 	return true;
 }
 
-inline bool WebSiteResource::Deserialize(const char *data, int size) {
-	bool result = r.ParseFromArray((void*)data, size);
+inline bool WebSiteResource::Deserialize(ResourceInputStream &input) {
+	uint32_t size;
+	if (!input.ReadVarint32(&size))
+                return false;
+	google::protobuf::io::CodedInputStream::Limit l = input.PushLimit(size);
+	bool result = r.ParseFromCodedStream(input.GetCodedInputStream());
+	input.PopLimit(l);
 
-	// we keep id
-	SetStatus(r.status());
-	ProtobufToJarray();
-	r.clear_paths();
-	LoadIpAddr();
-	return result;
-}
-
-inline bool WebSiteResource::Deserialize(google::protobuf::io::CodedInputStream *input) {
-	bool result = r.ParseFromCodedStream(input);
-
-	// we keep id
-	SetStatus(r.status());
 	ProtobufToJarray();
 	r.clear_paths();
 	LoadIpAddr();

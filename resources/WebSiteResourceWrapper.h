@@ -7,7 +7,7 @@
 
 #include <config.h>
 
-#include "ProtobufResource.h"
+#include "Resource.h"
 
 extern "C" Resource* create();
 

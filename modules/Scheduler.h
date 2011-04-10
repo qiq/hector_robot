@@ -21,10 +21,10 @@ untouched
 #include <queue>
 #include <string>
 #include <tr1/unordered_map>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "common.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
+#include "ResourceOutputStream.h"
 #include "WebResource.h"
 
 class Scheduler : public Module {
@@ -43,15 +43,14 @@ private:
 	char *GetOutputDir(const char *name);
 	void SetOutputDir(const char *name, const char *value);
 
-	ObjectValues<Scheduler> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<Scheduler> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	struct OpenFile {
 		int fd;
-		google::protobuf::io::FileOutputStream* file;
-		google::protobuf::io::CodedOutputStream* stream;
+		ResourceOutputStream* stream;
 	};
 
 	uint32_t currentTime;
@@ -66,16 +65,16 @@ inline Module::Type Scheduler::GetType() {
 	return SIMPLE;
 }
 
-inline char *Scheduler::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *Scheduler::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool Scheduler::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool Scheduler::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *Scheduler::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *Scheduler::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

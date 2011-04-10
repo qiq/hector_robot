@@ -1,3 +1,6 @@
+- 
+
+----------------------
 - umet processit relativni Location
 	- detekce relativniho URL (://) a resolve
 	- otestovat na real datech (robot.sh)

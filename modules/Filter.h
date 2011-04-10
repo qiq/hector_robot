@@ -1,5 +1,5 @@
 /**
- * Filter Resource according to various field values.
+ * Filter Resource according to various field props.
  */
 
 #ifndef _MODULES_FILTER_H_
@@ -12,7 +12,7 @@
 #include <pcrecpp.h>
 #include "robot_common.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 #include "Resource.h"
 #include "ResourceAttrInfoT.h"
 
@@ -40,11 +40,11 @@ private:
 	char *GetRuleFile(const char *name);
 	void SetRuleFile(const char *name, const char *value);
 
-	ObjectValues<Filter> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
+	ObjectProperties<Filter> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
 	bool IsInitOnly(const char *name);
-	std::vector<std::string> *ListNamesSync();
+	std::vector<std::string> *ListPropertiesSync();
 
 	std::tr1::unordered_map<int, std::vector<Filter::Rule*>*> rules;
 
@@ -86,7 +86,7 @@ public:
 
 	private:
 		bool length;		// length(string)
-		std::string name;	// used for header values
+		std::string name;	// used for header props
 		// variable
 		ResourceFieldInfo *info;
 		// operator
@@ -123,8 +123,8 @@ public:
 		ActionType type;
 		// variable setters
 		ResourceFieldInfo *info;
-		// values
-		std::string name;	// used for header values
+		// props
+		std::string name;	// used for header props
 		std::string sValue;
 		int iValue;
 		long lValue;
@@ -152,20 +152,20 @@ inline Module::Type Filter::GetType() {
 	return SIMPLE;
 }
 
-inline char *Filter::GetValueSync(const char *name) {
-	return values->GetValueSync(name);
+inline char *Filter::GetPropertySync(const char *name) {
+	return props->GetPropertySync(name);
 }
 
-inline bool Filter::SetValueSync(const char *name, const char *value) {
-	return values->SetValueSync(name, value);
+inline bool Filter::SetPropertySync(const char *name, const char *value) {
+	return props->SetPropertySync(name, value);
 }
 
 inline bool Filter::isInitOnly(const char *name) {
-	return values->isInitOnly(name);
+	return props->isInitOnly(name);
 }
 
 inline std::vector<std::string> *Filter::listNamesSync() {
-	return values->listNamesSync();
+	return props->listNamesSync();
 }
 
 inline Filter::Condition::Condition() {

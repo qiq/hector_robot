@@ -28,18 +28,18 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 	forwardPort = 0;
 	negativeTTL = 86400;
 
-	values = new ObjectValues<DnsResolver>(this);
-	values->Add("items", &DnsResolver::GetItems);
-	values->Add("maxRequests", &DnsResolver::GetMaxRequests, &DnsResolver::SetMaxRequests, true);
-	values->Add("timeTick", &DnsResolver::GetTimeTick, &DnsResolver::SetTimeTick);
-	values->Add("forwardServer", &DnsResolver::GetForwardServer, &DnsResolver::SetForwardServer);
-	values->Add("forwardPort", &DnsResolver::GetForwardPort, &DnsResolver::SetForwardPort);
-	values->Add("negativeTTL", &DnsResolver::GetNegativeTTL, &DnsResolver::SetNegativeTTL);
+	props = new ObjectProperties<DnsResolver>(this);
+	props->Add("items", &DnsResolver::GetItems);
+	props->Add("maxRequests", &DnsResolver::GetMaxRequests, &DnsResolver::SetMaxRequests, true);
+	props->Add("timeTick", &DnsResolver::GetTimeTick, &DnsResolver::SetTimeTick);
+	props->Add("forwardServer", &DnsResolver::GetForwardServer, &DnsResolver::SetForwardServer);
+	props->Add("forwardPort", &DnsResolver::GetForwardPort, &DnsResolver::SetForwardPort);
+	props->Add("negativeTTL", &DnsResolver::GetNegativeTTL, &DnsResolver::SetNegativeTTL);
 }
 
 DnsResolver::~DnsResolver() {
 	assert(running.size() == 0);
-	delete values;
+	delete props;
 	ub_ctx_delete(ctx);
 	for (vector<DnsResourceInfo*>::iterator iter = unused.begin(); iter != unused.end(); ++iter)
 		delete *iter;
@@ -216,7 +216,7 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 
 	if (maxRequests <= 0) {

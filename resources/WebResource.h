@@ -14,11 +14,13 @@
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "IpAddr.h"
-#include "ProtobufResource.h"
+#include "Resource.h"
 #include "ResourceAttrInfoT.h"
+#include "ResourceInputStream.h"
+#include "ResourceOutputStream.h"
 #include "WebResource.pb.h"
 
-class WebResource : public ProtobufResource {
+class WebResource : public Resource {
 public:
 	typedef struct ParsedUrl_ {
 		Scheme		scheme;
@@ -33,14 +35,11 @@ public:
 	WebResource(const WebResource &wr);
 	~WebResource();
 	// create copy of a resource
-	ProtobufResource *Clone();
+	Resource *Clone();
 	void Clear();
 	// save and restore resource
-	std::string *Serialize();
-	int GetSerializedSize();
-	bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
-	bool Deserialize(const char *data, int size);
-	bool Deserialize(google::protobuf::io::CodedInputStream *input);
+	bool Serialize(ResourceOutputStream &output);
+	bool Deserialize(ResourceInputStream &input);
 	// get info about a resource field
 	std::vector<ResourceAttrInfo*> *GetAttrInfoList();
 	// type id of a resource (to be used by ResourceRegistry::CreateResource(typeid))
@@ -128,62 +127,32 @@ protected:
 	static log4cxx::LoggerPtr logger;
 };
 
-inline std::string *WebResource::Serialize() {
+inline bool WebResource::Serialize(ResourceOutputStream &output) {
+	// Prepare Headers, ParsedUrl, IpAddr
 	if (header_map_dirty)
 		SaveHeaders();
 	if (parsed_url_dirty)
 		SaveParsedUrl();
 	SaveIpAddr();
-	r.set_id(GetId());
-	r.set_status(GetStatus());
 
-	std::string *result = new std::string();
-	r.SerializeToString(result);
-	return result;
-}
-
-inline int WebResource::GetSerializedSize() {
-	if (header_map_dirty)
-		SaveHeaders();
-	if (parsed_url_dirty)
-		SaveParsedUrl();
-	SaveIpAddr();
-	r.set_id(GetId());
-	r.set_status(GetStatus());
-
-	return r.ByteSize();
-}
-
-inline bool WebResource::SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output) {
-	// Headers, ParsedUrl, IpAddr, r.id and r.status were set in GetSerializedSize() already
-	r.SerializeWithCachedSizes(output);
+	output.WriteVarint32(r.ByteSize());
+	r.SerializeWithCachedSizes(output.GetCodedOutputStream());
 	return true;
 }
 
-inline bool WebResource::Deserialize(const char *data, int size) {
+inline bool WebResource::Deserialize(ResourceInputStream &input) {
 	header_map_ready = 0;
 	header_map_dirty = 0;
 	parsed_url_ready = 0;
 	parsed_url_dirty = 0;
 
-	bool result = r.ParseFromArray((void*)data, size);
+	uint32_t size;
+	if (!input.ReadVarint32(&size))
+                return false;
+	google::protobuf::io::CodedInputStream::Limit l = input.PushLimit(size);
+	bool result = r.ParseFromCodedStream(input.GetCodedInputStream());
+	input.PopLimit(l);
 
-	// we keep id
-	SetStatus(r.status());
-	LoadIpAddr();
-	return result;
-}
-
-inline bool WebResource::Deserialize(google::protobuf::io::CodedInputStream *input) {
-	header_map_ready = 0;
-	header_map_dirty = 0;
-	parsed_url_ready = 0;
-	parsed_url_dirty = 0;
-
-	bool result = r.ParseFromCodedStream(input);
-
-	// we keep id
-	SetStatus(r.status());
 	LoadIpAddr();
 	return result;
 }

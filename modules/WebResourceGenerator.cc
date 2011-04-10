@@ -15,16 +15,16 @@ WebResourceGenerator::WebResourceGenerator(ObjectRegistry *objects, const char *
 	maxItems = 0;
 	idPrefix = NULL;
 
-	values = new ObjectValues<WebResourceGenerator>(this);
-	values->Add("items", &WebResourceGenerator::GetItems);
-	values->Add("maxItems", &WebResourceGenerator::GetMaxItems, &WebResourceGenerator::SetMaxItems, true);
-	values->Add("idPrefix", &WebResourceGenerator::GetIdPrefix, &WebResourceGenerator::SetIdPrefix);
+	props = new ObjectProperties<WebResourceGenerator>(this);
+	props->Add("items", &WebResourceGenerator::GetItems);
+	props->Add("maxItems", &WebResourceGenerator::GetMaxItems, &WebResourceGenerator::SetMaxItems, true);
+	props->Add("idPrefix", &WebResourceGenerator::GetIdPrefix, &WebResourceGenerator::SetIdPrefix);
 }
 
 WebResourceGenerator::~WebResourceGenerator() {
 	free(idPrefix);
 
-	delete values;
+	delete props;
 }
 
 char *WebResourceGenerator::GetItems(const char *name) {
@@ -53,7 +53,7 @@ bool WebResourceGenerator::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 	if (maxItems)
 		LOG_INFO(this, "Going to produce " << maxItems << " WebResources.");

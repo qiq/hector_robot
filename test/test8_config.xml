@@ -82,6 +82,7 @@ test8: Load and save WebSiteResources in the WebSiteManager.
 				<modules>
 					<Module id="M_dump_load" lib="Load.la">
 						<param name="wait" value="true"/>
+						<param name="resourceType" value="WebSiteResource"/>
 					</Module>
 					<Module id="M_dump_dump" lib="Dump.la"/>
 					<Module id="M_dump_output" lib="TestOutput.la"/>

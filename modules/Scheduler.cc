@@ -15,9 +15,9 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 	items = 0;
 	outputDir = NULL;
 
-	values = new ObjectValues<Scheduler>(this);
-	values->Add("items", &Scheduler::GetItems);
-	values->Add("outputDir", &Scheduler::GetOutputDir, &Scheduler::SetOutputDir);
+	props = new ObjectProperties<Scheduler>(this);
+	props->Add("items", &Scheduler::GetItems);
+	props->Add("outputDir", &Scheduler::GetOutputDir, &Scheduler::SetOutputDir);
 
 	currentTime = 0;
 	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");
@@ -25,7 +25,7 @@ Scheduler::Scheduler(ObjectRegistry *objects, const char *id, int threadIndex): 
 
 Scheduler::~Scheduler() {
 	CloseFiles();
-	delete values;
+	delete props;
 }
 
 char *Scheduler::GetItems(const char *name) {
@@ -54,7 +54,6 @@ void Scheduler::CloseFiles() {
 	// close all files
 	for (tr1::unordered_map<int, OpenFile*>::iterator iter = openFiles.begin(); iter != openFiles.end(); ++iter) {
 		delete iter->second->stream;
-		delete iter->second->file;
 		close(iter->second->fd);
 		delete iter->second;
 	}
@@ -66,7 +65,7 @@ bool Scheduler::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 
 	if (!outputDir || strlen(outputDir) < 1) {
@@ -115,8 +114,7 @@ Resource *Scheduler::ProcessSimpleSync(Resource *resource) {
 		}
 		of = new OpenFile;
 		of->fd = fd;
-		of->file = new google::protobuf::io::FileOutputStream(of->fd);
-		of->stream = new google::protobuf::io::CodedOutputStream(of->file);
+		of->stream = new ResourceOutputStream(of->fd);
 		openFiles[now+next] = of;
 	} else {
 		of = iter->second;
@@ -125,7 +123,7 @@ Resource *Scheduler::ProcessSimpleSync(Resource *resource) {
 	WebResource *other = static_cast<WebResource*>(Resource::GetRegistry()->AcquireResource(webResourceTypeId));
 	other->SetUrl(wr->GetUrl());
 	other->SetScheduled(t);
-	if (!Resource::Serialize(other, of->stream)) {
+	if (!Resource::Serialize(other, *of->stream, false)) {
 		LOG_ERROR_R(this, resource, "Error serializing resource");
 		return resource;
 	}

@@ -34,7 +34,7 @@ Status:
 #include <curl/curl.h>
 #include "common.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 #include "WebResource.h"
 
 typedef struct CurlResourceInfo_ {
@@ -126,10 +126,10 @@ private:
 	char *GetAllowedContentTypes(const char *name);
 	void SetAllowedContentTypes(const char *name, const char *value);
 
-	ObjectValues<Fetcher> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<Fetcher> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	std::queue<Resource*> *outputResources;
 };
@@ -138,16 +138,16 @@ inline Module::Type Fetcher::GetType() {
 	return MULTI;
 }
 
-inline char *Fetcher::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *Fetcher::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool Fetcher::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool Fetcher::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *Fetcher::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *Fetcher::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

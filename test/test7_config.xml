@@ -98,6 +98,7 @@ address and robots info. Save WebSiteResource and then dump it.
 				<modules>
 					<Module id="M_dump_load" lib="Load.la">
 						<param name="wait" value="true"/>
+						<param name="resourceType" value="WebSiteResource"/>
 					</Module>
 					<Module id="M_dump_dump" lib="Dump.la"/>
 					<Module id="M_dump_output" lib="TestOutput.la"/>

@@ -44,7 +44,7 @@ extern "C" {
 #include "common.h"
 #include "MemoryPool.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 #include "WebResource.h"
 #include "WebSiteResource.h"
 
@@ -116,10 +116,10 @@ private:
 	char *GetRobotsNegativeTTL(const char *name);
 	void SetRobotsNegativeTTL(const char *name, const char *value);
 
-	ObjectValues<WebSiteManager> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<WebSiteManager> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	uint32_t currentTime;
 	MemoryPool<WebSiteResource, true> *pool;
@@ -154,16 +154,16 @@ inline Module::Type WebSiteManager::GetType() {
 	return MULTI;
 }
 
-inline char *WebSiteManager::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *WebSiteManager::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool WebSiteManager::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool WebSiteManager::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *WebSiteManager::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *WebSiteManager::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

@@ -15,19 +15,19 @@ Filter::Filter(ObjectRegistry *objects, const char *id, int threadIndex): Module
 	ruleFile = NULL;
 	ruleList = NULL;
 
-	values = new ObjectValues<Filter>(this);
-	values->addGetter("items", &Filter::GetItems);
-	values->addGetter("ruleList", &Filter::GetRuleList);
-	values->addSetter("ruleList", &Filter::SetRuleList, true);
-	values->addGetter("ruleFile", &Filter::GetRuleFile);
-	values->addSetter("ruleFile", &Filter::SetRuleFile, true);
+	props = new ObjectProperties<Filter>(this);
+	props->addGetter("items", &Filter::GetItems);
+	props->addGetter("ruleList", &Filter::GetRuleList);
+	props->addSetter("ruleList", &Filter::SetRuleList, true);
+	props->addGetter("ruleFile", &Filter::GetRuleFile);
+	props->addSetter("ruleFile", &Filter::SetRuleFile, true);
 }
 
 Filter::~Filter() {
 	free(ruleFile);
 	free(ruleList);
 
-	delete values;
+	delete props;
 
 	for (tr1::unordered_map<int, vector<Rule*>*>::iterator iter = rules.begin(); iter != rules.end(); ++iter) {
 		for (vector<Rule*>::iterator iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2) {
@@ -63,7 +63,7 @@ bool Filter::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 	return true;
 }

@@ -5,16 +5,13 @@ import "Scheme.proto";
 option optimize_for = SPEED;
 
 message WebResource {
-	required uint32 id = 1;			// id of a resource
-	required int32 status = 2;		// status to be used by filters
-
-	optional string url = 3;		// complete URL
-	optional fixed32 ip4_addr = 4;		// IPv4 address
-	optional fixed64 ip6_addr_1 = 5;	// IPv6 address, part 1
-	optional fixed64 ip6_addr_2 = 6;	// IPv6 address, part 2
-	repeated string header_names = 7;	// response header field names
-	repeated string header_values = 8;	// response header field values
-	optional int32 redirect_count = 9;	// number of redirects
-	optional bytes content = 10;		// content of a resource
-	optional fixed32 scheduled = 11;	// last touched this WR
+	optional string url = 1;		// complete URL
+	optional fixed32 ip4_addr = 2;		// IPv4 address
+	optional fixed64 ip6_addr_1 = 3;	// IPv6 address, part 1
+	optional fixed64 ip6_addr_2 = 4;	// IPv6 address, part 2
+	repeated string header_names = 5;	// response header field names
+	repeated string header_values = 6;	// response header field values
+	optional int32 redirect_count = 7;	// number of redirects
+	optional bytes content = 8;		// content of a resource
+	optional fixed32 scheduled = 9;		// last touched this WR
 }

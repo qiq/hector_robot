@@ -7,6 +7,7 @@
 
 class TestResource;             // for Perl SWIG (otherwise does not compile
 class TestProtobufResource;
+class MarkerResource;
 class PerlResource;
 %}
 

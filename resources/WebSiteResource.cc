@@ -11,7 +11,7 @@ WebSiteResource::WebSiteResource() {
 	paths = NULL;
 }
 
-WebSiteResource::WebSiteResource(const WebSiteResource &wsr) : ProtobufResource(wsr), lock(wsr.lock), r(wsr.r), paths(NULL) {
+WebSiteResource::WebSiteResource(const WebSiteResource &wsr) : Resource(wsr), lock(wsr.lock), r(wsr.r), paths(NULL) {
 	ProtobufToJarray();
 	r.clear_paths();
 }

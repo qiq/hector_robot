@@ -32,16 +32,16 @@ Fetcher::Fetcher(ObjectRegistry *objects, const char *id, int threadIndex): Modu
 	allowedContentTypes.push_back("text/plain");
 	allowedContentTypes.push_back("application/msword");
 
-	values = new ObjectValues<Fetcher>(this);
-	values->Add("items", &Fetcher::GetItems);
-	values->Add("minServerRelax", &Fetcher::GetMinServerRelax, &Fetcher::SetMinServerRelax);
-	values->Add("timeout", &Fetcher::GetTimeout, &Fetcher::SetTimeout);
-	values->Add("from", &Fetcher::GetFrom, &Fetcher::SetFrom, true);
-	values->Add("userAgent", &Fetcher::GetUserAgent, &Fetcher::SetUserAgent, true);
-	values->Add("maxRequests", &Fetcher::GetMaxRequests, &Fetcher::SetMaxRequests, true);
-	values->Add("maxContentLength", &Fetcher::GetMaxContentLength, &Fetcher::SetMaxContentLength);
-	values->Add("timeTick", &Fetcher::GetTimeTick, &Fetcher::SetTimeTick);
-	values->Add("allowedContentTypes", &Fetcher::GetAllowedContentTypes, &Fetcher::SetAllowedContentTypes);
+	props = new ObjectProperties<Fetcher>(this);
+	props->Add("items", &Fetcher::GetItems);
+	props->Add("minServerRelax", &Fetcher::GetMinServerRelax, &Fetcher::SetMinServerRelax);
+	props->Add("timeout", &Fetcher::GetTimeout, &Fetcher::SetTimeout);
+	props->Add("from", &Fetcher::GetFrom, &Fetcher::SetFrom, true);
+	props->Add("userAgent", &Fetcher::GetUserAgent, &Fetcher::SetUserAgent, true);
+	props->Add("maxRequests", &Fetcher::GetMaxRequests, &Fetcher::SetMaxRequests, true);
+	props->Add("maxContentLength", &Fetcher::GetMaxContentLength, &Fetcher::SetMaxContentLength);
+	props->Add("timeTick", &Fetcher::GetTimeTick, &Fetcher::SetTimeTick);
+	props->Add("allowedContentTypes", &Fetcher::GetAllowedContentTypes, &Fetcher::SetAllowedContentTypes);
 
 	curlInfo.logger = this->logger;
 }
@@ -63,7 +63,7 @@ Fetcher::~Fetcher() {
 	free(userAgent);
 	free(from);
 
-	delete values;
+	delete props;
 }
 
 char *Fetcher::GetItems(const char *name) {
@@ -478,7 +478,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 
 	if (maxRequests <= 0) {

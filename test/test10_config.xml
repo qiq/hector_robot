@@ -137,6 +137,7 @@ Run Scheduler.
 				<modules>
 					<Module id="M_dump_load" lib="Load.la">
 						<param name="wait" value="true"/>
+						<param name="resourceType" value="WebResource"/>
 					</Module>
 					<Module id="M_dump_dump" lib="Dump.la"/>
 					<Module id="M_dump_output" lib="TestOutput.la"/>

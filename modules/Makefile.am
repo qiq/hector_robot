@@ -4,6 +4,8 @@ AM_CXXFLAGS = @LIBXML2_CFLAGS@ @LOG4CXX_CFLAGS@ @PROTOBUF_CFLAGS@ @HECTOR_CORE_C
 AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@ -module -avoid-version
 AM_LIBTOOLFLAGS = --tag=disable-static
 
+BUILT_SOURCES =
+
 modulesdir = $(libdir)/hector/modules
 modules_LTLIBRARIES = WebResourceGenerator.la Fetcher.la DnsResolver.la WebSiteManager.la UrlExtractor.la Scheduler.la #Filter.la
 
@@ -36,6 +38,7 @@ UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 UrlExtractor_la_LIBADD = ../resources/libWebResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
 UrlExtractorLexer.cc: UrlExtractorLexer.l
 	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
+BUILT_SOURCES += UrlExtractorLexer.cc
 
 Scheduler_la_SOURCES = Scheduler.h Scheduler.cc
 Scheduler_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la

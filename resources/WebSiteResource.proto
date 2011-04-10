@@ -15,21 +15,18 @@ message WebSitePath {
 }
 
 message WebSiteResource {
-	required uint32 id = 1;			// id of a resource
-	required int32 status = 2;		// status to be used by filters
+	optional Scheme url_scheme = 1;		// HTTP or HTTPS
+	required string url_host = 2;		// host name (as seen in URL)
+	optional int32 url_port = 3;		// port value
+	optional fixed32 ip4_addr = 4;		// IPv4 address (result of DNS query)
+	optional fixed64 ip6_addr_1 = 5;	// IPv6 address, part 1
+	optional fixed64 ip6_addr_2 = 6;	// IPv6 address, part 2
+	optional fixed32 ip_addr_expire = 7;	// IP address DNS mapping expire time
 
-	optional Scheme url_scheme = 3;		// HTTP or HTTPS
-	required string url_host = 4;		// host name (as seen in URL)
-	optional int32 url_port = 5;		// port value
-	optional fixed32 ip4_addr = 6;		// IPv4 address (result of DNS query)
-	optional fixed64 ip6_addr_1 = 7;	// IPv6 address, part 1
-	optional fixed64 ip6_addr_2 = 8;	// IPv6 address, part 2
-	optional fixed32 ip_addr_expire = 9;	// IP address DNS mapping expire time
+	repeated string allow_urls = 8;	// list of allowed URLs
+	repeated string disallow_urls = 9;	// list of disallowed URLs
+	optional fixed32 robots_expire = 10;	// when robots.txt will expire
+	optional int32 robots_redirect_count = 11;	// number of redirects while fetching robots.txt
 
-	repeated string allow_urls = 10;	// list of allowed URLs
-	repeated string disallow_urls = 11;	// list of disallowed URLs
-	optional fixed32 robots_expire = 12;	// when robots.txt will expire
-	optional int32 robots_redirect_count = 13;	// number of redirects while fetching robots.txt
-
-	repeated WebSitePath paths = 14;	// all paths
+	repeated WebSitePath paths = 12;	// all paths
 }

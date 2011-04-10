@@ -14,11 +14,8 @@ public:
         ~WebResource();
         Resource *Clone();
         void Clear();
-        std::string *Serialize();
-        int GetSerializedSize();
-        bool SerializeWithCachedSize(google::protobuf::io::CodedOutputStream *output);
-        bool Deserialize(const char *data, int size);
-        bool Deserialize(google::protobuf::io::CodedInputStream *input);
+        bool Serialize(ResourceOutputStream &output);
+        bool Deserialize(ResourceInputStream &input);
         int GetTypeId();
         const char *GetTypeString(bool terse = false);
         const char *GetObjectName();

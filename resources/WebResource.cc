@@ -15,7 +15,7 @@ WebResource::WebResource() {
 	parsed_url_dirty = 0;
 }
 
-WebResource::WebResource(const WebResource &wr) : ProtobufResource(wr), r(wr.r), headers(wr.headers) {
+WebResource::WebResource(const WebResource &wr) : Resource(wr), r(wr.r), headers(wr.headers) {
 	header_map_ready = 0;
 	header_map_dirty = 0;
 	parsed_url_ready = 0;
@@ -25,7 +25,7 @@ WebResource::WebResource(const WebResource &wr) : ProtobufResource(wr), r(wr.r),
 WebResource::~WebResource() {
 }
 
-ProtobufResource *WebResource::Clone() {
+Resource *WebResource::Clone() {
 	return new WebResource(*this);
 }
 

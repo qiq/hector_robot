@@ -17,11 +17,11 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 	allowedSchemes = "http";
 	allowedSchemesSet.insert("http");
 
-	values = new ObjectValues<UrlExtractor>(this);
-	values->Add("items", &UrlExtractor::GetItems);
-	values->Add("newUrlStatus", &UrlExtractor::GetNewUrlStatus, &UrlExtractor::SetNewUrlStatus);
-	values->Add("imageLinks", &UrlExtractor::GetImageLinks, &UrlExtractor::SetImageLinks);
-	values->Add("allowedSchemes", &UrlExtractor::GetAllowedSchemes, &UrlExtractor::SetAllowedSchemes);
+	props = new ObjectProperties<UrlExtractor>(this);
+	props->Add("items", &UrlExtractor::GetItems);
+	props->Add("newUrlStatus", &UrlExtractor::GetNewUrlStatus, &UrlExtractor::SetNewUrlStatus);
+	props->Add("imageLinks", &UrlExtractor::GetImageLinks, &UrlExtractor::SetImageLinks);
+	props->Add("allowedSchemes", &UrlExtractor::GetAllowedSchemes, &UrlExtractor::SetAllowedSchemes);
 
 	scanner_create(&state, &scanner);
 
@@ -31,7 +31,7 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 UrlExtractor::~UrlExtractor() {
 	scanner_destroy(scanner);
 
-	delete values;
+	delete props;
 }
 
 char *UrlExtractor::GetItems(const char *name) {
@@ -89,7 +89,7 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 	if (!params)
 		return true;
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 
 	return true;

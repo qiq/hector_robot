@@ -25,7 +25,7 @@ extern "C" {
 #include "common.h"
 #include "IpAddr.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 #include "Resource.h"
 
 class DnsResolver;
@@ -67,10 +67,10 @@ private:
 	char *GetNegativeTTL(const char *name);
 	void SetNegativeTTL(const char *name, const char *value);
 
-	ObjectValues<DnsResolver> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<DnsResolver> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	struct ub_ctx* ctx;	// unbound context
 	int fd;			// file descriptor we are waiting for read
@@ -86,16 +86,16 @@ inline Module::Type DnsResolver::GetType() {
 	return MULTI;
 }
 
-inline char *DnsResolver::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *DnsResolver::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool DnsResolver::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool DnsResolver::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *DnsResolver::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *DnsResolver::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

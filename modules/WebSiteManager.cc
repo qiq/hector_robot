@@ -5,9 +5,10 @@
 
 #include <fcntl.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/select.h>
-#include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -88,16 +89,16 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 	robotsMaxRedirects = 5;
 	robotsNegativeTTL = 86400;
 
-	values = new ObjectValues<WebSiteManager>(this);
-	values->Add("items", &WebSiteManager::GetItems);
-	values->Add("maxRequests", &WebSiteManager::GetMaxRequests, &WebSiteManager::SetMaxRequests, true);
-	values->Add("timeTick", &WebSiteManager::GetTimeTick, &WebSiteManager::SetTimeTick);
-	values->Add("dnsEngine", &WebSiteManager::GetDnsEngine, &WebSiteManager::SetDnsEngine);
-	values->Add("robotsEngine", &WebSiteManager::GetRobotsEngine, &WebSiteManager::SetRobotsEngine);
-	values->Add("load", &WebSiteManager::GetLoad, &WebSiteManager::SetLoad);
-	values->Add("save", &WebSiteManager::GetSave, &WebSiteManager::SetSave);
-	values->Add("robotsMaxRedirects", &WebSiteManager::GetRobotsMaxRedirects, &WebSiteManager::SetRobotsMaxRedirects);
-	values->Add("robotsNegativeTTL", &WebSiteManager::GetRobotsNegativeTTL, &WebSiteManager::SetRobotsNegativeTTL);
+	props = new ObjectProperties<WebSiteManager>(this);
+	props->Add("items", &WebSiteManager::GetItems);
+	props->Add("maxRequests", &WebSiteManager::GetMaxRequests, &WebSiteManager::SetMaxRequests, true);
+	props->Add("timeTick", &WebSiteManager::GetTimeTick, &WebSiteManager::SetTimeTick);
+	props->Add("dnsEngine", &WebSiteManager::GetDnsEngine, &WebSiteManager::SetDnsEngine);
+	props->Add("robotsEngine", &WebSiteManager::GetRobotsEngine, &WebSiteManager::SetRobotsEngine);
+	props->Add("load", &WebSiteManager::GetLoad, &WebSiteManager::SetLoad);
+	props->Add("save", &WebSiteManager::GetSave, &WebSiteManager::SetSave);
+	props->Add("robotsMaxRedirects", &WebSiteManager::GetRobotsMaxRedirects, &WebSiteManager::SetRobotsMaxRedirects);
+	props->Add("robotsNegativeTTL", &WebSiteManager::GetRobotsNegativeTTL, &WebSiteManager::SetRobotsNegativeTTL);
 
 	pool = new MemoryPool<WebSiteResource, true>(10*1024);
 
@@ -105,7 +106,7 @@ WebSiteManager::WebSiteManager(ObjectRegistry *objects, const char *id, int thre
 }
 
 WebSiteManager::~WebSiteManager() {
-	delete values;
+	delete props;
 	delete pool;
 	free(dnsEngine);
 	free(robotsEngine);
@@ -206,7 +207,7 @@ bool WebSiteManager::Init(vector<pair<string, string> > *params) {
 		return true;
 	}
 
-	if (!values->InitValues(params))
+	if (!props->InitProperties(params))
 		return false;
 
 	if (!dnsEngine || strlen(dnsEngine) == 0) {
@@ -358,40 +359,23 @@ bool WebSiteManager::LoadWebSiteResources(const char *filename) {
 		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
-	google::protobuf::io::FileInputStream *file = new google::protobuf::io::FileInputStream(fd);
-	google::protobuf::io::CodedInputStream *stream = new google::protobuf::io::CodedInputStream(file);
+	if (flock(fd, LOCK_SH) < 0) {
+		LOG_ERROR(this, "Cannot lock file " << filename << ": " << strerror(errno));
+		return false;
+	}
+	ResourceInputStream *stream = new ResourceInputStream(fd);
 
-	bool result = true;
 	while (1) {
 		WebSiteResource *wsr = pool->Alloc();
-		char buffer[5];
-		result = stream->ReadRaw(buffer, 5);
-		if (!result) {
-			// end-of-file
-			result = true;
+		if (!wsr->Deserialize(*stream))
 			break;
-		}
-		uint32_t size = *(uint32_t*)buffer;
-		uint8_t typeId = *(uint8_t*)(buffer+4);
-		if (typeId != wsr->GetTypeId()) {
-			LOG_ERROR(this, "Invalid resource type: " << typeId);
-			break;
-		}
-		google::protobuf::io::CodedInputStream::Limit l = stream->PushLimit(size);
-		result = wsr->Deserialize(stream);
-		stream->PopLimit(l);
-		if (!result) {
-			LOG_ERROR(this, "Error reading resource");
-			break;
-		}
 		// so that no path is locked
 		wsr->ClearPathsRefreshing();
 		sites[wsr] = wsr;
 	}
 	delete stream;
-	delete file;
 	close(fd);
-	return result;
+	return true;
 }
 
 bool WebSiteManager::SaveWebSiteResources(const char *filename) {
@@ -400,19 +384,21 @@ bool WebSiteManager::SaveWebSiteResources(const char *filename) {
 		LOG_ERROR(this, "Cannot open file " << filename << ": " << strerror(errno));
 		return false;
 	}
-	google::protobuf::io::FileOutputStream *file = new google::protobuf::io::FileOutputStream(fd);
-	google::protobuf::io::CodedOutputStream *stream = new google::protobuf::io::CodedOutputStream(file);
+	if (flock(fd, LOCK_EX) < 0) {
+		LOG_ERROR(this, "Cannot lock file " << filename << ": " << strerror(errno));
+		return false;
+	}
+	ResourceOutputStream *stream = new ResourceOutputStream(fd);
 
 	bool result = true;
 	for (tr1::unordered_map<WebSiteResource*, WebSiteResource*, WebSiteResource_hash, WebSiteResource_equal>::iterator iter = sites.begin(); iter != sites.end(); ++iter) {
-		if (!Resource::Serialize(iter->second, stream)) {
+		if (!Resource::Serialize(iter->second, *stream, false)) {
 			LOG_ERROR_R(this, iter->second, "Cannot serialize resource");
 			result = false;
 			break;
 		}
 	}
 	delete stream;
-	delete file;
 	close(fd);
 	return result;
 }

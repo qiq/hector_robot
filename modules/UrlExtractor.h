@@ -24,7 +24,7 @@ new WR: status is set according to newUrlStatus parameter. Default is 2.
 #include <tr1/unordered_set>
 #include "common.h"
 #include "Module.h"
-#include "ObjectValues.h"
+#include "ObjectProperties.h"
 #include "UrlExtractorLexer.h"
 #include "WebResource.h"
 
@@ -51,10 +51,10 @@ private:
 	char *GetAllowedSchemes(const char *name);
 	void SetAllowedSchemes(const char *name, const char *value);
 
-	ObjectValues<UrlExtractor> *values;
-	char *GetValueSync(const char *name);
-	bool SetValueSync(const char *name, const char *value);
-	std::vector<std::string> *ListNamesSync();
+	ObjectProperties<UrlExtractor> *props;
+	char *GetPropertySync(const char *name);
+	bool SetPropertySync(const char *name, const char *value);
+	std::vector<std::string> *ListPropertiesSync();
 
 	std::tr1::unordered_set<std::string> urls;
 	// for flex
@@ -68,16 +68,16 @@ inline Module::Type UrlExtractor::GetType() {
 	return MULTI;
 }
 
-inline char *UrlExtractor::GetValueSync(const char *name) {
-	return values->GetValue(name);
+inline char *UrlExtractor::GetPropertySync(const char *name) {
+	return props->GetProperty(name);
 }
 
-inline bool UrlExtractor::SetValueSync(const char *name, const char *value) {
-	return values->SetValue(name, value);
+inline bool UrlExtractor::SetPropertySync(const char *name, const char *value) {
+	return props->SetProperty(name, value);
 }
 
-inline std::vector<std::string> *UrlExtractor::ListNamesSync() {
-	return values->ListNames();
+inline std::vector<std::string> *UrlExtractor::ListPropertiesSync() {
+	return props->ListProperties();
 }
 
 #endif

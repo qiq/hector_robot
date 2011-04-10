@@ -57,23 +57,3 @@ WebSiteResource_la_LIBADD = libWebSiteResource.la
 EXTRA_DIST += WebSiteResource.i WebSiteResource.proto
 CLEANFILES += WebSiteResource.pb.h WebSiteResource.pb.cc
 ALIASES += WebSiteResource.la
-
-# see comment in hector_core/lib/processing_engine/resources/Makefile.am
-
-all-local: $(ALIASES)
-	for i in $(ALIASES); do \
-		h=`echo $$i|sed -e 's/\.la/\.h/'`; \
-		id=`grep "int typeId" $(top_srcdir)/resources/$$h|sed -e 's/.*int typeId = \([0-9]\+\).*/\1/'`; \
-		ln -fs $$i $${id}.la; \
-	done
-
-clean-local:
-	rm -f {0,1,2,3,4,5,6,7,8,9}*.la
-
-install-exec-local:
-	$(INSTALL) -d $(DESTDIR)$(resourcesdir); \
-	for i in $(ALIASES); do \
-		h=`echo $$i|sed -e 's/\.la/\.h/'`; \
-		id=`grep "int typeId" $(top_srcdir)/resources/$$h|sed -e 's/.*int typeId = \([0-9]\+\).*/\1/'`; \
-		ln -fs $$i $(DESTDIR)$(resourcesdir)/$${id}.la; \
-	done
