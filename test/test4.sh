@@ -3,7 +3,7 @@
 . test_common.sh
 
 id=test4
-pkill http_server.pl; ( ./http_server.pl 8012 & )
+pkill http_server.pl; ( http_server.pl 8012 & )
 test_server_batch $id
 pkill http_server.pl
 

@@ -3,7 +3,7 @@
 . test_common.sh
 
 id=test10
-pkill dns_server.pl; pkill http_server.pl; ( ./dns_server.pl 5354 &  ./http_server.pl 8012 & )
+pkill dns_server.pl; pkill http_server.pl; ( dns_server.pl 5354 & http_server.pl 8012 & )
 test_server_start $id
 rm -rf test10.tmp; mkdir test10.tmp
 hector_client_set PE_test.run 1

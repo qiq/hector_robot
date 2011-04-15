@@ -53,7 +53,7 @@ Run UrlExtractor.
 						<param name="robotsEngine" value="PE_robots"/>
 					</Module>
 					<Module id="M_filter" type="perl" lib="Filter.pm">
-						<param name="filterFile" value="test12.filter"/>
+						<param name="filterFile" value="$1"/>
 					</Module>
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
 					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>

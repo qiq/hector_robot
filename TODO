@@ -1,4 +1,6 @@
-- 
+- odstranit curl ze stromu, udelat z toho zvlastni knihovnu, napr. hector_curl
+- googleurl je kratke, to ponechame
+
 
 ----------------------
 - umet processit relativni Location

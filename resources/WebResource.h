@@ -15,10 +15,16 @@
 #include "common.h"
 #include "IpAddr.h"
 #include "Resource.h"
-#include "ResourceAttrInfoT.h"
 #include "ResourceInputStream.h"
 #include "ResourceOutputStream.h"
 #include "WebResource.pb.h"
+
+class ResourceAttrInfo;
+
+class WebResourceInfo : public ResourceInfo {
+public:
+	WebResourceInfo();
+};
 
 class WebResource : public Resource {
 public:
@@ -40,16 +46,10 @@ public:
 	// save and restore resource
 	bool Serialize(ResourceOutputStream &output);
 	bool Deserialize(ResourceInputStream &input);
-	// get info about a resource field
-	std::vector<ResourceAttrInfo*> *GetAttrInfoList();
-	// type id of a resource (to be used by ResourceRegistry::CreateResource(typeid))
-	int GetTypeId();
-	// type string of a resource
-	const char *GetTypeString(bool terse = false);
-	// object name (for construction of an object or a reference)
-	const char *GetObjectName();
 	// used by queues in case there is limit on queue size
 	int GetSize();
+	// get info about this resource
+	ResourceInfo *GetResourceInfo();
 	// return string representation of the resource (e.g. for debugging purposes)
 	std::string ToString(Object::LogLevel = Object::INFO);
 
@@ -103,8 +103,6 @@ public:
 	static bool IsInstance(Resource *resource);
 
 protected:
-	static const int typeId = 10;
-
 	// saved properties
 	hector::resources::WebResource r;
 
@@ -124,6 +122,7 @@ protected:
 	void LoadParsedUrl();
 	void SaveParsedUrl();
 
+	static WebResourceInfo resourceInfo;
 	static log4cxx::LoggerPtr logger;
 };
 
@@ -157,20 +156,12 @@ inline bool WebResource::Deserialize(ResourceInputStream &input) {
 	return result;
 }
 
-inline int WebResource::GetTypeId() {
-	return typeId;
-}
-
-inline const char *WebResource::GetTypeString(bool terse) {
-	return terse ? "WR" : "WebResource";
-}
-
-inline const char *WebResource::GetObjectName() {
-	return "WebResource";
-}
-
 inline int WebResource::GetSize() {
 	return r.content().length();
+}
+
+inline ResourceInfo *WebResource::GetResourceInfo() {
+	return &WebResource::resourceInfo;
 }
 
 inline void WebResource::SetUrl(const std::string &url) {
@@ -367,7 +358,7 @@ inline void WebResource::ClearUrlPath() {
 }
 
 inline bool WebResource::IsInstance(Resource *resource) {
-	return resource->GetTypeId() == typeId;
+	return resource->GetTypeId() == resourceInfo.GetTypeId();
 }
 
 #endif

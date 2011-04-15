@@ -3,7 +3,7 @@
 . test_common.sh
 
 id=test5
-pkill dns_server.pl; pkill http_server.pl; ( ./dns_server.pl 5354 &  ./http_server.pl 8012 & )
+pkill dns_server.pl; pkill http_server.pl; ( dns_server.pl 5354 & http_server.pl 8012 & )
 test_server_batch $id
 pkill dns_server.pl; pkill http_server.pl
 

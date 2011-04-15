@@ -30,7 +30,6 @@
 #include "common.h"
 #include "MemoryPool.h"
 #include "Resource.h"
-#include "ResourceAttrInfoT.h"
 #include "ResourceInputStream.h"
 #include "ResourceOutputStream.h"
 #include "RWLock.h"
@@ -43,6 +42,13 @@
 
 #define MAX_PATH_SIZE 2048
 
+class ResourceAttrInfo;
+
+class WebSiteResourceInfo : public ResourceInfo {
+public:
+	WebSiteResourceInfo();
+};
+
 class WebSiteResource : public Resource {
 public:
 	WebSiteResource();
@@ -54,15 +60,6 @@ public:
 	// save and restore resource
 	bool Serialize(ResourceOutputStream &output);
 	bool Deserialize(ResourceInputStream &input);
-	// get info about a resource field
-	std::vector<ResourceAttrInfo*> *GetAttrInfoList();
-	// type id of a resource (to be used by ResourceRegistry::CreateResource(typeid))
-	int GetTypeId();
-	// type string of a resource
-	const char *GetTypeString(bool terse = false);
-	// object name (for construction of an object or a reference)
-	const char *GetObjectName();
-	// id should be unique across all in-memory resources
 	int GetId();
 	void SetId(int id);
 	// status may be tested in Processor to select target queue
@@ -74,6 +71,8 @@ public:
 	void ClearAttachedResource();
 	// used by queues in case there is limit on queue size
 	int GetSize();
+	// get info about this resource
+	ResourceInfo *GetResourceInfo();
 	// return string representation of the resource (e.g. for debugging purposes)
 	std::string ToString(Object::LogLevel = Object::INFO);
 
@@ -133,8 +132,6 @@ public:
 	static bool IsInstance(Resource *resource);
 
 protected:
-	static const int typeId = 11;
-
 	// this is a shared resource: all methods need to take the lock
 	RWLock lock;
 	// saved properties
@@ -157,6 +154,7 @@ protected:
 	WebSitePath *GetPathInfo(const char *path, bool create);
 	std::vector<std::string> *GetPathList();
 
+	static WebSiteResourceInfo resourceInfo;
 	static log4cxx::LoggerPtr logger;
 };
 
@@ -173,20 +171,12 @@ struct WebSiteResource_equal {
 	}
 };
 
-inline int WebSiteResource::GetTypeId() {
-	return typeId;
-}
-
-inline const char *WebSiteResource::GetTypeString(bool terse) {
-	return terse ? "WSR" : "WebSiteResource";
-}
-
-inline const char *WebSiteResource::GetObjectName() {
-	return "WebSiteResource";
-}
-
 inline int WebSiteResource::GetSize() {
 	return 1; //FIXME
+}
+
+inline ResourceInfo *WebSiteResource::GetResourceInfo() {
+	return &WebSiteResource::resourceInfo;
 }
 
 inline int WebSiteResource::GetId() {
@@ -698,7 +688,7 @@ inline void WebSiteResource::ClearRobotsRedirectCount() {
 }
 
 inline bool WebSiteResource::IsInstance(Resource *resource) {
-	return resource->GetTypeId() == typeId;
+	return resource->GetTypeId() == resourceInfo.GetTypeId();
 }
 
 #endif

@@ -8,7 +8,6 @@ AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE(subdir-objects -Wall -Werror)
-AC_CONFIG_SUBDIRS([lib/curl])
 
 AC_ARG_ENABLE(debug, [  --enable-debug          turn on debugging support], use_debug=yes, use_debug=no)
 
@@ -39,6 +38,7 @@ AC_CHECK_LIB(Judy, JudySLIns, [], [ echo "Please install libJudy"; exit -1 ])
 AC_CHECK_LIB(ev, ev_loop, [], [ echo "Please install libev"; exit -1 ])
 AC_CHECK_LIB(ldns, ldns_rr_free, [], [ echo "Please install libldns"; exit -1 ])
 AC_CHECK_LIB(unbound, ub_process, [], [ echo "Please install libunbound"; exit -1 ])
+LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
@@ -251,8 +251,6 @@ AC_CONFIG_FILES([Makefile
 		modules/python/Makefile
 		servers/Makefile
 		perl/Makefile
-		java/Makefile
-		python/Makefile
 		test/Makefile
 ])
 AC_OUTPUT

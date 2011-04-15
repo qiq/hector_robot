@@ -4,7 +4,7 @@
 
 id=test7
 rm -f test7.data.tmp
-pkill dns_server.pl; pkill http_server.pl; ( ./dns_server.pl 5354 &  ./http_server.pl 8012 & )
+pkill dns_server.pl; pkill http_server.pl; ( dns_server.pl 5354 & http_server.pl 8012 & )
 test_server_start $id
 hector_client_set PE_test.run 1
 hector_client_set PE_dns.run 1

@@ -5,6 +5,7 @@ AM_LDFLAGS = @LIBXML2_LIBS@ @LOG4CXX_LIBS@ @PROTOBUF_LIBS@ @HECTOR_CORE_LIBS@ -m
 AM_LIBTOOLFLAGS = --tag=disable-static
 
 BUILT_SOURCES =
+EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
 modules_LTLIBRARIES = WebResourceGenerator.la Fetcher.la DnsResolver.la WebSiteManager.la UrlExtractor.la Scheduler.la #Filter.la
@@ -20,14 +21,14 @@ WebResourceGenerator_la_LIBADD = ../resources/libWebResource.la
 #	flex -8 -f -Cf -Ca -Cr -t FilterLexer.l >FilterLexer.cc
 
 Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
-Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) -I ../lib/curl/include
-Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev
-Fetcher_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la ../lib/curl/lib/libcurl.la
+Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
+Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
+Fetcher_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
 
 DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
 DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
 DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-DnsResolver_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
+DnsResolver_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la ../lib/librobot.la
 
 WebSiteManager_la_SOURCES = WebSiteManager.h WebSiteManager.cc
 WebSiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
@@ -39,6 +40,7 @@ UrlExtractor_la_LIBADD = ../resources/libWebResource.la $(top_builddir)/lib/libr
 UrlExtractorLexer.cc: UrlExtractorLexer.l
 	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
 BUILT_SOURCES += UrlExtractorLexer.cc
+EXTRA_DIST += UrlExtractorLexer.l
 
 Scheduler_la_SOURCES = Scheduler.h Scheduler.cc
 Scheduler_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la

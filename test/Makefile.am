@@ -1,7 +1,7 @@
-TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(PATH)' LD_LIBRARY_PATH=$(HECTOR_CORE_PREFIX)/lib:$(HECTOR_CORE_PREFIX)/lib/hector:$(HECTOR_CORE_PREFIX)/lib/hector/resources:$(HECTOR_CORE_PREFIX)/lib/hector/modules:$(top_builddir)/resources:$(top_builddir)/modules:$(top_builddir)/servers:$(top_builddir)/perl/.libs:$(LD_LIBRARY_PATH) PERL5LIB=$(HECTOR_CORE_PREFIX)/lib/hector/modules/perl:$(top_builddir)/perl:$(top_builddir)/modules/perl $(SHELL)
+TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(top_srcdir)/test:$(PATH)' LD_LIBRARY_PATH=$(HECTOR_CORE_PREFIX)/lib:$(HECTOR_CORE_PREFIX)/lib/hector:$(HECTOR_CORE_PREFIX)/lib/hector/resources:$(HECTOR_CORE_PREFIX)/lib/hector/modules:$(top_builddir)/resources:$(top_builddir)/modules:$(top_builddir)/servers:$(top_builddir)/perl/.libs:$(LD_LIBRARY_PATH) PERL5LIB=$(HECTOR_CORE_PREFIX)/lib/hector/modules/perl:$(top_builddir)/perl:$(top_builddir)/modules/perl $(SHELL)
 
 TESTS =
-EXTRA_DIST = test_common.sh
+EXTRA_DIST = test_common.sh dns_server.pl http_server.pl
 CLEANFILES = test*.log.valgrind
 
 TESTS += test1.sh
@@ -47,3 +47,7 @@ CLEANFILES += test10.log test10.log.result
 TESTS += test11.sh
 EXTRA_DIST += test11.sh test11_config.xml test11.log.correct
 CLEANFILES += test11.log test11.log.result
+
+TESTS += test12.sh
+EXTRA_DIST += test12.sh test12_config.xml test12.log.correct test12.filter
+CLEANFILES += test12.log test12.log.result

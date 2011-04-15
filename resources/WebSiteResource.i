@@ -8,6 +8,11 @@
 
 %include "Scheme.i"
 
+class WebSiteResourceInfo : public ResourceInfo {
+public:
+        WebSiteResourceInfo();
+};
+
 class WebSiteResource : public Resource {
 public:
         WebSiteResource();
@@ -17,9 +22,6 @@ public:
         void Clear();
         bool Serialize(ResourceOutputStream &output);
         bool Deserialize(ResourceInputStream &input);
-        int GetTypeId();
-        const char *GetTypeString(bool terse = false);
-        const char *GetObjectName();
         int GetId();
         void SetId(int id);
         int GetStatus();
@@ -28,6 +30,7 @@ public:
         void SetAttachedResource(Resource *attachedResource);
         void ClearAttachedResource();
         int GetSize();
+        ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
 
         // WebSiteResource-specific

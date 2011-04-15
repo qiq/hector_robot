@@ -6,8 +6,11 @@
 #define SWIG_FILE_WITH_INIT // for Python
 
 class TestResource;             // for Perl SWIG (otherwise does not compile
+class TestResourceInfo;
 class TestProtobufResource;
+class TestProtobufResourceInfo;
 class MarkerResource;
+class MarkerResourceInfo;
 class PerlResource;
 %}
 

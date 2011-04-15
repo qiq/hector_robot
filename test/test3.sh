@@ -3,7 +3,7 @@
 . test_common.sh
 
 id=test3
-pkill dns_server.pl; ( ./dns_server.pl 5354 & )
+pkill dns_server.pl; ( dns_server.pl 5354 & )
 test_server_batch $id
 pkill dns_server.pl
 

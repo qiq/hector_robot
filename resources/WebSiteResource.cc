@@ -1,4 +1,6 @@
 
+#include "Resource.h"
+#include "ResourceAttrInfoT.h"
 #include "WebSiteResource.h"
 #include "WebSiteResource.pb.h"
 
@@ -6,6 +8,63 @@ using namespace std;
 
 log4cxx::LoggerPtr WebSiteResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebSiteResource"));
 MemoryPool<WebSitePath, true> WebSiteResource::pool(1024);
+WebSiteResourceInfo WebSiteResource::resourceInfo;
+
+WebSiteResourceInfo::WebSiteResourceInfo() {
+	SetTypeId(11);
+	SetTypeString("WebSiteResource");
+	SetTypeStringTerse("WSR");
+	SetObjectName("WebSiteResource");
+
+	vector<ResourceAttrInfo*> *l = new vector<ResourceAttrInfo*>();
+	ResourceAttrInfoT<WebSiteResource> *ai;
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitInt("id", &WebSiteResource::GetId, &WebSiteResource::SetId);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitInt("status", &WebSiteResource::GetStatus, &WebSiteResource::SetStatus);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitInt("urlScheme", &WebSiteResource::GetUrlScheme, &WebSiteResource::SetUrlScheme);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitString("urlHost", &WebSiteResource::GetUrlHost, &WebSiteResource::SetUrlHost);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitInt("urlPort", &WebSiteResource::GetUrlPort, &WebSiteResource::SetUrlPort);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitIpAddr("ipAddr", &WebSiteResource::GetIpAddr, &WebSiteResource::SetIpAddr);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitLong("ipAddrExpire", &WebSiteResource::GetIpAddrExpire, &WebSiteResource::SetIpAddrExpire);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitArrayString("allowUrls", &WebSiteResource::GetAllowUrl, &WebSiteResource::SetAllowUrl, &WebSiteResource::ClearAllowUrls, &WebSiteResource::CountAllowUrls);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitArrayString("disallowUrls", &WebSiteResource::GetDisallowUrl, &WebSiteResource::SetDisallowUrl, &WebSiteResource::ClearDisallowUrls, &WebSiteResource::CountDisallowUrls);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitLong("robotsExpire", &WebSiteResource::GetRobotsExpire, &WebSiteResource::SetRobotsExpire);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
+	ai->InitInt("robotsRedirectCount", &WebSiteResource::GetRobotsRedirectCount, &WebSiteResource::SetRobotsRedirectCount);
+	l->push_back(ai);
+
+	SetAttrInfoList(l);
+}
 
 WebSiteResource::WebSiteResource() {
 	paths = NULL;
@@ -217,55 +276,4 @@ string WebSiteResource::ToString(Object::LogLevel logLevel) {
 	delete v;
 
 	return s;
-}
-
-vector<ResourceAttrInfo*> *WebSiteResource::GetAttrInfoList() {
-	vector<ResourceAttrInfo*> *result = new vector<ResourceAttrInfo*>();
-	ResourceAttrInfoT<WebSiteResource> *ai;
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitInt("id", &WebSiteResource::GetId, &WebSiteResource::SetId);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitInt("status", &WebSiteResource::GetStatus, &WebSiteResource::SetStatus);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitInt("urlScheme", &WebSiteResource::GetUrlScheme, &WebSiteResource::SetUrlScheme);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitString("urlHost", &WebSiteResource::GetUrlHost, &WebSiteResource::SetUrlHost);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitInt("urlPort", &WebSiteResource::GetUrlPort, &WebSiteResource::SetUrlPort);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitIpAddr("ipAddr", &WebSiteResource::GetIpAddr, &WebSiteResource::SetIpAddr);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitLong("ipAddrExpire", &WebSiteResource::GetIpAddrExpire, &WebSiteResource::SetIpAddrExpire);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitArrayString("allowUrls", &WebSiteResource::GetAllowUrl, &WebSiteResource::SetAllowUrl, &WebSiteResource::ClearAllowUrls, &WebSiteResource::CountAllowUrls);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitArrayString("disallowUrls", &WebSiteResource::GetDisallowUrl, &WebSiteResource::SetDisallowUrl, &WebSiteResource::ClearDisallowUrls, &WebSiteResource::CountDisallowUrls);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitLong("robotsExpire", &WebSiteResource::GetRobotsExpire, &WebSiteResource::SetRobotsExpire);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebSiteResource>(typeId);
-	ai->InitInt("robotsRedirectCount", &WebSiteResource::GetRobotsRedirectCount, &WebSiteResource::SetRobotsRedirectCount);
-	result->push_back(ai);
-
-	return result;
 }

@@ -8,6 +8,11 @@
 
 %include "Scheme.i"
 
+class WebResourceInfo : public ResourceInfo {
+public:
+        WebResourceInfo();
+};
+
 class WebResource : public Resource {
 public:
         WebResource();
@@ -16,10 +21,8 @@ public:
         void Clear();
         bool Serialize(ResourceOutputStream &output);
         bool Deserialize(ResourceInputStream &input);
-        int GetTypeId();
-        const char *GetTypeString(bool terse = false);
-        const char *GetObjectName();
         int GetSize();
+        ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
 
         void SetUrl(const std::string &url);

@@ -1,12 +1,83 @@
 #include <config.h>
 
 #include "googleurl/src/gurl.h"
+#include "Resource.h"
+#include "ResourceAttrInfoT.h"
 #include "WebResource.h"
 #include "WebResource.pb.h"
 
 using namespace std;
 
 log4cxx::LoggerPtr WebResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebResource"));
+WebResourceInfo WebResource::resourceInfo;
+
+WebResourceInfo::WebResourceInfo() {
+	SetTypeId(10);
+	SetTypeString("WebResource");
+	SetTypeStringTerse("WR");
+	SetObjectName("WebResource");
+
+	vector<ResourceAttrInfo*> *l = new vector<ResourceAttrInfo*>();
+	ResourceAttrInfoT<WebResource> *ai;
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitInt("id", &WebResource::GetId, &WebResource::SetId);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitInt("status", &WebResource::GetStatus, &WebResource::SetStatus);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("url", &WebResource::GetUrl, &WebResource::SetUrl);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitIpAddr("ipAddr", &WebResource::GetIpAddr, &WebResource::SetIpAddr);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitHashString("header", &WebResource::GetHeaderValue, &WebResource::SetHeaderValue, &WebResource::ClearHeader, &WebResource::ClearHeaderField, &WebResource::GetHeaderCount, &WebResource::GetHeaderNames, &WebResource::GetHeaderValues);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitInt("redirectCount", &WebResource::GetRedirectCount, &WebResource::SetRedirectCount);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("content", &WebResource::GetContent, &WebResource::SetContent);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitLong("scheduled", &WebResource::GetScheduled, &WebResource::SetScheduled);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitInt("urlScheme", &WebResource::GetUrlScheme, &WebResource::SetUrlScheme);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("urlUsername", &WebResource::GetUrlUsername, &WebResource::SetUrlUsername);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("urlPassword", &WebResource::GetUrlPassword, &WebResource::SetUrlPassword);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("urlHost", &WebResource::GetUrlHost, &WebResource::SetUrlHost);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitInt("urlPort", &WebResource::GetUrlPort, &WebResource::SetUrlPort);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
+	ai->InitString("urlPath", &WebResource::GetUrlPath, &WebResource::SetUrlPath);
+	l->push_back(ai);
+
+	SetAttrInfoList(l);
+}
 
 WebResource::WebResource() {
 	header_map_ready = 0;
@@ -262,67 +333,4 @@ string WebResource::ToString(Object::LogLevel logLevel) {
 		s += this->GetContent();
 	}
 	return s;
-}
-
-vector<ResourceAttrInfo*> *WebResource::GetAttrInfoList() {
-	vector<ResourceAttrInfo*> *result = new vector<ResourceAttrInfo*>();
-	ResourceAttrInfoT<WebResource> *ai;
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitInt("id", &WebResource::GetId, &WebResource::SetId);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitInt("status", &WebResource::GetStatus, &WebResource::SetStatus);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("url", &WebResource::GetUrl, &WebResource::SetUrl);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitIpAddr("ipAddr", &WebResource::GetIpAddr, &WebResource::SetIpAddr);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitHashString("header", &WebResource::GetHeaderValue, &WebResource::SetHeaderValue, &WebResource::ClearHeader, &WebResource::ClearHeaderField, &WebResource::GetHeaderCount, &WebResource::GetHeaderNames, &WebResource::GetHeaderValues);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitInt("redirectCount", &WebResource::GetRedirectCount, &WebResource::SetRedirectCount);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("content", &WebResource::GetContent, &WebResource::SetContent);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitLong("scheduled", &WebResource::GetScheduled, &WebResource::SetScheduled);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitInt("urlScheme", &WebResource::GetUrlScheme, &WebResource::SetUrlScheme);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("urlUsername", &WebResource::GetUrlUsername, &WebResource::SetUrlUsername);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("urlPassword", &WebResource::GetUrlPassword, &WebResource::SetUrlPassword);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("urlHost", &WebResource::GetUrlHost, &WebResource::SetUrlHost);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitInt("urlPort", &WebResource::GetUrlPort, &WebResource::SetUrlPort);
-	result->push_back(ai);
-
-	ai = new ResourceAttrInfoT<WebResource>(typeId);
-	ai->InitString("urlPath", &WebResource::GetUrlPath, &WebResource::SetUrlPath);
-	result->push_back(ai);
-
-	return result;
 }

@@ -1,4 +1,6 @@
 
+#include "ResourceInputStream.h"
+#include "ResourceOutputStream.h"
 #include "WebSiteResourceWrapper.h"
 #include "WebSiteResource.h"
 

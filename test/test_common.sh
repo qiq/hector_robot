@@ -7,6 +7,7 @@ base=`dirname "$base"`
 base=`readlink -f "$base"`'/..'
 test_base=`readlink -f "$base"`
 
+export "PATH=$test_base/test:$PATH"
 export "LD_LIBRARY_PATH=$test_base/resources:$test_base/modules:$test_base/servers:$test_base/perl/.libs:$test_base/python/.libs:$LD_LIBRARY_PATH"
 export "PERL5LIB=$test_base/perl:$test_base/modules/perl:$test_base/resources/perl:$PERL5LIB"
 export "PYTHONPATH=$test_base/python:$test_base/modules/python:$test_base/resource/python:$PYTHONPATH"
