@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#ifndef WRAPPER
+
 log4cxx::LoggerPtr WebSiteResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebSiteResource"));
 MemoryPool<WebSitePath, true> WebSiteResource::pool(1024);
 WebSiteResourceInfo WebSiteResource::resourceInfo;
@@ -277,3 +279,11 @@ string WebSiteResource::ToString(Object::LogLevel logLevel) {
 
 	return s;
 }
+
+#else
+
+extern "C" Resource* create() {
+	return (Resource*)new WebSiteResource();
+}
+
+#endif

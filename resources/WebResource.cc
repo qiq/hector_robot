@@ -8,6 +8,8 @@
 
 using namespace std;
 
+#ifndef WRAPPER
+
 log4cxx::LoggerPtr WebResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.WebResource"));
 WebResourceInfo WebResource::resourceInfo;
 
@@ -334,3 +336,11 @@ string WebResource::ToString(Object::LogLevel logLevel) {
 	}
 	return s;
 }
+
+#else
+
+extern "C" Resource* create() {
+	return (Resource*)new WebResource();
+}
+
+#endif

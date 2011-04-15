@@ -33,7 +33,8 @@ WebResource.pb.cc WebResource.pb.h: WebResource.proto
 	$(PROTOC) WebResource.proto --cpp_out=.
 WebResource.pb.h WebResource.pb.cc: Scheme.pb.h Scheme.pb.cc
 
-WebResource_la_SOURCES = WebResourceWrapper.h WebResourceWrapper.cc
+WebResource_la_SOURCES = WebResource.cc
+WebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER -I$(top_srcdir)/lib/googleurl
 WebResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 WebResource_la_LIBADD = libWebResource.la
 
@@ -50,7 +51,8 @@ WebSiteResource.pb.cc WebSiteResource.pb.h: WebSiteResource.proto
 	$(PROTOC) WebSiteResource.proto --cpp_out=.
 WebSiteResource.pb.h WebSiteResource.pb.cc: Scheme.pb.h Scheme.pb.cc
 
-WebSiteResource_la_SOURCES = WebSiteResourceWrapper.h WebSiteResourceWrapper.cc
+WebSiteResource_la_SOURCES = WebSiteResource.cc
+WebSiteResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
 WebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 WebSiteResource_la_LIBADD = libWebSiteResource.la
 
