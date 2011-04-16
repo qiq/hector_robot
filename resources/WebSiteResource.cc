@@ -22,15 +22,15 @@ WebSiteResourceInfo::WebSiteResourceInfo() {
 	ResourceAttrInfoT<WebSiteResource> *ai;
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitInt("id", &WebSiteResource::GetId, &WebSiteResource::SetId);
+	ai->InitInt32("id", &WebSiteResource::GetId, &WebSiteResource::SetId);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitInt("status", &WebSiteResource::GetStatus, &WebSiteResource::SetStatus);
+	ai->InitInt32("status", &WebSiteResource::GetStatus, &WebSiteResource::SetStatus);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitInt("urlScheme", &WebSiteResource::GetUrlScheme, &WebSiteResource::SetUrlScheme);
+	ai->InitInt32("urlScheme", &WebSiteResource::GetUrlScheme, &WebSiteResource::SetUrlScheme);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
@@ -38,7 +38,7 @@ WebSiteResourceInfo::WebSiteResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitInt("urlPort", &WebSiteResource::GetUrlPort, &WebSiteResource::SetUrlPort);
+	ai->InitInt32("urlPort", &WebSiteResource::GetUrlPort, &WebSiteResource::SetUrlPort);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
@@ -46,7 +46,7 @@ WebSiteResourceInfo::WebSiteResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitLong("ipAddrExpire", &WebSiteResource::GetIpAddrExpire, &WebSiteResource::SetIpAddrExpire);
+	ai->InitUInt32("ipAddrExpire", &WebSiteResource::GetIpAddrExpire, &WebSiteResource::SetIpAddrExpire);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
@@ -58,11 +58,11 @@ WebSiteResourceInfo::WebSiteResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitLong("robotsExpire", &WebSiteResource::GetRobotsExpire, &WebSiteResource::SetRobotsExpire);
+	ai->InitUInt32("robotsExpire", &WebSiteResource::GetRobotsExpire, &WebSiteResource::SetRobotsExpire);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebSiteResource>(GetTypeId());
-	ai->InitInt("robotsRedirectCount", &WebSiteResource::GetRobotsRedirectCount, &WebSiteResource::SetRobotsRedirectCount);
+	ai->InitInt32("robotsRedirectCount", &WebSiteResource::GetRobotsRedirectCount, &WebSiteResource::SetRobotsRedirectCount);
 	l->push_back(ai);
 
 	SetAttrInfoList(l);
@@ -231,11 +231,11 @@ string WebSiteResource::ToString(Object::LogLevel logLevel) {
 	s = buf;
 	s += addr.ToString();
 	if (this->GetIpAddrExpire()) {
-		snprintf(buf, sizeof(buf), ", ip expire: %ld", this->GetIpAddrExpire());
+		snprintf(buf, sizeof(buf), ", ip expire: %u", this->GetIpAddrExpire());
 		s += buf;
 	}
 	if (this->GetIpAddrExpire()) {
-		snprintf(buf, sizeof(buf), ", robots expire: %ld", this->GetRobotsExpire());
+		snprintf(buf, sizeof(buf), ", robots expire: %u", this->GetRobotsExpire());
 		s += buf;
 	}
 	vector<string> *v = this->GetAllowUrls();

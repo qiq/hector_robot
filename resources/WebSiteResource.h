@@ -80,16 +80,16 @@ public:
 	// preferred way: locks WSR and sets everything at once
 	void SetUrl(int urlScheme, const std::string &urlHost, int urlPort);
 	void GetUrl(int &urlScheme, std::string &urlHost, int &urlPort);
-	void SetIpAddrExpire(IpAddr &addr, long time);
-	void GetIpAddrExpire(IpAddr &addr, long &time);
-	void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
-	void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-	int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
-	bool PathNewLinkReady(const char *path, long currentTime);
-	bool PathUpdateError(const char *path, long currentTime, int maxCount);
-	bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
-	bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
-	long PathNextRefresh(const char *path);
+	void SetIpAddrExpire(IpAddr &addr, uint32_t time);
+	void GetIpAddrExpire(IpAddr &addr, uint32_t &time);
+	void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, uint32_t time);
+	void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, uint32_t &time);
+	int PathReadyToFetch(const char *path, uint32_t currentTime, uint32_t lastScheduled);
+	bool PathNewLinkReady(const char *path, uint32_t currentTime);
+	bool PathUpdateError(const char *path, uint32_t currentTime, int maxCount);
+	bool PathUpdateRedirect(const char *path, uint32_t currentTime, bool redirectPermanent);
+	bool PathUpdateOK(const char *path, uint32_t currentTime, uint32_t size, uint32_t cksum);
+	int PathNextRefresh(const char *path);
 
 	// change on-item methods
 	void SetUrlScheme(int urlScheme);
@@ -104,8 +104,8 @@ public:
 	void SetIpAddr(IpAddr &addr);
 	IpAddr GetIpAddr();
 	void ClearIpAddr();
-	void SetIpAddrExpire(long time);
-	long GetIpAddrExpire();
+	void SetIpAddrExpire(uint32_t time);
+	uint32_t GetIpAddrExpire();
 	void ClearIpAddrExpire();
 	void SetAllowUrls(const std::vector<std::string> &allow_urls);
 	void SetAllowUrl(int index, const std::string &url);
@@ -119,8 +119,8 @@ public:
 	const std::string GetDisallowUrl(int index);
 	int CountDisallowUrls();
 	void ClearDisallowUrls();
-	void SetRobotsExpire(long time);
-	long GetRobotsExpire();
+	void SetRobotsExpire(uint32_t time);
+	uint32_t GetRobotsExpire();
 	void ClearRobotsExpire();
 	void SetRobotsRedirectCount(int redirects);
 	int GetRobotsRedirectCount();
@@ -269,21 +269,21 @@ inline void WebSiteResource::GetUrl(int &urlScheme, std::string &urlHost, int &u
 	lock.Unlock();
 }
 
-inline void WebSiteResource::SetIpAddrExpire(IpAddr &addr, long time) {
+inline void WebSiteResource::SetIpAddrExpire(IpAddr &addr, uint32_t time) {
 	lock.LockWrite();
 	this->addr = addr;
 	r.set_ip_addr_expire(time);
 	lock.Unlock();
 }
 
-inline void WebSiteResource::GetIpAddrExpire(IpAddr &addr, long &time) {
+inline void WebSiteResource::GetIpAddrExpire(IpAddr &addr, uint32_t &time) {
 	lock.LockRead();
 	addr = this->addr;
-	time = (long)r.ip_addr_expire();
+	time = r.ip_addr_expire();
 	lock.Unlock();
 }
 
-inline void WebSiteResource::SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time) {
+inline void WebSiteResource::SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, uint32_t time) {
 	lock.LockWrite();
 	r.clear_allow_urls();
 	for (std::vector<std::string>::const_iterator iter = allow_urls.begin(); iter != allow_urls.end(); ++iter) {
@@ -297,7 +297,7 @@ inline void WebSiteResource::SetRobots(const std::vector<std::string> &allow_url
 	lock.Unlock();
 }
 
-inline void WebSiteResource::GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time) {
+inline void WebSiteResource::GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, uint32_t &time) {
 	lock.LockRead();
 	for (int i = 0; i < r.allow_urls_size(); i++) {
 		allow_urls.push_back(r.allow_urls(i));
@@ -305,13 +305,13 @@ inline void WebSiteResource::GetRobots(std::vector<std::string> &allow_urls, std
 	for (int i = 0; i < r.disallow_urls_size(); i++) {
 		disallow_urls.push_back(r.disallow_urls(i));
 	}
-	time = (long)r.robots_expire();
+	time = r.robots_expire();
 	lock.Unlock();
 }
 
 // test whether path is ready to be fetched
 // return: 0: OK, 1: invalid status, 2: status updated recently, 3: currently refreshing (locked)
-inline int WebSiteResource::PathReadyToFetch(const char *path, long currentTime, long lastScheduled) {
+inline int WebSiteResource::PathReadyToFetch(const char *path, uint32_t currentTime, uint32_t lastScheduled) {
 	lock.LockWrite();
 	WebSitePath *wsp = GetPathInfo(path, true);
 	int result = 1;
@@ -339,7 +339,7 @@ inline int WebSiteResource::PathReadyToFetch(const char *path, long currentTime,
 }
 
 // test whether the path is new and ready to be scheduled for a fetch
-inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime) {
+inline bool WebSiteResource::PathNewLinkReady(const char *path, uint32_t currentTime) {
 	lock.LockWrite();
 	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
@@ -354,7 +354,7 @@ inline bool WebSiteResource::PathNewLinkReady(const char *path, long currentTime
 	return result;
 }
 
-inline bool WebSiteResource::PathUpdateError(const char *path, long currentTime, int maxCount) {
+inline bool WebSiteResource::PathUpdateError(const char *path, uint32_t currentTime, int maxCount) {
 	lock.LockWrite();
 	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
@@ -374,7 +374,7 @@ inline bool WebSiteResource::PathUpdateError(const char *path, long currentTime,
 	return result;
 }
 
-inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent) {
+inline bool WebSiteResource::PathUpdateRedirect(const char *path, uint32_t currentTime, bool redirectPermanent) {
 	lock.LockWrite();
 	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
@@ -394,7 +394,7 @@ inline bool WebSiteResource::PathUpdateRedirect(const char *path, long currentTi
 	return result;
 }
 
-inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, long size, long cksum) {
+inline bool WebSiteResource::PathUpdateOK(const char *path, uint32_t currentTime, uint32_t size, uint32_t cksum) {
 	lock.LockWrite();
 	WebSitePath *wsp = GetPathInfo(path, true);
 	bool result = false;
@@ -431,10 +431,10 @@ inline bool WebSiteResource::PathUpdateOK(const char *path, long currentTime, lo
 }
 
 // result < 0: do not schedule
-inline long WebSiteResource::PathNextRefresh(const char *path) {
+inline int32_t WebSiteResource::PathNextRefresh(const char *path) {
 	lock.LockRead();
 	WebSitePath *wsp = GetPathInfo(path, true);
-	long result = -1;
+	int result = 0;
 	if (wsp) {
 		WebSitePath::PathStatus status = wsp->GetPathStatus();
 		if (status == WebSitePath::OK || status == WebSitePath::ERROR) {
@@ -540,15 +540,15 @@ inline void WebSiteResource::ClearIpAddr() {
 	lock.Unlock();
 }
 
-inline void WebSiteResource::SetIpAddrExpire(long time) {
+inline void WebSiteResource::SetIpAddrExpire(uint32_t time) {
 	lock.LockWrite();
 	r.set_ip_addr_expire(time);
 	lock.Unlock();
 }
 
-inline long WebSiteResource::GetIpAddrExpire() {
+inline uint32_t WebSiteResource::GetIpAddrExpire() {
 	lock.LockRead();
-	long expire = (long)r.ip_addr_expire();
+	uint32_t expire = r.ip_addr_expire();
 	lock.Unlock();
 	return expire;
 }
@@ -649,15 +649,15 @@ inline void WebSiteResource::ClearDisallowUrls() {
 	lock.Unlock();
 }
 
-inline void WebSiteResource::SetRobotsExpire(long time) {
+inline void WebSiteResource::SetRobotsExpire(uint32_t time) {
 	lock.LockWrite();
 	r.set_robots_expire(time);
 	lock.Unlock();
 }
 
-inline long WebSiteResource::GetRobotsExpire() {
+inline uint32_t WebSiteResource::GetRobotsExpire() {
 	lock.LockRead();
-	long expire = (long)r.robots_expire();
+	uint32_t expire = r.robots_expire();
 	lock.Unlock();
 	return expire;
 }

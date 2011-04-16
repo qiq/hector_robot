@@ -1,6 +1,8 @@
 %include "std_string.i"
 %include "std_vector.i"
-%newobject WebResource::Serialize();
+
+%apply unsigned int { uint32_t }
+%apply unsigned long long { uint64_t }
 
 %{
 #include "WebResource.h"
@@ -45,8 +47,8 @@ public:
         void SetContent(const std::string &content);
         const std::string GetContent();
         void ClearContent();
-        void SetScheduled(long time);
-        long GetScheduled();
+        void SetScheduled(uint32_t time);
+        uint32_t GetScheduled();
         void ClearScheduled();
 
         void SetUrlScheme(int urlScheme);

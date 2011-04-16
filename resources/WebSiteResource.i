@@ -1,6 +1,8 @@
 %include "std_string.i"
 %include "std_vector.i"
-%newobject WebSiteResource::Serialize();
+
+%apply unsigned int { uint32_t }
+%apply unsigned long long { uint64_t }
 
 %{
 #include "WebSiteResource.h"
@@ -37,16 +39,16 @@ public:
         // preferred way: locks WSR and sets everything at once
         void SetUrl(int urlScheme, const std::string &urlHost, int urlPort);
         void GetUrl(int &urlScheme, std::string &urlHost, int &urlPort);
-        void SetIpAddrExpire(IpAddr &addr, long time);
-        void GetIpAddrExpire(IpAddr &addr, long &time);
-        void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, long time);
-        void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, long &time);
-        int PathReadyToFetch(const char *path, long currentTime, long lastScheduled);
-        bool PathNewLinkReady(const char *path, long currentTime);
-        bool PathUpdateError(const char *path, long currentTime, int maxCount);
-        bool PathUpdateRedirect(const char *path, long currentTime, bool redirectPermanent);
-        bool PathUpdateOK(const char *path, long currentTime, long size, long cksum);
-        long PathNextRefresh(const char *path);
+        void SetIpAddrExpire(IpAddr &addr, uint32_t time);
+        void GetIpAddrExpire(IpAddr &addr, uint32_t &time);
+        void SetRobots(const std::vector<std::string> &allow_urls, const std::vector<std::string> &disallow_urls, uint32_t time);
+        void GetRobots(std::vector<std::string> &allow_urls, std::vector<std::string> &disallow_urls, uint32_t &time);
+        int PathReadyToFetch(const char *path, uint32_t currentTime, uint32_t lastScheduled);
+        bool PathNewLinkReady(const char *path, uint32_t currentTime);
+        bool PathUpdateError(const char *path, uint32_t currentTime, int maxCount);
+        bool PathUpdateRedirect(const char *path, uint32_t currentTime, bool redirectPermanent);
+        bool PathUpdateOK(const char *path, uint32_t currentTime, uint32_t size, uint32_t cksum);
+        int PathNextRefresh(const char *path);
 
         // change on-item methods
         void SetUrlScheme(int urlScheme);
@@ -61,8 +63,8 @@ public:
         void SetIpAddr(IpAddr &addr);
         IpAddr GetIpAddr();
         void ClearIpAddr();
-        void SetIpAddrExpire(long time);
-        long GetIpAddrExpire();
+        void SetIpAddrExpire(uint32_t time);
+        uint32_t GetIpAddrExpire();
         void ClearIpAddrExpire();
         void SetAllowUrls(const std::vector<std::string> &allow_urls);
         void SetAllowUrl(int index, const std::string &url);
@@ -76,8 +78,8 @@ public:
         const std::string GetDisallowUrl(int index);
         int CountDisallowUrls();
         void ClearDisallowUrls();
-        void SetRobotsExpire(long time);
-        long GetRobotsExpire();
+        void SetRobotsExpire(uint32_t time);
+        uint32_t GetRobotsExpire();
         void ClearRobotsExpire();
         void SetRobotsRedirectCount(int redirects);
         int GetRobotsRedirectCount();

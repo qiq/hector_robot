@@ -243,7 +243,7 @@ WebSiteResource *WebSiteManager::GetWebSiteResource(WebResource *wr) {
 void WebSiteManager::CopyRobotsInfo(WebSiteResource *src, WebSiteResource *dst) {
 	vector<string> allow;
 	vector<string> disallow;
-	long time;
+	uint32_t time;
 	src->GetRobots(allow, disallow, time);
 	dst->SetRobots(allow, disallow, time);
 }
@@ -307,11 +307,11 @@ void WebSiteManager::FinishProcessing(WebSiteResource *wsr, queue<Resource*> *ou
 				vector<string> disallow;
 				wsr->SetRobots(allow, disallow, robotsNegativeTTL);
 			} else {
-				if (next->GetIpAddrExpire() < (long)currentTime || next->GetRobotsExpire() < (long)currentTime) {
+				if (next->GetIpAddrExpire() < currentTime || next->GetRobotsExpire() < currentTime) {
 					// WSR not up-to-date: recursively resolve WSR
 					LOG_TRACE_R(this, wsr, "Recursively resolve WSR");
 					next->SetRobotsRedirectCount(redirects+1);
-					StartProcessing(wsr, next, next->GetIpAddrExpire() >= (long)currentTime);
+					StartProcessing(wsr, next, next->GetIpAddrExpire() >= currentTime);
 					return;
 				}
 				// WSR is ready, just copy info
@@ -417,8 +417,8 @@ int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Res
 				outputResources->push(wr);
 			} else {
 				LOG_TRACE_R(this, wr, "Checking WR: " << wr->GetUrl());
-				if (wsr->GetIpAddrExpire() < (long)currentTime || wsr->GetRobotsExpire() < (long)currentTime) {
-					StartProcessing(wr, wsr, wsr->GetIpAddrExpire() >= (long)currentTime);
+				if (wsr->GetIpAddrExpire() < currentTime || wsr->GetRobotsExpire() < currentTime) {
+					StartProcessing(wr, wsr, wsr->GetIpAddrExpire() >= currentTime);
 				} else {
 					LOG_TRACE_R(this, wr, "NOP: " << wr->GetUrl());
 					// no problem with the WSR, just attach it to WR
@@ -440,7 +440,7 @@ int WebSiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Res
 		WebSiteResource *wsr = static_cast<WebSiteResource*>(callDnsOutput.front());
 		callDnsOutput.pop();
 		IpAddr ip = wsr->GetIpAddr();
-		if (!ip.IsEmpty() && wsr->GetRobotsExpire() < (long)currentTime)
+		if (!ip.IsEmpty() && wsr->GetRobotsExpire() < currentTime)
 			callRobotsInput.push(wsr);
 		else
 			FinishProcessing(wsr, outputResources);

@@ -23,11 +23,11 @@ WebResourceInfo::WebResourceInfo() {
 	ResourceAttrInfoT<WebResource> *ai;
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitInt("id", &WebResource::GetId, &WebResource::SetId);
+	ai->InitInt32("id", &WebResource::GetId, &WebResource::SetId);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitInt("status", &WebResource::GetStatus, &WebResource::SetStatus);
+	ai->InitInt32("status", &WebResource::GetStatus, &WebResource::SetStatus);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
@@ -43,7 +43,7 @@ WebResourceInfo::WebResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitInt("redirectCount", &WebResource::GetRedirectCount, &WebResource::SetRedirectCount);
+	ai->InitInt32("redirectCount", &WebResource::GetRedirectCount, &WebResource::SetRedirectCount);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
@@ -51,11 +51,11 @@ WebResourceInfo::WebResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitLong("scheduled", &WebResource::GetScheduled, &WebResource::SetScheduled);
+	ai->InitUInt32("scheduled", &WebResource::GetScheduled, &WebResource::SetScheduled);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitInt("urlScheme", &WebResource::GetUrlScheme, &WebResource::SetUrlScheme);
+	ai->InitInt32("urlScheme", &WebResource::GetUrlScheme, &WebResource::SetUrlScheme);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
@@ -71,7 +71,7 @@ WebResourceInfo::WebResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
-	ai->InitInt("urlPort", &WebResource::GetUrlPort, &WebResource::SetUrlPort);
+	ai->InitInt32("urlPort", &WebResource::GetUrlPort, &WebResource::SetUrlPort);
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<WebResource>(GetTypeId());
@@ -310,7 +310,7 @@ string WebResource::ToString(Object::LogLevel logLevel) {
 	s += buf;
 	s += ", ip: ";
 	s += addr.ToString();
-	snprintf(buf, sizeof(buf), ", scheduled: %ld", this->GetScheduled());
+	snprintf(buf, sizeof(buf), ", scheduled: %u", this->GetScheduled());
 	s += buf;
 	if (header_map_dirty)
 		SaveHeaders();
