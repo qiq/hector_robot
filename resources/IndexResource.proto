@@ -1,0 +1,12 @@
+package hector.resources;
+
+option optimize_for = SPEED;
+
+message IndexResource {
+	required fixed64 site_md5 = 1;		// MD5 of the site part
+	required fixed64 path_md5 = 2;		// MD5 of the path
+	required fixed32 last_modified = 3;	// Last modified timestamp
+	required fixed32 modification_history = 4; // 4 bytes of quantized modification history
+	required fixed32 index_status = 5;	// error count + status 
+	required fixed32 unused = 6;		// not used
+}

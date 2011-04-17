@@ -8,10 +8,10 @@ CLEANFILES =
 ALIASES =
 
 resourcesdir = $(libdir)/hector/resources
-resources_LTLIBRARIES = libScheme.la libWebResource.la WebResource.la libWebSiteResource.la WebSiteResource.la
+resources_LTLIBRARIES = libScheme.la libWebResource.la WebResource.la libWebSiteResource.la WebSiteResource.la libIndexResource.la IndexResource.la
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = WebResource.h WebResource.pb.h WebResource.i WebSiteResource.h WebSiteResource.pb.h WebSiteResource.i WebSitePath.h
+hectorinclude_HEADERS = WebResource.h WebResource.pb.h WebResource.i WebSiteResource.h WebSiteResource.pb.h WebSiteResource.i WebSitePath.h IndexResource.h IndexResource.pb.h IndexResource.i
 
 BUILT_SOURCES += Scheme.pb.h Scheme.pb.cc
 Scheme.pb.cc Scheme.pb.h: Scheme.proto
@@ -59,3 +59,19 @@ WebSiteResource_la_LIBADD = libWebSiteResource.la
 EXTRA_DIST += WebSiteResource.i WebSiteResource.proto
 CLEANFILES += WebSiteResource.pb.h WebSiteResource.pb.cc
 ALIASES += WebSiteResource.la
+
+libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc IndexResource.pb.h IndexResource.pb.cc
+libIndexResource_la_LDFLAGS = $(AM_LDFLAGS)
+
+BUILT_SOURCES += IndexResource.pb.h IndexResource.pb.cc
+IndexResource.pb.cc IndexResource.pb.h: IndexResource.proto
+	$(PROTOC) IndexResource.proto --cpp_out=.
+
+IndexResource_la_SOURCES = IndexResource.cc
+IndexResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
+IndexResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+IndexResource_la_LIBADD = libIndexResource.la
+
+EXTRA_DIST += IndexResource.i IndexResource.proto
+CLEANFILES += IndexResource.pb.h IndexResource.pb.cc
+ALIASES += IndexResource.la
