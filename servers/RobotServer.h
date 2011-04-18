@@ -5,7 +5,7 @@
 #ifndef _ROBOT_SERVER_
 #define _ROBOT_SERVER_
 
-#include "config.h"
+#include <config.h>
 
 #include <vector>
 #include <tr1/unordered_map>

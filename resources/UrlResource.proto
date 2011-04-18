@@ -1,0 +1,9 @@
+package hector.resources;
+
+option optimize_for = SPEED;
+
+message UrlResource {
+	required fixed64 site_md5 = 1;		// MD5 of the site part
+	required fixed64 path_md5 = 2;		// MD5 of the path
+	required string url = 3;		// URL itself
+}

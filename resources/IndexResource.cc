@@ -73,7 +73,7 @@ void IndexResource::Clear() {
 string IndexResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[IR %d %d] MD5: %.16llx %.16llx modified: %u, history: [", GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetLastModified());
+	snprintf(buf, sizeof(buf), "[IR %d %d] MD5: %.16llx %.16llx, modified: %u, history: [", GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetLastModified());
 	s = buf;
 	uint32_t lm = GetLastModified();
 	for (int i = 0; i < 4; i++) {

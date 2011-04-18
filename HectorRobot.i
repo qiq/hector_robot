@@ -19,6 +19,8 @@ class PerlResource;
 %template(StringVector_hectorrobot) std::vector<std::string>;
 
 %import Hector.i
+%include IndexResource.i
+%include UrlResource.i
 %include WebResource.i
 %include WebSiteResource.i
 %include robot_common.i
