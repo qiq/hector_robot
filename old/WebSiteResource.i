@@ -24,13 +24,6 @@ public:
         void Clear();
         bool Serialize(ResourceOutputStream &output);
         bool Deserialize(ResourceInputStream &input);
-        int GetId();
-        void SetId(int id);
-        int GetStatus();
-        void SetStatus(int status);
-        Resource *GetAttachedResource();
-        void SetAttachedResource(Resource *attachedResource);
-        void ClearAttachedResource();
         int GetSize();
         ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);

@@ -52,24 +52,6 @@ IndexResourceInfo::IndexResourceInfo() {
 	SetAttrInfoList(l);
 }
 
-IndexResource::IndexResource() {
-}
-
-IndexResource::IndexResource(const IndexResource &wr) : Resource(wr), r(wr.r) {
-}
-
-IndexResource::~IndexResource() {
-}
-
-Resource *IndexResource::Clone() {
-	return new IndexResource(*this);
-}
-
-void IndexResource::Clear() {
-	Resource::Clear();
-	r.Clear();
-}
-
 string IndexResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];

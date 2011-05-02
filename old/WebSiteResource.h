@@ -160,6 +160,31 @@ struct WebSiteResource_equal {
 	}
 };
 
+inline WebSiteResource::WebSiteResource() {
+	paths = NULL;
+}
+
+inline WebSiteResource::WebSiteResource(const WebSiteResource &wsr) : SharedResource(wsr), r(wsr.r), paths(NULL) {
+	ProtobufToJarray();
+	r.clear_paths();
+}
+
+inline WebSiteResource::~WebSiteResource() {
+	JudySLFreeArray(&paths, NULL);
+}
+
+inline Resource *WebSiteResource::Clone() {
+	return new WebSiteResource(*this);
+}
+
+inline void WebSiteResource::Clear() {
+	Resource::Clear();
+	r.Clear();
+	JudySLFreeArray(&paths, NULL);
+	paths = NULL;
+	addr.SetEmpty();
+}
+
 inline int WebSiteResource::GetSize() {
 	return 1; //FIXME
 }

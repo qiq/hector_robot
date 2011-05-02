@@ -9,7 +9,7 @@
 # wildcards		r/w	Whether to consider robots rules as wildcards
 # 
 # Status:
-# not changed (on error, WebResources are discarded)
+# not changed (on error, PageResources are discarded)
 
 package RobotsFilter;
 
@@ -92,21 +92,21 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
-	if ($wsr->GetTypeString() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	if ($sr->GetTypeString() ne 'SiteResource') {
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 
 	my $path = $resource->GetUrlPath();
 	my $allowed = 0;
-	my $au = $wsr->GetAllowUrls();
+	my $au = $sr->GetAllowUrls();
 	my $prefix;
 	for (my $i = 0; $i < $au->size(); $i++) {
 		$prefix = $au->get($i);
@@ -126,7 +126,7 @@ sub ProcessSimple() {
 	HectorRobot::DeleteVectorOfString($au);
 	if (not $allowed) {
 		my $disallowed = 0;
-		my $du = $wsr->GetDisallowUrls();
+		my $du = $sr->GetDisallowUrls();
 		for (my $i = 0; $i < $du->size(); $i++) {
 			$prefix = $du->get($i);
 			if ($self->{'wildcards'}) {

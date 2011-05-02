@@ -35,16 +35,16 @@ Status:
 #include "common.h"
 #include "Module.h"
 #include "ObjectProperties.h"
-#include "WebResource.h"
+#include "PageResource.h"
 
 typedef struct CurlResourceInfo_ {
 	int index;		// index in the resourceInfo table
-	WebResource *current;	// currently processed Resource
-	std::string *content;	// content to be filled (pointer to current WebResource)
+	PageResource *current;	// currently processed Resource
+	std::string *content;	// content to be filled (pointer to current PageResource)
 	long contentLength;	// content size of current object (copy of Content-Length, if known)
 	long maxContentLength;	// copy from Fetcher object
 	bool contentIsText;	// content is text (text/html or text/plain)?
-	std::deque<WebResource*> waiting;	// waiting resource in the current hash bucket
+	std::deque<PageResource*> waiting;	// waiting resource in the current hash bucket
 	CURL *easy;		// CURL easy handle (to be reused)
 	curl_socket_t socketfd;	// socket used by CURL
 	struct curl_slist *headers; // headers to be set
@@ -91,9 +91,9 @@ public:
 	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
 
 	CurlInfo curlInfo;
-	void QueueResource(WebResource *wr);
+	void QueueResource(PageResource *pr);
 	void StartQueuedResourcesFetch();
-	void StartResourceFetch(WebResource *wr, int index);
+	void StartResourceFetch(PageResource *pr, int index);
 	void FinishResourceFetch(CurlResourceInfo *ri, int result);
 	bool CheckContentType(std::string *contentType);
 

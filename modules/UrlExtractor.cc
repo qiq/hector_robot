@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include "googleurl/src/gurl.h"
 #include "UrlExtractor.h"
-#include "WebResource.h"
+#include "PageResource.h"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 
 	scanner_create(&state, &scanner);
 
-	webResourceTypeId = Resource::GetRegistry()->NameToId("WebResource");
+	pageResourceTypeId = Resource::GetRegistry()->NameToId("PageResource");
 }
 
 UrlExtractor::~UrlExtractor() {
@@ -97,13 +97,13 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 
 int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
 	while (inputResources->size() > 0) {
-		if (!WebResource::IsInstance(inputResources->front())) {
+		if (!PageResource::IsInstance(inputResources->front())) {
 			outputResources->push(inputResources->front());
 		} else {
-			WebResource *wr = static_cast<WebResource*>(inputResources->front());
-			outputResources->push(wr);
-			GURL *base = new GURL(wr->GetUrl());
-			string *content = wr->GetContentMutable();
+			PageResource *pr = static_cast<PageResource*>(inputResources->front());
+			outputResources->push(pr);
+			GURL *base = new GURL(pr->GetUrl());
+			string *content = pr->GetContentMutable();
 			scanner_set_buffer(content->data(), content->size(), &state, scanner);
 			char *text;
 			token_type tok;
@@ -149,7 +149,7 @@ int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 	}
 
 	for (tr1::unordered_set<string>::iterator iter = urls.begin(); iter != urls.end(); ++iter) {
-		WebResource *tmp = static_cast<WebResource*>(Resource::GetRegistry()->AcquireResource(webResourceTypeId));
+		PageResource *tmp = static_cast<PageResource*>(Resource::GetRegistry()->AcquireResource(pageResourceTypeId));
 		tmp->SetUrl(*iter);
 		tmp->SetStatus(newUrlStatus);
 		outputResources->push(tmp);

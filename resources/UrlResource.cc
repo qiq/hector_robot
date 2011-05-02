@@ -44,24 +44,6 @@ UrlResourceInfo::UrlResourceInfo() {
 	SetAttrInfoList(l);
 }
 
-UrlResource::UrlResource() {
-}
-
-UrlResource::UrlResource(const UrlResource &wr) : Resource(wr), r(wr.r) {
-}
-
-UrlResource::~UrlResource() {
-}
-
-Resource *UrlResource::Clone() {
-	return new UrlResource(*this);
-}
-
-void UrlResource::Clear() {
-	Resource::Clear();
-	r.Clear();
-}
-
 string UrlResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];

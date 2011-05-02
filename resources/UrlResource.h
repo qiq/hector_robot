@@ -9,7 +9,6 @@
 
 #include <vector>
 #include <string>
-#include <tr1/unordered_map>
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "Resource.h"
@@ -63,6 +62,24 @@ protected:
 	static log4cxx::LoggerPtr logger;
 };
 
+inline UrlResource::UrlResource() {
+}
+
+inline UrlResource::UrlResource(const UrlResource &wr) : Resource(wr), r(wr.r) {
+}
+
+inline UrlResource::~UrlResource() {
+}
+
+inline Resource *UrlResource::Clone() {
+	return new UrlResource(*this);
+}
+
+inline void UrlResource::Clear() {
+	Resource::Clear();
+	r.Clear();
+}
+
 inline bool UrlResource::Serialize(ResourceOutputStream &output) {
 	output.WriteVarint32(r.ByteSize());
 	r.SerializeWithCachedSizes(output.GetCodedOutputStream());
@@ -112,12 +129,7 @@ inline void UrlResource::ClearPathMD5() {
 }
 
 inline void UrlResource::SetUrl(const std::string &url) {
-//	size_t offset = url.find('#');
-//	if (offset != std::string::npos)
-//		r.set_url(url.substr(0, offset));
-//	else
-// FIXME: remove ^^^
-		r.set_url(url);
+	r.set_url(url);
 }
 
 inline const std::string UrlResource::GetUrl() {

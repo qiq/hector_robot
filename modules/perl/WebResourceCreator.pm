@@ -1,4 +1,4 @@
-# WebResourceCreator.pm, input, perl
+# PageResourceCreator.pm, input, perl
 # Create WRs according to the list of url got in the config or in the file.
 # 
 # Dependencies: none
@@ -11,7 +11,7 @@
 # Status:
 # 0 (default of WR)
 
-package WebResourceCreator;
+package PageResourceCreator;
 
 use warnings;
 use strict;
@@ -87,7 +87,7 @@ sub Init {
 	}
 
 	$self->{'_registry'} = &Hector::Resource::GetRegistry();
-	$self->{'_webResourceTypeId'} = $self->{'_registry'}->NameToId("WebResource");
+	$self->{'_webResourceTypeId'} = $self->{'_registry'}->NameToId("PageResource");
 
 	return 1;
 }
@@ -148,17 +148,17 @@ sub ProcessInput() {
 	}
 	if (@{$self->{'_url'}} == 0) {
 		if (not $self->{'_finished'}) {
-			$self->{'_object'}->log_info("Finished, total WebResources created: ".$self->{'items'});
+			$self->{'_object'}->log_info("Finished, total PageResources created: ".$self->{'items'});
 			$self->{'_finished'} = 1;
 		}
 		return undef;
 	}
 	$resource = $self->{'_registry'}->AcquireResource($self->{'_webResourceTypeId'});
 	if (not defined $resource) {
-		$self->{'_object'}->log_error("Cannot create resource type: WebResource (".$self->{'_webResourceTypeId'}.")");
+		$self->{'_object'}->log_error("Cannot create resource type: PageResource (".$self->{'_webResourceTypeId'}.")");
 		return undef;
 	}
-	$resource = &HectorRobot::ResourceToWebResource($resource);
+	$resource = &HectorRobot::ResourceToPageResource($resource);
 	$resource->SetId($self->{'_threadIndex'}*10000+$self->{'items'});
 	my $url = shift(@{$self->{'_url'}});
 	$url = "http://".$url if ($url !~ /^[[:alpha:]]+:\/\//);

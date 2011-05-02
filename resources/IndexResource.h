@@ -69,6 +69,24 @@ protected:
 	static log4cxx::LoggerPtr logger;
 };
 
+inline IndexResource::IndexResource() {
+}
+
+inline IndexResource::IndexResource(const IndexResource &wr) : Resource(wr), r(wr.r) {
+}
+
+inline IndexResource::~IndexResource() {
+}
+
+inline Resource *IndexResource::Clone() {
+	return new IndexResource(*this);
+}
+
+inline void IndexResource::Clear() {
+	Resource::Clear();
+	r.Clear();
+}
+
 inline bool IndexResource::Serialize(ResourceOutputStream &output) {
 	output.WriteVarint32(r.ByteSize());
 	r.SerializeWithCachedSizes(output.GetCodedOutputStream());

@@ -1,5 +1,5 @@
 # DnsResolver.pm, simple, perl
-# Translate DNS name to IP address, supports WebResource and WebSiteResource.
+# Translate DNS name to IP address, supports PageResource and SiteResource.
 # 
 # Dependencies: Net::DNS
 #
@@ -101,7 +101,7 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebSiteResource' and $resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'SiteResource' and $resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
@@ -129,7 +129,7 @@ sub ProcessSimple() {
 				my $ip = Hector::IpAddr->new();
 				$ip->ParseIp4Addr($rr->address);
 				$resource->SetIpAddr($ip);
-				$resource->SetIpAddrExpire(time() + $rr->ttl) if ($resource->GetTypeString() eq 'WebSiteResource');
+				$resource->SetIpAddrExpire(time() + $rr->ttl) if ($resource->GetTypeString() eq 'SiteResource');
 				$resource->SetStatus(0);
 				last;
 			}
@@ -137,7 +137,7 @@ sub ProcessSimple() {
 			$self->{'_object'}->log_debug($resource->ToStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
 			my $ip = Hector::IpAddr->new();
 			$resource->SetIpAddr($ip);
-			$resource->SetIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->GetTypeString() eq 'WebSiteResource');
+			$resource->SetIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->GetTypeString() eq 'SiteResource');
 			$resource->SetStatus(1);
 		}
 	}

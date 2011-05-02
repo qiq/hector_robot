@@ -1,5 +1,5 @@
 # PreFetch.pm, simple, perl
-# Pre-process WebResource before passing to the Fetch module, test that
+# Pre-process PageResource before passing to the Fetch module, test that
 # WebSitePath is not locked, lock it and propagate IP address from WSR to WR.
 # If WR does not pass the test, it is discarded.
 # 
@@ -9,7 +9,7 @@
 # items			r/o	Total items processed
 # 
 # Status:
-# not changed (on error, WebResources are discarded)
+# not changed (on error, PageResources are discarded)
 
 package PreFetch;
 
@@ -91,23 +91,23 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
-	if ($wsr->GetTypeString() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	if ($sr->GetTypeString() ne 'SiteResource') {
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 
 	my $currentTime = time();
 	# check that path is ready to be fetched (not disabled, etc) and lock it
-	my $err = $wsr->PathReadyToFetch($resource->GetUrlPath(), $currentTime, $resource->GetScheduled());
+	my $err = $sr->PathReadyToFetch($resource->GetUrlPath(), $currentTime, $resource->GetScheduled());
 	if ($err == 0) {
-		my $ip = $wsr->GetIpAddr();
+		my $ip = $sr->GetIpAddr();
 		$resource->SetIpAddr($ip);
 		$self->{'items'}++;
 	} else {

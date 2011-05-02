@@ -1,6 +1,6 @@
 /**
 DnsResolver.la, multi, native
-Translate DNS name to IP address, supports WebResource and WebSiteResource.
+Translate DNS name to IP address, supports PageResource and WebSiteResource.
 
 Dependencies: libunbound
 

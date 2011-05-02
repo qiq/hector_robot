@@ -154,14 +154,14 @@ sub ParseRobots() {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
-	if ($wsr->GetTypeString() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." No attaxhed WSR: ".$wsr->GetTypeString());
+	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	if ($sr->GetTypeString() ne 'SiteResource') {
+		$self->{'_object'}->log_error($resource->ToStringShort()." No attaxhed WSR: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -184,25 +184,25 @@ sub ProcessSimple() {
 		my $mime = $resource->GetHeaderValue("Content-Type");
 		if ($mime eq '') {
 			$self->{'_object'}->log_debug($resource->ToStringShort()." Missing robots.txt mime type (".$resource->GetUrlHost().")");
-			$wsr->SetRobots([], [], time()+$self->{'negativeTTL'});
+			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
 		}
 		if ($mime !~ /^text\/plain/) {
 			$self->{'_object'}->log_debug($resource->ToStringShort()." Invalid robots.txt mime type: ".$mime." (".$resource->GetUrlHost().")");
-			$wsr->SetRobots([], [], time()+$self->{'negativeTTL'});
+			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
 		}
 		my $content = $resource->GetContent();
 		if (length($content) > 100000) {
 			$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->GetUrlHost().")");
-			$wsr->SetRobots([], [], time()+$self->{'negativeTTL'});
+			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
 		}
 		my ($allow, $disallow) = $self->ParseRobots($content);
-		$wsr->SetRobots($allow, $disallow, time()+$self->{'TTL'});
+		$sr->SetRobots($allow, $disallow, time()+$self->{'TTL'});
 		# status is 0
 		$self->{'items'}++;
 	} elsif ($status >= 300 and $status < 400) {
@@ -210,18 +210,18 @@ sub ProcessSimple() {
 		my $location = $resource->GetHeaderValue("Location");
 		if (not defined $location) {
 			$self->{'_object'}->log_error($resource->ToStringShort()." Redirect with no location: ".$resource->GetUrl());
-			$wsr->SetRobots([], [], time()+$self->{'negativeTTL'});
+			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			$resource->SetStatus(1);
 			return $resource;
 		} else {
-			my $wr = HectorRobot::ResourceToWebResource($resource);
-			$wr->SetUrl(HectorRobot::AbsolutizeUrl($resource->GetUrl(), $location));
+			my $pr = HectorRobot::ResourceToPageResource($resource);
+			$pr->SetUrl(HectorRobot::AbsolutizeUrl($resource->GetUrl(), $location));
 			$resource->SetStatus(2);
 			$self->{'items'}++;
 		}
 	} else {
 		# 4xx, 5xx: client or server error
-		$wsr->SetRobots([], [], time()+$self->{'negativeTTL'});
+		$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 		$resource->SetStatus(1);
 	}
 	return $resource;

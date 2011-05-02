@@ -8,10 +8,10 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = WebResourceGenerator.la Fetcher.la DnsResolver.la WebSiteManager.la UrlExtractor.la Scheduler.la #Filter.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la #Filter.la
 
-WebResourceGenerator_la_SOURCES = WebResourceGenerator.h WebResourceGenerator.cc
-WebResourceGenerator_la_LIBADD = ../resources/libWebResource.la
+PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
+PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
 
 #Filter_la_SOURCES = Filter.h Filter.cc FilterLexer.h FilterLexer.cc
 #Filter_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBPCRECPP_CFLAGS@
@@ -23,24 +23,21 @@ WebResourceGenerator_la_LIBADD = ../resources/libWebResource.la
 Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
 Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
 Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
-Fetcher_la_LIBADD = ../resources/libWebResource.la ../lib/librobot.la
+Fetcher_la_LIBADD = ../resources/libPageResource.la ../lib/librobot.la
 
 DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
 DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
 DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-DnsResolver_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la ../lib/librobot.la
+DnsResolver_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la ../lib/librobot.la
 
-WebSiteManager_la_SOURCES = WebSiteManager.h WebSiteManager.cc
-WebSiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-WebSiteManager_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la
+SiteManager_la_SOURCES = SiteManager.h SiteManager.cc
+SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
+SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la
 
 UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-UrlExtractor_la_LIBADD = ../resources/libWebResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
+UrlExtractor_la_LIBADD = ../resources/libPageResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
 UrlExtractorLexer.cc: UrlExtractorLexer.l
 	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
 BUILT_SOURCES += UrlExtractorLexer.cc
 EXTRA_DIST += UrlExtractorLexer.l
-
-Scheduler_la_SOURCES = Scheduler.h Scheduler.cc
-Scheduler_la_LIBADD = ../resources/libWebResource.la ../resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la

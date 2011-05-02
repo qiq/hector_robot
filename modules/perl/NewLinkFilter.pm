@@ -1,5 +1,5 @@
 # SaveNewUrl.pm, simple, perl
-# Check that we are first to save a WebResource, set status to 0, otherwise
+# Check that we are first to save a PageResource, set status to 0, otherwise
 # delete it (set DELETED flag).
 # 
 # Dependencies: none
@@ -90,14 +90,14 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
-	if ($wsr->GetTypeString() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	if ($sr->GetTypeString() ne 'SiteResource') {
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -105,7 +105,7 @@ sub ProcessSimple() {
 	$self->{'items'}++;
 
 	my $currentTime = time();
-	my $ok = $wsr->PathNewLinkReady($resource->GetUrlPath(), $currentTime);
+	my $ok = $sr->PathNewLinkReady($resource->GetUrlPath(), $currentTime);
 	if ($ok) {
 		$resource->SetStatus(0);
 	} else {

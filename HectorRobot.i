@@ -21,6 +21,6 @@ class PerlResource;
 %import Hector.i
 %include IndexResource.i
 %include UrlResource.i
-%include WebResource.i
-%include WebSiteResource.i
+%include SiteResource.i
+%include PageResource.i
 %include robot_common.i

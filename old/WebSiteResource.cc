@@ -68,31 +68,6 @@ WebSiteResourceInfo::WebSiteResourceInfo() {
 	SetAttrInfoList(l);
 }
 
-WebSiteResource::WebSiteResource() {
-	paths = NULL;
-}
-
-WebSiteResource::WebSiteResource(const WebSiteResource &wsr) : SharedResource(wsr), r(wsr.r), paths(NULL) {
-	ProtobufToJarray();
-	r.clear_paths();
-}
-
-WebSiteResource::~WebSiteResource() {
-	JudySLFreeArray(&paths, NULL);
-}
-
-Resource *WebSiteResource::Clone() {
-	return new WebSiteResource(*this);
-}
-
-void WebSiteResource::Clear() {
-	Resource::Clear();
-	r.Clear();
-	JudySLFreeArray(&paths, NULL);
-	paths = NULL;
-	addr.SetEmpty();
-}
-
 void WebSiteResource::LoadIpAddr() {
 	uint32_t a = r.ip4_addr();
 	if (a != 0) {

@@ -12,8 +12,8 @@ extern "C" {
 }
 #include "DnsResolver.h"
 #include "ProcessingEngine.h"
-#include "WebResource.h"
-#include "WebSiteResource.h"
+#include "PageResource.h"
+#include "SiteResource.h"
 
 using namespace std;
 
@@ -117,12 +117,12 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 			}
 		} else {
 			const char *host;
-			if (WebResource::IsInstance(ri->current)) {
-				WebResource *wr = static_cast<WebResource*>(ri->current);
-				host = wr->GetUrlHost().c_str();
+			if (PageResource::IsInstance(ri->current)) {
+				PageResource *pr = static_cast<PageResource*>(ri->current);
+				host = pr->GetUrlHost().c_str();
 			} else {
-				WebSiteResource *wsr = static_cast<WebSiteResource*>(ri->current);
-				host = wsr->GetUrlHost().c_str();
+				SiteResource *sr = static_cast<SiteResource*>(ri->current);
+				host = sr->GetUrlHost().c_str();
 			}
 			if (result->rcode == 0) {
 				LOG_DEBUG_R(ri->parent, ri->current, "No IP address " << host);
@@ -142,12 +142,12 @@ void CompletedCallback(void *data, int error, struct ub_result *result) {
 
 void DnsResolver::StartResolution(Resource *resource) {
 	const char *host = NULL;
-	if (WebResource::IsInstance(resource)) {
-		WebResource *wr = static_cast<WebResource*>(resource);
-		host = wr->GetUrlHost().c_str();
-	} else if (WebSiteResource::IsInstance(resource)) {
-		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
-		host = wsr->GetUrlHost().c_str();
+	if (PageResource::IsInstance(resource)) {
+		PageResource *pr = static_cast<PageResource*>(resource);
+		host = pr->GetUrlHost().c_str();
+	} else if (SiteResource::IsInstance(resource)) {
+		SiteResource *sr = static_cast<SiteResource*>(resource);
+		host = sr->GetUrlHost().c_str();
 	} else {
 		LOG_ERROR_R(this, resource, "Unknown resource type: " << resource->GetTypeString());
 		return;
@@ -196,15 +196,16 @@ void DnsResolver::FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4
 void DnsResolver::UpdateResource(Resource *resource, int status, IpAddr *addr, uint32_t ipAddrExpire) {
 	resource->SetStatus(status);
 	const char *host = NULL;
-	if (WebResource::IsInstance(resource)) {
-		WebResource *wr = static_cast<WebResource*>(resource);
-		wr->SetIpAddr(*addr);
-		// WebResource has no ipAddrExpire
-		host = wr->GetUrlHost().c_str();
+	if (PageResource::IsInstance(resource)) {
+		PageResource *pr = static_cast<PageResource*>(resource);
+		pr->SetIpAddr(*addr);
+		// PageResource has no ipAddrExpire
+		host = pr->GetUrlHost().c_str();
 	} else {
-		WebSiteResource *wsr = static_cast<WebSiteResource*>(resource);
-		wsr->SetIpAddrExpire(*addr, ipAddrExpire);
-		host = wsr->GetUrlHost().c_str();
+		SiteResource *sr = static_cast<SiteResource*>(resource);
+		sr->SetIpAddr(*addr);
+		sr->SetIpAddrExpire(ipAddrExpire);
+		host = sr->GetUrlHost().c_str();
 	}
 	LOG_DEBUG_R(this, resource, "DNS " << host << ": " << addr->ToString());
 	outputResources->push(resource);
@@ -270,7 +271,7 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && (int)running.size() < maxRequests) {
 		Resource *r = inputResources->front();
-		if (!WebSiteResource::IsInstance(r) && !WebResource::IsInstance(r)) {
+		if (!SiteResource::IsInstance(r) && !PageResource::IsInstance(r)) {
 			outputResources->push(inputResources->front());
 		} else {
 			StartResolution(r);

@@ -50,7 +50,7 @@ Fetcher::~Fetcher() {
 	for (int i = 0; i < maxRequests; i++) {
 		CurlResourceInfo *ri = &curlInfo.resourceInfo[i];
 		Resource::GetRegistry()->ReleaseResource(ri->current);
-		for (deque<WebResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
+		for (deque<PageResource*>::iterator iter = ri->waiting.begin(); iter != ri->waiting.end(); ++iter)
 			Resource::GetRegistry()->ReleaseResource(*iter);
 		curl_multi_remove_handle(curlInfo.multi, ri->easy);
 		curl_easy_cleanup(ri->easy);
@@ -339,9 +339,9 @@ size_t HeaderCallback(void *ptr, size_t size, size_t nmemb, void *data) {
 	return realsize;
 }
 
-void Fetcher::QueueResource(WebResource *wr) {
+void Fetcher::QueueResource(PageResource *pr) {
 	// count hash of the IP address
-	IpAddr ip = wr->GetIpAddr();
+	IpAddr ip = pr->GetIpAddr();
 	uint32_t ip_sum;
 	if (ip.IsIp4Addr()) {
 		ip_sum = ntohl(ip.GetIp4Addr());
@@ -357,9 +357,9 @@ void Fetcher::QueueResource(WebResource *wr) {
 	// busy: just append to the bucket
 	curlInfo.resources++;
 	if (ri->current || (curlInfo.currentTime < ri->time)) {
-		ri->waiting.push_back(wr);
+		ri->waiting.push_back(pr);
 		curlInfo.waiting++;
-		LOG_TRACE_R(this, wr, "waiting (h: " << hash << ")");
+		LOG_TRACE_R(this, pr, "waiting (h: " << hash << ")");
 		// just waiting for timeout (not currently being processed)
 		if (!ri->current && ri->waiting.size() == 1) {
 			curlInfo.waitingHeap.push_back(ri);
@@ -367,8 +367,8 @@ void Fetcher::QueueResource(WebResource *wr) {
 		}
 		return;
 	}
-	LOG_TRACE_R(this, wr, "Not waiting (h: " << hash << ")");
-	StartResourceFetch(wr, hash);
+	LOG_TRACE_R(this, pr, "Not waiting (h: " << hash << ")");
+	StartResourceFetch(pr, hash);
 }
 
 // check resources in the heap and start fetch of resources that waited long enough
@@ -378,31 +378,31 @@ void Fetcher::StartQueuedResourcesFetch() {
 		LOG_TRACE(this, "waking up, h: " << ri->index);
 		pop_heap(curlInfo.waitingHeap.begin(), curlInfo.waitingHeap.end(), CurlResourceInfo_compare());
 		curlInfo.waitingHeap.pop_back();
-		WebResource *wr = ri->waiting.front();
+		PageResource *pr = ri->waiting.front();
 		ri->waiting.pop_front();
 		curlInfo.waiting--;
-		StartResourceFetch(wr, ri->index);
+		StartResourceFetch(pr, ri->index);
 	}
 }
 
 // really start download
-void Fetcher::StartResourceFetch(WebResource *wr, int index) {
+void Fetcher::StartResourceFetch(PageResource *pr, int index) {
 	// set URL
-	const string &url = wr->GetUrl();
+	const string &url = pr->GetUrl();
 	if (url.empty()) {
-		LOG_ERROR_R(this, wr, "No URL found");
-		outputResources->push(wr);
+		LOG_ERROR_R(this, pr, "No URL found");
+		outputResources->push(pr);
 		return;
 	}
-	wr->ClearHeader();
+	pr->ClearHeader();
 	CurlResourceInfo *ri = &curlInfo.resourceInfo[index];
-	ri->current = wr;
-	ri->content = wr->GetContentMutable();
+	ri->current = pr;
+	ri->content = pr->GetContentMutable();
 	ri->content->clear();
 	curl_easy_setopt(ri->easy, CURLOPT_URL, url.c_str());
 
 	// set IP4/6 address
-	IpAddr ip = wr->GetIpAddr();
+	IpAddr ip = pr->GetIpAddr();
 	struct sockaddr_storage addr;
 	if (ip.IsIp4Addr()) {
 		addr.ss_family = AF_INET;
@@ -423,7 +423,7 @@ void Fetcher::StartResourceFetch(WebResource *wr, int index) {
 	LOG_TRACE_R(this, ri->current, "Fetching " << ri->current->GetUrl());
 	CURLMcode rc = curl_multi_add_handle(curlInfo.multi, ri->easy);
 	if (rc != CURLM_OK) {
-		LOG_ERROR_R(this, wr, "Error adding easy handle to multi: " << rc << " (" << ri->current->GetUrl() << ")");
+		LOG_ERROR_R(this, pr, "Error adding easy handle to multi: " << rc << " (" << ri->current->GetUrl() << ")");
 		FinishResourceFetch(ri, rc);
 	}
 }
@@ -553,17 +553,17 @@ int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*>
 
 	// queue/start input resources
 	while (inputResources->size() > 0 && curlInfo.resources < maxRequests) {
-		if (!WebResource::IsInstance(inputResources->front())) {
+		if (!PageResource::IsInstance(inputResources->front())) {
 			outputResources->push(inputResources->front());
 		} else {
-			WebResource *wr = static_cast<WebResource*>(inputResources->front());
-			IpAddr ip = wr->GetIpAddr();
+			PageResource *pr = static_cast<PageResource*>(inputResources->front());
+			IpAddr ip = pr->GetIpAddr();
 			if (!ip.IsEmpty()) {
-				QueueResource(wr);
+				QueueResource(pr);
 			} else {
-				LOG_DEBUG_R(this, wr, "Empty ip address");
-				wr->SetStatus(1);
-				outputResources->push(wr);
+				LOG_DEBUG_R(this, pr, "Empty ip address");
+				pr->SetStatus(1);
+				outputResources->push(pr);
 			}
 		}
 		inputResources->pop();

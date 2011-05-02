@@ -1,6 +1,7 @@
-- odstranit curl ze stromu, udelat z toho zvlastni knihovnu, napr. hector_curl
-- googleurl je kratke, to ponechame
+Module for scanning index and selecting URLs to be downloaded
+Module for merging Index with Pages
 
+New wsm: loads resources, loads sites, downloads, save sites...
 
 ----------------------
 - umet processit relativni Location
@@ -75,7 +76,13 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 - reorder modul
 - cistici modul
 
+----
 DONE
+----
+
+- odstranit curl ze stromu, udelat z toho zvlastni knihovnu, napr. hector_curl
+	- googleurl je kratke, to ponechame
+
 - meta refresh -- podpora (asi jen extrakce url)
 - url extractor
 	- skladani url (base, zaklad z wr)

@@ -95,14 +95,14 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $wsr = HectorRobot::ResourceToWebSiteResource($resource->GetAttachedResource());
-	if ($wsr->GetTypeString() ne 'WebSiteResource') {
-		$self->{'_object'}->log_error($wsr->ToStringShort()." Invalid type: ".$wsr->GetTypeString());
+	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	if ($sr->GetTypeString() ne 'SiteResource') {
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -126,8 +126,8 @@ sub ProcessSimple() {
 				my $content = $resource->GetContent();
 				my $size = length($content);
 				my $cksum = 0;
-				$cksum = CountCksum($content, $size) if ($size == $wsr->GetSize());
-				$wsr->PathUpdateOK($resource->GetUrlPath(), $currentTime, $size, $cksum);
+				$cksum = CountCksum($content, $size) if ($size == $sr->GetSize());
+				$sr->PathUpdateOK($resource->GetUrlPath(), $currentTime, $size, $cksum);
 				$resource->SetStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
@@ -142,7 +142,7 @@ sub ProcessSimple() {
 					} else {
 						# correct redirects
 						$resource->SetRedirectCount($redirects+1);
-						$wsr->PathUpdateRedirect($resource->GetUrlPath(), $currentTime, $status == 301);
+						$sr->PathUpdateRedirect($resource->GetUrlPath(), $currentTime, $status == 301);
 						$resource->SetStatus(1);	# mark resource, so that we can filter redirection later
 					}
 				}
@@ -159,13 +159,13 @@ sub ProcessSimple() {
 	} elsif ($rs == 2) {
 		# error fetching object (permanent error)
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid object: ".$resource->GetUrl());
-		my $ok = $wsr->PathUpdateError($resource->GetUrlPath(), $currentTime, 1);
+		my $ok = $sr->PathUpdateError($resource->GetUrlPath(), $currentTime, 1);
 		$resource->SetFlag($Hector::Resource::DELETED) if (not $ok);
 		$resource->SetStatus(0);
 	}
 
 	if ($error == 1) {
-		my $ok = $wsr->PathUpdateError($resource->GetUrlPath(), $currentTime, $self->{'maxErrors'});
+		my $ok = $sr->PathUpdateError($resource->GetUrlPath(), $currentTime, $self->{'maxErrors'});
 		$resource->SetFlag($Hector::Resource::DELETED) if (not $ok);
 	}
 

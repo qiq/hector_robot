@@ -126,6 +126,38 @@ protected:
 	static log4cxx::LoggerPtr logger;
 };
 
+inline WebResource::WebResource() {
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
+}
+
+inline WebResource::WebResource(const WebResource &wr) : Resource(wr), r(wr.r), headers(wr.headers) {
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
+}
+
+inline WebResource::~WebResource() {
+}
+
+inline Resource *WebResource::Clone() {
+	return new WebResource(*this);
+}
+
+inline void WebResource::Clear() {
+	Resource::Clear();
+	r.Clear();
+	header_map_ready = 0;
+	header_map_dirty = 0;
+	headers.clear();
+	addr.SetEmpty();
+	parsed_url_ready = 0;
+	parsed_url_dirty = 0;
+}
+
 inline bool WebResource::Serialize(ResourceOutputStream &output) {
 	// Prepare Headers, ParsedUrl, IpAddr
 	if (header_map_dirty)

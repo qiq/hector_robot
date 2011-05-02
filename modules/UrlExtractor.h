@@ -1,12 +1,12 @@
 /**
 UrlExtractor.la, multi, native
-Extract URLs from WebResource using flex.
+Extract URLs from PageResource using flex.
 
 Dependencies: none
 
 Parameters:
 items		r/o	Total items processed
-newUrlStatus	r/w	Status to be set for new-url WebResources
+newUrlStatus	r/w	Status to be set for new-url PageResources
 imageLinks	r/w	Also extract image links
 
 Status:
@@ -26,7 +26,7 @@ new WR: status is set according to newUrlStatus parameter. Default is 2.
 #include "Module.h"
 #include "ObjectProperties.h"
 #include "UrlExtractorLexer.h"
-#include "WebResource.h"
+#include "PageResource.h"
 
 class UrlExtractor : public Module {
 public:
@@ -38,7 +38,7 @@ public:
 
 private:
 	int items;		// ObjectLock, items processed
-	int newUrlStatus;	// ObjectLock, status to be set for new-url WebResources
+	int newUrlStatus;	// ObjectLock, status to be set for new-url PageResources
 	bool imageLinks;	// ObjectLock, also extract image links (e.g. <img src=""/>)
 	std::string allowedSchemes;	// ObjectLock, allowed schemes, separated by space, by default "http"
 	std::tr1::unordered_set<std::string> allowedSchemesSet;
@@ -61,7 +61,7 @@ private:
 	void *scanner;
 	scanner_state state;
 
-	int webResourceTypeId;	// WebResource typeId
+	int pageResourceTypeId;	// PageResource typeId
 };
 
 inline Module::Type UrlExtractor::GetType() {

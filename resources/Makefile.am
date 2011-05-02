@@ -11,7 +11,7 @@ resourcesdir = $(libdir)/hector/resources
 resources_LTLIBRARIES =
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = WebResource.h WebResource.pb.h WebResource.i WebSiteResource.h WebSiteResource.pb.h WebSiteResource.i WebSitePath.h IndexResource.h IndexResource.pb.h IndexResource.i
+hectorinclude_HEADERS = IndexResource.h IndexResource.pb.h IndexResource.i
 
 resources_LTLIBRARIES += libScheme.la
 EXTRA_DIST += Scheme.proto Scheme.i
@@ -24,47 +24,7 @@ Scheme.pb.cc Scheme.pb.h: Scheme.proto
 libScheme_la_SOURCES = Scheme.pb.h Scheme.pb.cc
 libScheme_la_LDFLAGS = $(AM_LDFLAGS)
 
-
-resources_LTLIBRARIES += libWebResource.la WebResource.la
-hectorinclude_HEADERS += WebResource.h WebResource.pb.h WebResource.i
-EXTRA_DIST += WebResource.i WebResource.proto
-CLEANFILES += WebResource.pb.h WebResource.pb.cc
-ALIASES += WebResource.la
-
-libWebResource_la_SOURCES = WebResource.h WebResource.cc WebResource.pb.h WebResource.pb.cc
-libWebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-libWebResource_la_LDFLAGS = $(AM_LDFLAGS)
-libWebResource_la_LIBADD = libScheme.la $(top_builddir)/lib/libgoogleurl.la
-
-BUILT_SOURCES += WebResource.pb.h WebResource.pb.cc
-WebResource.pb.cc WebResource.pb.h: WebResource.proto
-	$(PROTOC) WebResource.proto --cpp_out=.
-WebResource.pb.h WebResource.pb.cc: Scheme.pb.h Scheme.pb.cc
-
-WebResource_la_SOURCES = WebResource.cc
-WebResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER -I$(top_srcdir)/lib/googleurl
-WebResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
-WebResource_la_LIBADD = libWebResource.la
-
-resources_LTLIBRARIES += libWebSiteResource.la WebSiteResource.la
-hectorinclude_HEADERS += WebSiteResource.h WebSiteResource.pb.h WebSiteResource.i WebSitePath.h
-EXTRA_DIST += WebSiteResource.i WebSiteResource.proto
-CLEANFILES += WebSiteResource.pb.h WebSiteResource.pb.cc
-ALIASES += WebSiteResource.la
-
-libWebSiteResource_la_SOURCES = WebSiteResource.h WebSiteResource.cc WebSiteResource.pb.h WebSiteResource.pb.cc WebSitePath.h
-libWebSiteResource_la_LDFLAGS = $(AM_LDFLAGS)
-libWebSiteResource_la_LIBADD = libScheme.la -lJudy
-
-BUILT_SOURCES += WebSiteResource.pb.h WebSiteResource.pb.cc
-WebSiteResource.pb.cc WebSiteResource.pb.h: WebSiteResource.proto
-	$(PROTOC) WebSiteResource.proto --cpp_out=.
-WebSiteResource.pb.h WebSiteResource.pb.cc: Scheme.pb.h Scheme.pb.cc
-
-WebSiteResource_la_SOURCES = WebSiteResource.cc
-WebSiteResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
-WebSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
-WebSiteResource_la_LIBADD = libWebSiteResource.la
+# IndexResource
 
 resources_LTLIBRARIES += libIndexResource.la IndexResource.la
 hectorinclude_HEADERS += IndexResource.h IndexResource.pb.h IndexResource.i
@@ -84,6 +44,7 @@ IndexResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
 IndexResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 IndexResource_la_LIBADD = libIndexResource.la
 
+# UrlResource
 
 resources_LTLIBRARIES += libUrlResource.la UrlResource.la
 hectorinclude_HEADERS += UrlResource.h UrlResource.pb.h UrlResource.i
@@ -103,3 +64,43 @@ UrlResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
 UrlResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 UrlResource_la_LIBADD = libUrlResource.la
 
+# SiteResource
+
+resources_LTLIBRARIES += libSiteResource.la SiteResource.la
+hectorinclude_HEADERS += SiteResource.h SiteResource.pb.h SiteResource.i
+EXTRA_DIST += SiteResource.i SiteResource.proto
+CLEANFILES += SiteResource.pb.h SiteResource.pb.cc
+ALIASES += SiteResource.la
+
+libSiteResource_la_SOURCES = SiteResource.h SiteResource.cc SiteResource.pb.h SiteResource.pb.cc
+libSiteResource_la_LDFLAGS = $(AM_LDFLAGS)
+
+BUILT_SOURCES += SiteResource.pb.h SiteResource.pb.cc
+SiteResource.pb.cc SiteResource.pb.h: SiteResource.proto
+	$(PROTOC) SiteResource.proto --cpp_out=.
+
+SiteResource_la_SOURCES = SiteResource.cc
+SiteResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
+SiteResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+SiteResource_la_LIBADD = libSiteResource.la
+
+# PageResource
+
+resources_LTLIBRARIES += libPageResource.la PageResource.la
+hectorinclude_HEADERS += PageResource.h PageResource.pb.h PageResource.i
+EXTRA_DIST += PageResource.i PageResource.proto
+CLEANFILES += PageResource.pb.h PageResource.pb.cc
+ALIASES += PageResource.la
+
+libPageResource_la_SOURCES = PageResource.h PageResource.cc PageResource.pb.h PageResource.pb.cc
+libPageResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
+libPageResource_la_LDFLAGS = $(AM_LDFLAGS) libScheme.la $(top_builddir)/lib/libgoogleurl.la
+
+BUILT_SOURCES += PageResource.pb.h PageResource.pb.cc
+PageResource.pb.cc PageResource.pb.h: PageResource.proto
+	$(PROTOC) PageResource.proto --cpp_out=.
+
+PageResource_la_SOURCES = PageResource.cc
+PageResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER -I$(top_srcdir)/lib/googleurl
+PageResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+PageResource_la_LIBADD = libPageResource.la

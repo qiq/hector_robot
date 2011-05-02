@@ -1,5 +1,5 @@
 # FixRedirect.pm, simple, perl
-# Copy Location header field of the redirect into WebResource's url.
+# Copy Location header field of the redirect into PageResource's url.
 # 
 # Dependencies: none
 # 
@@ -89,7 +89,7 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'WebResource') {
+	if ($resource->GetTypeString() ne 'PageResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;

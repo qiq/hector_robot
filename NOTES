@@ -3,6 +3,46 @@ Pro Resource pouzivat misto dynamic_cast radeji pomoci getId() + kontrolu na typ
 
 http://docs.bor.org.ua/eBooks/Perl/Manning.Extending_and_Embedding_Perl.2002.pdf
 
+New Resources:
+
+IndexResource:
+- site_md5 (8B)
+- path_md5 (8B)
+- last_modified (4B)
+- modification_history (4B)
+- error_count + status (4B)
+- N/A (4B)
+
+UrlResource:
+- MD5 (16B)
+- url_len (2B)
+- url (string)
+
+SiteResource:
+- MD5(1/2) (8B)
+- len (4B)
+PB:
+- scheme (1B)
+- host
+- port (2B)
+- IP addr (4B/16B)
+- IP expire
+- [disallow]
+- [allow]
+- robots_expire (4B)
+memory:
+- robots_redirect_count
+
+PageResource:
+PB:
+- url (string)
+- [header]
+- content
+- timestamp
+- IP addr (4B/16B)
+memory:
+- redirect_count
+
 Obecne
 
 - C++ (+ nejake bindingy?)
@@ -19,28 +59,6 @@ Obecne
 
 Coding style:
 - includes: C, C++ (+STL), other libs, local
-
-Struktura
-
-	- master, ktery zna vsechny domeny (ma v pameti)
-		- muze jich byt vic, propojenych one-to-one
-		- staci hashe domen (hash domain->robotid)
-	- roboti, kteri znaji vsechna URL, co obsluhuji
-		- maji je v pameti (teda staci jejich hashe, predpokladame, ze jsou jednoznacne)
-		- + robots.txt
-
-MASTER
-	- prijima a prideluje domeny/URL ke zpracovani
-	- vede si evidenci o domenach (ma v pameti)
-
-ROBOT
-	- ma seznam URL (v pameti)
-	- ma obsah robots.txt ke svym domenam (taky v pameti)
-	- udrzuje si fronty pozadavku na disku v souborech
-	- pracuje jako s paskou, cte+modifikuje+zapisuje
-	- cilova rychlost stahovani: 1000 stranek/s
-	- cilovy pocet URL: 10 M na masinu (idealne vic)
-		- priklady URL: vytahnout od Galambose seznam URL, zkusit zahashovat
 
 
 Adresarova struktura:
@@ -78,4 +96,28 @@ rozmyslet:
 	  skriptem?
 	- prevod do C++ struktury -- z ceho, PML schematu, nebo .proto?
 	- prevod instanci PML z XML do protocol buffers
+
+OLD:
+
+Struktura
+
+	- master, ktery zna vsechny domeny (ma v pameti)
+		- muze jich byt vic, propojenych one-to-one
+		- staci hashe domen (hash domain->robotid)
+	- roboti, kteri znaji vsechna URL, co obsluhuji
+		- maji je v pameti (teda staci jejich hashe, predpokladame, ze jsou jednoznacne)
+		- + robots.txt
+
+MASTER
+	- prijima a prideluje domeny/URL ke zpracovani
+	- vede si evidenci o domenach (ma v pameti)
+
+ROBOT
+	- ma seznam URL (v pameti)
+	- ma obsah robots.txt ke svym domenam (taky v pameti)
+	- udrzuje si fronty pozadavku na disku v souborech
+	- pracuje jako s paskou, cte+modifikuje+zapisuje
+	- cilova rychlost stahovani: 1000 stranek/s
+	- cilovy pocet URL: 10 M na masinu (idealne vic)
+		- priklady URL: vytahnout od Galambose seznam URL, zkusit zahashovat
 

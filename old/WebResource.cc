@@ -81,38 +81,6 @@ WebResourceInfo::WebResourceInfo() {
 	SetAttrInfoList(l);
 }
 
-WebResource::WebResource() {
-	header_map_ready = 0;
-	header_map_dirty = 0;
-	parsed_url_ready = 0;
-	parsed_url_dirty = 0;
-}
-
-WebResource::WebResource(const WebResource &wr) : Resource(wr), r(wr.r), headers(wr.headers) {
-	header_map_ready = 0;
-	header_map_dirty = 0;
-	parsed_url_ready = 0;
-	parsed_url_dirty = 0;
-}
-
-WebResource::~WebResource() {
-}
-
-Resource *WebResource::Clone() {
-	return new WebResource(*this);
-}
-
-void WebResource::Clear() {
-	Resource::Clear();
-	r.Clear();
-	header_map_ready = 0;
-	header_map_dirty = 0;
-	headers.clear();
-	addr.SetEmpty();
-	parsed_url_ready = 0;
-	parsed_url_dirty = 0;
-}
-
 void WebResource::SetHeaderFields(const std::vector<std::string> &names, const std::vector<std::string> &values) {
 	r.clear_header_names();
 	r.clear_header_values();
