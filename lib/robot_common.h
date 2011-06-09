@@ -15,6 +15,7 @@
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "IpAddr.h"
+#include "MD5.h"
 #include "SuperFastHash.h"
 
 bool ParseLabel(std::string &data, std::string &value);
@@ -33,5 +34,19 @@ inline long CountCksum(const char *data, int size) {
 }
 
 std::string AbsolutizeUrl(const std::string &baseUrl, const std::string &url);
+
+/*inline uint64_t SiteMD5(int scheme, const char *host, int port) {
+	char buf[1024];
+	snprintf(buf, sizeof(buf), "%d %s %d", scheme, host, port);
+	uint64_t result[2];
+        MD5::HashBuffer((char*)&result, buf, strlen(buf));
+	return result[0];
+}
+
+inline uint64_t PathMD5(const char *path) {
+	uint64_t result[2];
+	MD5::HashBuffer((char*)&result, path, strlen(path));
+	return result[0];
+}*/
 
 #endif

@@ -21,7 +21,8 @@ public:
         Resource *Clone();
         void Clear();
         bool Serialize(ResourceOutputStream &output);
-        bool Deserialize(ResourceInputStream &input);
+        bool Deserialize(ResourceInputStream &input, bool headerOnly);
+        bool Skip(ResourceInputStream &input);
         int GetSize();
         ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
@@ -44,3 +45,9 @@ public:
 
         static bool IsInstance(Resource *resource);
 };
+
+%inline %{
+IndexResource *ResourceToIndexResource(Resource *r) {
+        return r && IndexResource::IsInstance(r) ? static_cast<IndexResource*>(r) : NULL;
+}
+%}

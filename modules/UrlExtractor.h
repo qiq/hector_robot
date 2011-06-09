@@ -27,6 +27,7 @@ new WR: status is set according to newUrlStatus parameter. Default is 2.
 #include "ObjectProperties.h"
 #include "UrlExtractorLexer.h"
 #include "PageResource.h"
+#include "SitePathMD5.h"
 
 class UrlExtractor : public Module {
 public:
@@ -34,14 +35,13 @@ public:
 	~UrlExtractor();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type GetType();
-	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	bool ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources, int *processingResources);
 
 private:
 	int items;		// ObjectLock, items processed
 	int newUrlStatus;	// ObjectLock, status to be set for new-url PageResources
 	bool imageLinks;	// ObjectLock, also extract image links (e.g. <img src=""/>)
 	std::string allowedSchemes;	// ObjectLock, allowed schemes, separated by space, by default "http"
-	std::tr1::unordered_set<std::string> allowedSchemesSet;
 
 	char *GetItems(const char *name);
 	char *GetNewUrlStatus(const char *name);
@@ -56,12 +56,13 @@ private:
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
 
-	std::tr1::unordered_set<std::string> urls;
+	std::tr1::unordered_set<std::string> allowedSchemesSet;
+	std::tr1::unordered_set<SitePathMD5, SitePathMD5_hash, SitePathMD5_equal> seen;
 	// for flex
 	void *scanner;
 	scanner_state state;
 
-	int pageResourceTypeId;	// PageResource typeId
+	int urlResourceTypeId;	// PageResource typeId
 };
 
 inline Module::Type UrlExtractor::GetType() {

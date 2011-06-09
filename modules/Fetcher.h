@@ -88,7 +88,7 @@ public:
 	~Fetcher();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type GetType();
-	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	bool ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources, int *processingResources);
 
 	CurlInfo curlInfo;
 	void QueueResource(PageResource *pr);

@@ -1,3 +1,9 @@
+urlextractor: pridat extrakci z hlavicky (Location)
+mark aby prosel vsemi moduly
+MergeIndexUrl
+UpdateIndex
+UpdateSites
+
 Module for scanning index and selecting URLs to be downloaded
 Module for merging Index with Pages
 
@@ -80,6 +86,8 @@ filter: umet pracovat i s jednotlivou hlavickou (clear), umet filtrovat hlavicku
 DONE
 ----
 
+- pridat metodu, ktera vrati novy resource podle stringu (hlavne pro Perl)
+- pridat do generatoru pageresources moznost, aby se generoval marker
 - odstranit curl ze stromu, udelat z toho zvlastni knihovnu, napr. hector_curl
 	- googleurl je kratke, to ponechame
 

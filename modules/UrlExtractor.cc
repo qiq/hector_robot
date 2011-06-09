@@ -5,8 +5,10 @@
 #include <string.h>
 #include <sys/socket.h>
 #include "googleurl/src/gurl.h"
+#include "robot_common.h"
 #include "UrlExtractor.h"
 #include "PageResource.h"
+#include "UrlResource.h"
 
 using namespace std;
 
@@ -25,7 +27,7 @@ UrlExtractor::UrlExtractor(ObjectRegistry *objects, const char *id, int threadIn
 
 	scanner_create(&state, &scanner);
 
-	pageResourceTypeId = Resource::GetRegistry()->NameToId("PageResource");
+	urlResourceTypeId = Resource::GetRegistry()->NameToId("UrlResource");
 }
 
 UrlExtractor::~UrlExtractor() {
@@ -95,7 +97,7 @@ bool UrlExtractor::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+bool UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources, int *processingResources) {
 	while (inputResources->size() > 0) {
 		if (!PageResource::IsInstance(inputResources->front())) {
 			outputResources->push(inputResources->front());
@@ -133,8 +135,20 @@ int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 							size_t colon = url.find_first_of(':');
 							assert(colon != string::npos);
 							string scheme = url.substr(0, colon);
-							if (allowedSchemesSet.find(scheme) != allowedSchemesSet.end())
-								urls.insert(url);
+							if (allowedSchemesSet.find(scheme) != allowedSchemesSet.end()) {
+								// check whether we have already seen this URL
+								ParsedUrl u(url);
+								SitePathMD5 md5(u.GetSiteMD5(), u.GetPathMD5());
+								if (seen.find(md5) == seen.end()) {
+									// not seen
+									UrlResource *ur = static_cast<UrlResource*>(Resource::GetRegistry()->AcquireResource(urlResourceTypeId));
+									ur->SetUrl(url);
+									ur->SetSiteMD5(u.GetSiteMD5());
+									ur->SetPathMD5(u.GetPathMD5());
+									outputResources->push(ur);
+									seen.insert(md5);
+								}
+							}
 						}
 					}
 					break;
@@ -144,26 +158,20 @@ int UrlExtractor::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 				}
 			}
 			delete base;
+			items++;
 		}
 		inputResources->pop();
 	}
 
-	for (tr1::unordered_set<string>::iterator iter = urls.begin(); iter != urls.end(); ++iter) {
-		PageResource *tmp = static_cast<PageResource*>(Resource::GetRegistry()->AcquireResource(pageResourceTypeId));
-		tmp->SetUrl(*iter);
-		tmp->SetStatus(newUrlStatus);
-		outputResources->push(tmp);
-	}
-	urls.clear();
-	items++;
-
 	if (expectingResources)
 		*expectingResources = 1000;
-	return 0;
+	if (processingResources)
+		*processingResources = 0;
+	return false;
 }
 
 // factory functions
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+extern "C" Module* hector_module_create(ObjectRegistry *objects, const char *id, int threadIndex) {
 	return new UrlExtractor(objects, id, threadIndex);
 }

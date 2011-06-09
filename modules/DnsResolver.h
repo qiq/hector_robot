@@ -43,7 +43,7 @@ public:
 	~DnsResolver();
 	bool Init(std::vector<std::pair<std::string, std::string> > *params);
 	Module::Type GetType();
-	int ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources);
+	bool ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources, int *processingResources);
 
 	void StartResolution(Resource *reesource);
 	void FinishResolution(DnsResourceInfo *ri, int status, uint32_t ip4, uint32_t ipAddrExpire);

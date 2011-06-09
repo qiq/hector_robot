@@ -8,7 +8,7 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la #Filter.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
 PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
@@ -23,16 +23,16 @@ PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
 Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
 Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
 Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
-Fetcher_la_LIBADD = ../resources/libPageResource.la ../lib/librobot.la
+Fetcher_la_LIBADD = ../resources/libPageResource.la $(top_builddir)/lib/librobot.la
 
 DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
 DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
 DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-DnsResolver_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la ../lib/librobot.la
+DnsResolver_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la
 
 SiteManager_la_SOURCES = SiteManager.h SiteManager.cc
 SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la
+SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
 
 UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
@@ -41,3 +41,8 @@ UrlExtractorLexer.cc: UrlExtractorLexer.l
 	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
 BUILT_SOURCES += UrlExtractorLexer.cc
 EXTRA_DIST += UrlExtractorLexer.l
+
+ResourceTypeToStatus_la_SOURCES = ResourceTypeToStatus.h ResourceTypeToStatus.cc
+ResourceTypeToStatus_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
+ResourceTypeToStatus_la_LIBADD = $(top_builddir)/lib/librobot.la
+

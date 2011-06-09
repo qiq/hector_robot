@@ -43,6 +43,18 @@ PB:
 memory:
 - redirect_count
 
+data dir:
+
+- index + url
+- sites
+- pages
+
+Tasks:
+- insert URLs (index + url)
+- delete URLs (index + url)
+- select URLs and refresh them
+- merge PageUrls -> index + url
+
 Obecne
 
 - C++ (+ nejake bindingy?)

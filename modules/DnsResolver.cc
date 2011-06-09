@@ -266,7 +266,7 @@ bool DnsResolver::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+bool DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources, int *processingResources) {
 	this->outputResources = outputResources;
 	// get input resources and start resolution for them
 	while (inputResources->size() > 0 && (int)running.size() < maxRequests) {
@@ -282,7 +282,9 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 	if (running.size() == 0) {
 		if (expectingResources)
 			*expectingResources = maxRequests;
-		return 0;
+		if (processingResources)
+			*processingResources = 0;
+		return false;
 	}
 
 	struct timeval startTime;
@@ -302,7 +304,9 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 	                LOG_ERROR(this, "Error in select() = " << errno);
 			if (expectingResources)
 				*expectingResources = maxRequests-running.size();
-			return running.size();
+			if (processingResources)
+				*processingResources = running.size();
+			return running.size() > 0;
 	        } else if (FD_ISSET(fd, &rfds)) {
 			// process finished resources
 			int retval = ub_process(ctx);
@@ -310,7 +314,9 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 				LOG_ERROR(this, "Resolve error: " << ub_strerror(retval));
 				if (expectingResources)
 					*expectingResources = maxRequests-running.size();
-				return running.size();
+				if (processingResources)
+					*processingResources = running.size();
+				return running.size() > 0;
 			}
 		}
 		gettimeofday(&currentTime, NULL);
@@ -320,11 +326,13 @@ int DnsResolver::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resour
 	// finished resources are already appended to the outputResources queue
 	if (expectingResources)
 		*expectingResources = maxRequests-running.size();
-	return running.size();
+	if (processingResources)
+		*processingResources = running.size();
+	return running.size() > 0;
 }
 
 // factory functions
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+extern "C" Module* hector_module_create(ObjectRegistry *objects, const char *id, int threadIndex) {
 	return new DnsResolver(objects, id, threadIndex);
 }

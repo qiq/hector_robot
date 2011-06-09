@@ -542,7 +542,7 @@ bool Fetcher::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources) {
+bool Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*> *outputResources, int *expectingResources, int *processingResources) {
 	curlInfo.currentTime = time(NULL);
 	this->outputResources = outputResources;
 
@@ -572,10 +572,12 @@ int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*>
 	if (curlInfo.resources == 0) {
 		if (expectingResources)
 			*expectingResources = maxRequests;
+		if (processingResources)
+			*processingResources = 0;
 
 		LOG_TRACE(this, "> waiting: " << curlInfo.waiting << ", processing: " << curlInfo.resources-curlInfo.waiting);
 
-		return 0;
+		return false;
 	}
 
 	// set timer for the timerTick
@@ -589,14 +591,16 @@ int Fetcher::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resource*>
 	// finished resources are already appended to the outputResources queue
 	if (expectingResources)
 		*expectingResources = maxRequests-curlInfo.resources;
+	if (processingResources)
+		*processingResources = curlInfo.resources;
 
 	LOG_TRACE(this, "> waiting: " << curlInfo.waiting << ", processing: " << curlInfo.resources-curlInfo.waiting);
 
-	return curlInfo.resources;
+	return curlInfo.resources-curlInfo.waiting > 0;
 }
 
 // factory functions
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+extern "C" Module* hector_module_create(ObjectRegistry *objects, const char *id, int threadIndex) {
 	return new Fetcher(objects, id, threadIndex);
 }

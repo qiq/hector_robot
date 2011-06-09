@@ -159,7 +159,7 @@ sub ProcessSimple() {
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
-	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
+	my $sr = &HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
 		$self->{'_object'}->log_error($resource->ToStringShort()." No attaxhed WSR: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
@@ -214,8 +214,8 @@ sub ProcessSimple() {
 			$resource->SetStatus(1);
 			return $resource;
 		} else {
-			my $pr = HectorRobot::ResourceToPageResource($resource);
-			$pr->SetUrl(HectorRobot::AbsolutizeUrl($resource->GetUrl(), $location));
+			my $pr = &HectorRobot::ResourceToPageResource($resource);
+			$pr->SetUrl(&HectorRobot::AbsolutizeUrl($resource->GetUrl(), $location));
 			$resource->SetStatus(2);
 			$self->{'items'}++;
 		}

@@ -1,12 +1,8 @@
-(HTTP www.test.com:8012), ip: 0.0.0.0
-(HTTP www.test.com:8012), ip: 127.0.0.1
-url: http://www.test.com:8012/bar.html (HTTP www.test.com:8012 /bar.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/bar.html (HTTP www.test.com:8012 /bar.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/redirect.html (HTTP www.test.com:8012 /redirect.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/redirect.html (HTTP www.test.com:8012 /redirect.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/robots.txt (HTTP www.test.com:8012 /robots.txt), size: 0, ip: 127.0.0.1, scheduled: 0
-url: http://www.test.com:8012/robots.txt (HTTP www.test.com:8012 /robots.txt), size: 37, ip: 127.0.0.1, scheduled: 0
-url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 0, ip: 0.0.0.0, scheduled: 0
-url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 0, ip: 0.0.0.0, scheduled: 0
+url: http://www.test.com:8012/bar.html (HTTP www.test.com:8012 /bar.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/bar.html (HTTP www.test.com:8012 /bar.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/redirect.html (HTTP www.test.com:8012 /redirect.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/redirect.html (HTTP www.test.com:8012 /redirect.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 0, ip: 0.0.0.0
+url: http://www.test.com:8012/xyzzy.html (HTTP www.test.com:8012 /xyzzy.html), size: 0, ip: 0.0.0.0

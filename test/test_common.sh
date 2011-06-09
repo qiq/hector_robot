@@ -8,9 +8,9 @@ base=`readlink -f "$base"`'/..'
 test_base=`readlink -f "$base"`
 
 export "PATH=$test_base/test:$PATH"
-export "LD_LIBRARY_PATH=$test_base/resources:$test_base/modules:$test_base/servers:$test_base/perl/.libs:$test_base/python/.libs:$LD_LIBRARY_PATH"
+export "LD_LIBRARY_PATH=$test_base/modules/.libs:$test_base/resources/.libs:$test_base/servers/.libs:$test_base/perl/.libs:$test_base/python/.libs:$LD_LIBRARY_PATH"
 export "PERL5LIB=$test_base/perl:$test_base/modules/perl:$test_base/resources/perl:$PERL5LIB"
-export "PYTHONPATH=$test_base/python:$test_base/modules/python:$test_base/resource/python:$PYTHONPATH"
+export "PYTHONPATH=$test_base/python:$test_base/modules/python:$test_base/resources/python:$PYTHONPATH"
 HECTOR_HOST=localhost:1101
 
 # hector helper functions
@@ -18,13 +18,14 @@ HECTOR_HOST=localhost:1101
 
 function test_server_start {
 	id=$1
-	if [ -z "$id" ]; then
-		echo "usage: test_server_start id [args]"
+	server=$2
+	if [ -z "$id" -o -z "$server" ]; then
+		echo "usage: test_server_start id serverId [args]"
 		return
 	fi
 	shift
 	hector_server_shutdown 2>/dev/null
-	hector_server_start "$test_base/test/${id}_config.xml" test $@
+	hector_server_start "$test_base/test/${id}_config.xml" $server $@
 	hector_client_wait_dontfail PE_test.run 0
 }
 
@@ -34,12 +35,13 @@ function test_server_shutdown {
 
 function test_server_batch {
 	id=$1
-	if [ -z "$id" ]; then
-		echo "usage: test_server_batch id"
+	server=$2
+	if [ -z "$id" -o -z "$server" ]; then
+		echo "usage: test_server_batch id serverId"
 		return
 	fi
-	shift
-	hector_server_start "$test_base/test/${id}_config.xml" -f -b test $@
+	shift; shift
+	hector_server_start "$test_base/test/${id}_config.xml" -f -b $server $@
 }
 
 function test_compare_result {

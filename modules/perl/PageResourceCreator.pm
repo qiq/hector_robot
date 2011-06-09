@@ -24,10 +24,10 @@ sub new {
 		'_object' => $object,
 		'_id' => $id,
 		'_threadIndex' => $threadIndex,
-		'_registry' => undef,
 		'items' => 0,
 		'urlList' => undef,
 		'urlFile' => undef,
+		'mark' => 0,
 		'_url' => [],
 		'_finished' => 0,
 	};
@@ -85,9 +85,6 @@ sub Init {
 	if (defined $self->{'urlFile'}) {
 		return 0 if (not $self->LoadFile($self->{'urlFile'}));
 	}
-
-	$self->{'_registry'} = &Hector::Resource::GetRegistry();
-	$self->{'_webResourceTypeId'} = $self->{'_registry'}->NameToId("PageResource");
 
 	return 1;
 }
@@ -150,12 +147,15 @@ sub ProcessInput() {
 		if (not $self->{'_finished'}) {
 			$self->{'_object'}->log_info("Finished, total PageResources created: ".$self->{'items'});
 			$self->{'_finished'} = 1;
+			if ($self->{'mark'}) {
+				return &Hector::Resource::GetRegistry()->AcquireResource("MarkerResource");
+			}
 		}
 		return undef;
 	}
-	$resource = $self->{'_registry'}->AcquireResource($self->{'_webResourceTypeId'});
+	$resource = &Hector::Resource::GetRegistry()->AcquireResource("PageResource");
 	if (not defined $resource) {
-		$self->{'_object'}->log_error("Cannot create resource type: PageResource (".$self->{'_webResourceTypeId'}.")");
+		$self->{'_object'}->log_error("Cannot create resource type: PageResource");
 		return undef;
 	}
 	$resource = &HectorRobot::ResourceToPageResource($resource);

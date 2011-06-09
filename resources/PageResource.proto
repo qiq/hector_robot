@@ -1,0 +1,20 @@
+package hector.resources;
+
+option optimize_for = SPEED;
+
+import "Scheme.proto";
+
+// memory-only:
+// - int redirect_count
+message PageResource {
+	required string url = 1;		// complete URL
+	required fixed64 site_md5 = 2;		// site-part MD5
+	required fixed64 path_md5 = 3;		// path-part MD5
+	repeated string header_names = 4;	// header field names
+	repeated string header_values = 5;	// header field values
+	optional string content = 6;		// content of an object
+	optional fixed32 timestamp = 7;		// when page was crawled
+	optional fixed32 ip4_addr = 8;		// IPv6 address, part 1
+	optional fixed64 ip6_addr_1 = 9;	// IPv6 address, part 1
+	optional fixed64 ip6_addr_2 = 10;	// IPv6 address, part 2
+}

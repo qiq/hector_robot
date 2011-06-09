@@ -18,21 +18,18 @@ PreFetch, Fetch and PostFetch. Process redirects correctly.
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
 			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
 		</logConfig>
-		<resources>
-			<Resource id="R_test" lib="WebResource.la"/>
-			<Resource id="R_test2" lib="WebSiteResource.la"/>
-		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_load">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+					<Module id="M_input" type="perl" lib="PageResourceCreator.pm">
 						<param name="urlList">
 <![CDATA[						http://www.test.com:8012/foo.html
 							http://www.test.com:8012/bar.html
 							http://www.test.com:8012/xyzzy.html
 							http://www.test.com:8012/redirect.html ]]>
 						</param>
+						<param name="mark" value="true"/>
 					</Module>
 					<Module id="M_dump1" lib="Dump.la"/>
 				</modules>
@@ -47,9 +44,13 @@ PreFetch, Fetch and PostFetch. Process redirects correctly.
 					<queue priority="100"/>		<!-- redirect queue -->
 				</input>
 				<modules>
-					<Module id="M_wsm" lib="WebSiteManager.la">
+					<Module id="M_sm" lib="SiteManager.la">
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
+						<param name="inputSiteResourceFilename" value="$1"/>
+						<param name="inputSiteResourceText" value="true"/>
+						<param name="outputSiteResourceFilename" value="$2"/>
+						<param name="outputSiteResourceText" value="true"/>
 					</Module>
 					<Module id="M_prefetch" type="perl" lib="PreFetch.pm"/>
 					<Module id="M_robotsfilter" type="perl" lib="RobotsFilter.pm"/>

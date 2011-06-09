@@ -91,37 +91,17 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
-		$resource->SetFlag($Hector::Resource::DELETED);
-		return $resource;
-	}
+	return $resource if ($resource->GetTypeString() ne 'PageResource');
 	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
-		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid attached type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 
-	my $currentTime = time();
-	# check that path is ready to be fetched (not disabled, etc) and lock it
-	my $err = $sr->PathReadyToFetch($resource->GetUrlPath(), $currentTime, $resource->GetScheduled());
-	if ($err == 0) {
-		my $ip = $sr->GetIpAddr();
-		$resource->SetIpAddr($ip);
-		$self->{'items'}++;
-	} else {
-		if ($err == 1) {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Disabled (status): ".$resource->GetUrl());
-		} elsif ($err == 2) {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Disabled (updated recently): ".$resource->GetUrl());
-		} elsif ($err == 3) {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Disabled (currently updating): ".$resource->GetUrl());
-		} else {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Disabled: ".$resource->GetUrl());
-		}
-		$resource->SetFlag($Hector::Resource::DELETED);
-	}
+	my $ip = $sr->GetIpAddr();
+	$resource->SetIpAddr($ip);
+	$self->{'items'}++;
 	return $resource;
 }
 

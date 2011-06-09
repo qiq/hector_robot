@@ -1,0 +1,22 @@
+package hector.resources;
+
+option optimize_for = SPEED;
+
+import "Scheme.proto";
+
+// outside of Protocol Buffers serialization:
+// - fixed64 site_md5
+// memory-only:
+// - int robots_redirect_count
+message SiteResource {
+	required Scheme url_scheme = 1;		// HTTP or HTTPS
+	required string url_host = 2;		// host name (as seen in URL)
+	required int32 url_port = 3;		// port value
+	optional fixed32 ip4_addr = 4;		// IPv4 address (result of DNS query)
+	optional fixed64 ip6_addr_1 = 5;	// IPv6 address, part 1
+	optional fixed64 ip6_addr_2 = 6;	// IPv6 address, part 2
+	optional fixed32 ip_addr_expire = 7;	// IP address DNS mapping expire time
+	repeated string allow_urls = 8;		// list of allowed URLs
+	repeated string disallow_urls = 9;	// list of disallowed URLs
+	optional fixed32 robots_expire = 10;	// when robots.txt will expire
+}

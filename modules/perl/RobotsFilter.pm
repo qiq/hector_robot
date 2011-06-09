@@ -92,11 +92,7 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
-		$resource->SetFlag($Hector::Resource::DELETED);
-		return $resource;
-	}
+	return $resource if ($resource->GetTypeString() ne 'PageResource');
 	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
 		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
@@ -123,7 +119,8 @@ sub ProcessSimple() {
 			}
 		}
 	}
-	HectorRobot::DeleteVectorOfString($au);
+$au = undef;
+#	HectorRobot::DeleteVectorOfString($au);
 	if (not $allowed) {
 		my $disallowed = 0;
 		my $du = $sr->GetDisallowUrls();
@@ -142,7 +139,8 @@ sub ProcessSimple() {
 				}
 			}
 		}
-		HectorRobot::DeleteVectorOfString($du);
+$du = undef;
+#		HectorRobot::DeleteVectorOfString($du);
 		if ($disallowed) {
 			$self->{'_object'}->log_debug($resource->ToStringShort()." Disallowed by robots.txt policy ($prefix): ".$resource->GetUrl());
 			$resource->SetFlag($Hector::Resource::DELETED);

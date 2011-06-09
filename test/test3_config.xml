@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test3: Create WebResources, parse urls, resolve DNS and dump result
+test3: Create PageResources, parse urls, resolve DNS and dump result
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -17,14 +17,11 @@ test3: Create WebResources, parse urls, resolve DNS and dump result
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
 			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
 		</logConfig>
-		<resources>
-			<Resource id="R_test" lib="WebResource.la"/>
-		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+					<Module id="M_input" type="perl" lib="PageResourceCreator.pm">
 						<param name="urlList">
 <![CDATA[						http://www.test.com/foo/bar?a=b#c
 							http://www.test.org/

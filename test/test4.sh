@@ -4,9 +4,9 @@
 
 id=test4
 pkill http_server.pl; ( http_server.pl 8012 & )
-test_server_batch $id
+test_server_batch $id test
 pkill http_server.pl
 
-grep "M_dump[0-9]\[[0-9]\+\]: " $id.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[WR .*\)|\1|'|sed -e 's|, ip expire:.*||'|sort >$id.log.result
+grep "M_dump[0-9]\[[0-9]\+\]: " $id.log|sed -e 's|M_dump[0-9]\[[0-9]\+\]: \(\[PR .*\)|\1|'|sed -e 's|, ip expire:.*||'|sort >$id.log.result
 test_compare_result $id
 exit $?

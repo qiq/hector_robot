@@ -11,7 +11,7 @@ resourcesdir = $(libdir)/hector/resources
 resources_LTLIBRARIES =
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = IndexResource.h IndexResource.pb.h IndexResource.i
+hectorinclude_HEADERS = 
 
 resources_LTLIBRARIES += libScheme.la
 EXTRA_DIST += Scheme.proto Scheme.i
@@ -33,7 +33,7 @@ CLEANFILES += IndexResource.pb.h IndexResource.pb.cc
 ALIASES += IndexResource.la
 
 libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc IndexResource.pb.h IndexResource.pb.cc
-libIndexResource_la_LDFLAGS = $(AM_LDFLAGS)
+libIndexResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
 BUILT_SOURCES += IndexResource.pb.h IndexResource.pb.cc
 IndexResource.pb.cc IndexResource.pb.h: IndexResource.proto
@@ -53,7 +53,7 @@ CLEANFILES += UrlResource.pb.h UrlResource.pb.cc
 ALIASES += UrlResource.la
 
 libUrlResource_la_SOURCES = UrlResource.h UrlResource.cc UrlResource.pb.h UrlResource.pb.cc
-libUrlResource_la_LDFLAGS = $(AM_LDFLAGS)
+libUrlResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
 BUILT_SOURCES += UrlResource.pb.h UrlResource.pb.cc
 UrlResource.pb.cc UrlResource.pb.h: UrlResource.proto
@@ -73,7 +73,7 @@ CLEANFILES += SiteResource.pb.h SiteResource.pb.cc
 ALIASES += SiteResource.la
 
 libSiteResource_la_SOURCES = SiteResource.h SiteResource.cc SiteResource.pb.h SiteResource.pb.cc
-libSiteResource_la_LDFLAGS = $(AM_LDFLAGS)
+libSiteResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
 BUILT_SOURCES += SiteResource.pb.h SiteResource.pb.cc
 SiteResource.pb.cc SiteResource.pb.h: SiteResource.proto
@@ -94,7 +94,7 @@ ALIASES += PageResource.la
 
 libPageResource_la_SOURCES = PageResource.h PageResource.cc PageResource.pb.h PageResource.pb.cc
 libPageResource_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-libPageResource_la_LDFLAGS = $(AM_LDFLAGS) libScheme.la $(top_builddir)/lib/libgoogleurl.la
+libPageResource_la_LDFLAGS = $(AM_LDFLAGS) libScheme.la $(top_builddir)/lib/libgoogleurl.la -avoid-version
 
 BUILT_SOURCES += PageResource.pb.h PageResource.pb.cc
 PageResource.pb.cc PageResource.pb.h: PageResource.proto

@@ -95,14 +95,10 @@ sub RestoreCheckpoint {
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
-	if ($resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
-		$resource->SetFlag($Hector::Resource::DELETED);
-		return $resource;
-	}
+	return $resource if ($resource->GetTypeString() ne 'PageResource');
 	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
-		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid type: ".$sr->GetTypeString());
+		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid attached type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -123,11 +119,6 @@ sub ProcessSimple() {
 			$self->{'_object'}->log_debug($resource->ToStringShort().' Status: '.$status.' '.$resource->GetUrl());
 			if ($status >= 100 and $status < 300) {
 				# 1xx, 2xx: OK
-				my $content = $resource->GetContent();
-				my $size = length($content);
-				my $cksum = 0;
-				$cksum = CountCksum($content, $size) if ($size == $sr->GetSize());
-				$sr->PathUpdateOK($resource->GetUrlPath(), $currentTime, $size, $cksum);
 				$resource->SetStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect

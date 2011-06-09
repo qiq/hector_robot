@@ -5,11 +5,11 @@ lib_LTLIBRARIES = librobot.la
 noinst_LTLIBRARIES = libgoogleurl.la
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = robot_common.h SuperFastHash.h \
+hectorinclude_HEADERS = robot_common.h SuperFastHash.h SitePathMD5.h \
 	robot_common.i
 
 librobot_la_SOURCES = \
-	robot_common.h robot_common.cc SuperFastHash.h
+	robot_common.h robot_common.cc SuperFastHash.h SuperFastHash.cc ParsedUrl.h ParsedUrl.cc
 librobot_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 librobot_la_LIBADD = libgoogleurl.la
 librobot_la_LDFLAGS = -version-info 0:0:0 $(AM_LDFLAGS) -lltdl

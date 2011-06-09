@@ -1,6 +1,6 @@
-[WR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0, scheduled: 0
-[WR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 127.0.0.1, scheduled: 0
-[WR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 472, ip: 127.0.0.1, scheduled: 0
-[WR 1 0] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
-[WR 1 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
-[WR 1 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0, scheduled: 0
+[PR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 0.0.0.0
+[PR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 0, ip: 127.0.0.1
+[PR 0 0] url: http://www.test.com:8012/foo.html (HTTP www.test.com:8012 /foo.html), size: 472, ip: 127.0.0.1
+[PR 1 0] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0
+[PR 1 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0
+[PR 1 1] url: https://www.vimeovine.cz/ (HTTPS www.vimeovine.cz:443 /), size: 0, ip: 0.0.0.0

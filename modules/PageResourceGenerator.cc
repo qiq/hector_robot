@@ -81,6 +81,6 @@ Resource *PageResourceGenerator::ProcessInputSync(bool sleep) {
 
 // the class factories
 
-extern "C" Module* create(ObjectRegistry *objects, const char *id, int threadIndex) {
+extern "C" Module* hector_module_create(ObjectRegistry *objects, const char *id, int threadIndex) {
 	return (Module*)new PageResourceGenerator(objects, id, threadIndex);
 }

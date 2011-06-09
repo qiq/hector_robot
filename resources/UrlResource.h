@@ -33,7 +33,8 @@ public:
 	void Clear();
 	// save and restore resource
 	bool Serialize(ResourceOutputStream &output);
-	bool Deserialize(ResourceInputStream &input);
+	bool Deserialize(ResourceInputStream &input, bool headerOnly);
+	bool Skip(ResourceInputStream &input);
 	// used by queues in case there is limit on queue size
 	int GetSize();
 	// get info about this resource
@@ -81,19 +82,18 @@ inline void UrlResource::Clear() {
 }
 
 inline bool UrlResource::Serialize(ResourceOutputStream &output) {
-	output.WriteVarint32(r.ByteSize());
-	r.SerializeWithCachedSizes(output.GetCodedOutputStream());
+	output.SerializeMessage(r);
 	return true;
 }
 
-inline bool UrlResource::Deserialize(ResourceInputStream &input) {
-	uint32_t size;
-	if (!input.ReadVarint32(&size))
-                return false;
-	google::protobuf::io::CodedInputStream::Limit l = input.PushLimit(size);
-	bool result = r.ParseFromCodedStream(input.GetCodedInputStream());
-	input.PopLimit(l);
-	return result;
+inline bool UrlResource::Deserialize(ResourceInputStream &input, bool headerOnly) {
+	if (headerOnly)
+		return true;
+	return input.ParseMessage(r);
+}
+
+inline bool UrlResource::Skip(ResourceInputStream &input) {
+	return input.ParseMessage(r, 0, true);
 }
 
 inline int UrlResource::GetSize() {

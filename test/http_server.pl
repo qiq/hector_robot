@@ -47,7 +47,7 @@ END
 			print $c "Content-Type: text/plain";
 			$c->send_crlf;
 			$c->send_crlf;
-			$c->print("User-agent: *\r\nDisallow: /*bar.html\$\n");
+			$c->print("User-agent: *\r\nDisallow: /*bar.html\$\r\nDisallow: /disabled\r\n");
 			$c->force_last_request();
 		} elsif ($r->method eq 'GET' and $r->url->path eq "/redirect.html") {
 			$c->send_basic_header(301);

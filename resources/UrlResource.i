@@ -21,7 +21,8 @@ public:
         Resource *Clone();
         void Clear();
         bool Serialize(ResourceOutputStream &output);
-        bool Deserialize(ResourceInputStream &input);
+        bool Deserialize(ResourceInputStream &input, bool headerOnly);
+        bool Skip(ResourceInputStream &input);
         int GetSize();
         ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
@@ -38,3 +39,9 @@ public:
 
         static bool IsInstance(Resource *resource);
 };
+
+%inline %{
+UrlResource *ResourceToUrlResource(Resource *r) {
+        return r && UrlResource::IsInstance(r) ? static_cast<UrlResource*>(r) : NULL;
+}
+%}

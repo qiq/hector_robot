@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-test8: Load and save WebSiteResources in the WebSiteManager.
+test8: Load and save SiteResources in the SiteManager.
 -->
 <Config>
 	<Server id="test" lib="RobotServer.la">
@@ -17,26 +17,27 @@ test8: Load and save WebSiteResources in the WebSiteManager.
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
 			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
 		</logConfig>
-		<resources>
-			<Resource id="R_test" lib="WebResource.la"/>
-			<Resource id="R_test2" lib="WebSiteResource.la"/>
-		</resources>
 		<ProcessingEngine id="PE_test">
 			<Processor id="P_main">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" type="perl" lib="WebResourceCreator.pm">
+					<Module id="M_input" type="perl" lib="PageResourceCreator.pm">
 						<param name="urlList">
-<![CDATA[						http://www.test.com:8012/foo.html
+<![CDATA[						http://www.abc.com/index.html
 							http://www.test.com:8012/bar.html
 							http://www.test.com:8012/xyzzy.html
 							http://www.test.com:8012/redirect.html ]]>
 						</param>
+                                                <param name="mark" value="true"/>
 					</Module>
 					<Module id="M_dump1" lib="Dump.la"/>
-					<Module id="M_wsm" lib="WebSiteManager.la">
+					<Module id="M_wsm" lib="SiteManager.la">
 						<param name="dnsEngine" value="PE_dns"/>
 						<param name="robotsEngine" value="PE_robots"/>
+						<param name="inputSiteResourceFilename" value="$1"/>
+						<param name="inputSiteResourceText" value="true"/>
+						<param name="outputSiteResourceFilename" value="$2"/>
+						<param name="outputSiteResourceText" value="true"/>
 					</Module>
 					<Module id="M_dump2" lib="Dump.la"/>
 					<Module id="M_output" lib="TestOutput.la"/>
@@ -75,14 +76,29 @@ test8: Load and save WebSiteResources in the WebSiteManager.
                                 </output>
 			</Processor>
 		</ProcessingEngine>
+	</Server>
 
+	<Server id="dump" lib="RobotServer.la">
+		<threads>1</threads>
+		<serverHost>*</serverHost>
+		<serverPort>1101</serverPort>
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=test8.log
+			log4j.appender.LOGFILE.Append=true
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
 		<ProcessingEngine id="PE_dump">
 			<Processor id="P_dump">
 				<threads>1</threads>
 				<modules>
 					<Module id="M_dump_load" lib="Load.la">
-						<param name="wait" value="true"/>
-						<param name="resourceType" value="WebSiteResource"/>
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="SiteResource"/>
+						<param name="text" value="true"/>
 					</Module>
 					<Module id="M_dump_dump" lib="Dump.la"/>
 					<Module id="M_dump_output" lib="TestOutput.la"/>

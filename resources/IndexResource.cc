@@ -70,7 +70,7 @@ string IndexResource::ToString(Object::LogLevel logLevel) {
 
 #else
 
-extern "C" Resource* create() {
+extern "C" Resource* hector_resource_create() {
 	return (Resource*)new IndexResource();
 }
 

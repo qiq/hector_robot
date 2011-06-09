@@ -21,6 +21,6 @@ bool RobotServer::HandleExtension(SimpleHTTPConn *conn) {
 
 // factory functions
 
-extern "C" SimpleHTTPServer* create(ObjectRegistry *objects, std::vector<ProcessingEngine*> *engines) {
+extern "C" SimpleHTTPServer* hector_server_create(ObjectRegistry *objects, std::vector<ProcessingEngine*> *engines) {
 	return new RobotServer(objects, engines);
 }
