@@ -611,8 +611,8 @@ bool SiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 			if (srs->GetPageResources()->size() > 0)
 				MarkSiteResourceReady(srs);
 
-			// check timeout every 100 SiteResources read
-			if (++resourcesProcessed % 100 == 0 && ((int)(time(NULL)-currentTime) > timeTick))
+			// check timeout every 1000 SiteResources read
+			if (++resourcesProcessed % 1000 == 0 && ((int)(time(NULL)-currentTime) > timeTick))
 				break;
 		}
 		Resource::GetRegistry()->ReleaseResource(sr);
@@ -645,8 +645,8 @@ bool SiteManager::ProcessMultiSync(queue<Resource*> *inputResources, queue<Resou
 			if (srs->GetPageResources()->size() > 0)
 				MarkSiteResourceReady(srs);
 
-			// check timeout every 10 SiteResources found
-			if (++resourcesProcessed % 10 == 0 && ((int)(time(NULL)-currentTime) > timeTick))
+			// check timeout every 1000 SiteResources found
+			if (++resourcesProcessed % 1000 == 0 && ((int)(time(NULL)-currentTime) > timeTick))
 				break;
 		}
 	}

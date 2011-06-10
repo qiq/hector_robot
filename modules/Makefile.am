@@ -8,7 +8,7 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la #Filter.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
 PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
@@ -43,6 +43,10 @@ BUILT_SOURCES += UrlExtractorLexer.cc
 EXTRA_DIST += UrlExtractorLexer.l
 
 ResourceTypeToStatus_la_SOURCES = ResourceTypeToStatus.h ResourceTypeToStatus.cc
-ResourceTypeToStatus_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
 ResourceTypeToStatus_la_LIBADD = $(top_builddir)/lib/librobot.la
 
+UpdateSites_la_SOURCES = UpdateSites.h UpdateSites.cc
+UpdateSites_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libSiteResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
+
+UpdateUrls_la_SOURCES = UpdateUrls.h UpdateUrls.cc
+UpdateUrls_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResource.la ../resources/libPageResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
