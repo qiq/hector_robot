@@ -11,7 +11,7 @@ imageLinks	r/w	Also extract image links
 
 Status:
 original WR: untouched
-new WR: status is set according to newUrlStatus parameter. Default is 2.
+new WR: status is set according to newUrlStatus parameter. Default is 0.
 */
 
 #ifndef _MODULES_URL_EXTRACTOR_H_
@@ -29,6 +29,8 @@ new WR: status is set according to newUrlStatus parameter. Default is 2.
 #include "PageResource.h"
 #include "SitePathMD5.h"
 
+class GURL;
+
 class UrlExtractor : public Module {
 public:
 	UrlExtractor(ObjectRegistry *objects, const char *id, int threadIndex);
@@ -38,10 +40,10 @@ public:
 	bool ProcessMultiSync(std::queue<Resource*> *inputResources, std::queue<Resource*> *outputResources, int *expectingResources, int *processingResources);
 
 private:
-	int items;		// ObjectLock, items processed
-	int newUrlStatus;	// ObjectLock, status to be set for new-url PageResources
-	bool imageLinks;	// ObjectLock, also extract image links (e.g. <img src=""/>)
-	std::string allowedSchemes;	// ObjectLock, allowed schemes, separated by space, by default "http"
+	int items;			// items processed
+	int newUrlStatus;		// status to be set for new-url PageResources
+	bool imageLinks;		// also extract image links (e.g. <img src=""/>)
+	std::string allowedSchemes;	// allowed schemes, separated by space, by default "http"
 
 	char *GetItems(const char *name);
 	char *GetNewUrlStatus(const char *name);
@@ -55,6 +57,8 @@ private:
 	char *GetPropertySync(const char *name);
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
+
+	void AppendUrl(const char *url, GURL *base, std::queue<Resource*> *outputResources);
 
 	std::tr1::unordered_set<std::string> allowedSchemesSet;
 	std::tr1::unordered_set<SitePathMD5, SitePathMD5_hash, SitePathMD5_equal> seen;
