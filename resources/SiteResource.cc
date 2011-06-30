@@ -9,7 +9,7 @@ using namespace std;
 
 #ifndef WRAPPER
 
-log4cxx::LoggerPtr SiteResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.SiteResource"));
+log4cxx::LoggerPtr SiteResource::logger(log4cxx::Logger::getLogger("resources.SiteResource"));
 SiteResourceInfo SiteResource::resourceInfo;
 
 SiteResourceInfo::SiteResourceInfo() {
@@ -118,22 +118,22 @@ string SiteResource::ToString(Object::LogLevel logLevel) {
 	string s;
 
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[SR %d %d] (%s://%s:%d), md5: %llu, ip: ", this->GetId(), this->GetStatus(), Scheme_Name((Scheme)this->GetUrlScheme()).c_str(), this->GetUrlHost().c_str(), this->GetUrlPort(), site_md5);
+	snprintf(buf, sizeof(buf), "[%s %d %d] (%s://%s:%d), md5: %llu, ip: ", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), Scheme_Name((Scheme)GetUrlScheme()).c_str(), GetUrlHost().c_str(), GetUrlPort(), site_md5);
 	s = buf;
 	s += addr.ToString();
-	if (this->GetIpAddrExpire()) {
-		snprintf(buf, sizeof(buf), ", ip expire: %u", this->GetIpAddrExpire());
+	if (GetIpAddrExpire()) {
+		snprintf(buf, sizeof(buf), ", ip expire: %u", GetIpAddrExpire());
 		s += buf;
 	}
-	if (this->GetIpAddrExpire()) {
-		snprintf(buf, sizeof(buf), ", robots expire: %u", this->GetRobotsExpire());
+	if (GetIpAddrExpire()) {
+		snprintf(buf, sizeof(buf), ", robots expire: %u", GetRobotsExpire());
 		s += buf;
 	}
 	if (robots_redirect_count) {
 		snprintf(buf, sizeof(buf), ", robots redirs: %u", robots_redirect_count);
 		s += buf;
 	}
-	vector<string> *v = this->GetAllowUrls();
+	vector<string> *v = GetAllowUrls();
 	if (v->size() > 0) {
 		s += "\nAllow: ";
 		bool first = true;
@@ -146,7 +146,7 @@ string SiteResource::ToString(Object::LogLevel logLevel) {
 		}
 	}
 	delete v;
-	v = this->GetDisallowUrls();
+	v = GetDisallowUrls();
 	if (v->size() > 0) {
 		s += "\nDisallow: ";
 		bool first = true;

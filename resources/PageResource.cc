@@ -11,7 +11,7 @@ using namespace std;
 
 #ifndef WRAPPER
 
-log4cxx::LoggerPtr PageResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.PageResource"));
+log4cxx::LoggerPtr PageResource::logger(log4cxx::Logger::getLogger("resources.PageResource"));
 PageResourceInfo PageResource::resourceInfo;
 
 PageResourceInfo::PageResourceInfo() {
@@ -200,28 +200,28 @@ void PageResource::ClearHeader() {
 string PageResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[PR %d %d] url: %s", this->GetId(), this->GetStatus(), this->GetUrl().c_str());
+	snprintf(buf, sizeof(buf), "[%s %d %d] url: %s", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), GetUrl().c_str());
 	s = buf;
-	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)this->GetUrlScheme()).c_str());
+	snprintf(buf, sizeof(buf), " (%s", Scheme_Name((Scheme)GetUrlScheme()).c_str());
 	s += buf;
-	if (this->GetUrlUsername().length() > 0) {
-		snprintf(buf, sizeof(buf), " %s:%s", this->GetUrlUsername().c_str(), this->GetUrlPassword().c_str());
+	if (GetUrlUsername().length() > 0) {
+		snprintf(buf, sizeof(buf), " %s:%s", GetUrlUsername().c_str(), GetUrlPassword().c_str());
 		s += buf;
 	}
-	snprintf(buf, sizeof(buf), " %s:%d %s)", this->GetUrlHost().c_str(), this->GetUrlPort(), this->GetUrlPath().c_str());
+	snprintf(buf, sizeof(buf), " %s:%d %s)", GetUrlHost().c_str(), GetUrlPort(), GetUrlPath().c_str());
 	s += buf;
-	snprintf(buf, sizeof(buf), ", size: %d", (int)this->GetContent().length());
+	snprintf(buf, sizeof(buf), ", size: %d", (int)GetContent().length());
 	s += buf;
 	s += ", ip: ";
 	s += addr.ToString();
 	if (header_map_dirty)
 		SaveHeaders();
-	vector<string> *v = this->GetHeaderNames();
+	vector<string> *v = GetHeaderNames();
 	if (v->size() > 0) {
 		s += "\nheaders: ";
 		bool first = true;
 		for (vector<string>::iterator iter = v->begin(); iter != v->end(); ++iter) {
-			const std::string &value = this->GetHeaderValue(iter->c_str());
+			const std::string &value = GetHeaderValue(iter->c_str());
 			if (first)
 				first = false;
 			else
@@ -232,9 +232,9 @@ string PageResource::ToString(Object::LogLevel logLevel) {
 		}
 	}
 	delete v;
-	if (this->GetContent().length() > 0) {
+	if (GetContent().length() > 0) {
 		s += "\ncontent:\n";
-		s += this->GetContent();
+		s += GetContent();
 	}
 	return s;
 }

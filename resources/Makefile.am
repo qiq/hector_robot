@@ -104,3 +104,44 @@ PageResource_la_SOURCES = PageResource.cc
 PageResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER -I$(top_srcdir)/lib/googleurl
 PageResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 PageResource_la_LIBADD = libPageResource.la
+
+# NewUrlResource
+#
+#resources_LTLIBRARIES += libNewUrlResource.la NewUrlResource.la
+#hectorinclude_HEADERS += NewUrlResource.h NewUrlResource.pb.h NewUrlResource.i
+#EXTRA_DIST += NewUrlResource.i NewUrlResource.proto
+#CLEANFILES += NewUrlResource.pb.h NewUrlResource.pb.cc
+#ALIASES += NewUrlResource.la
+#
+#libNewUrlResource_la_SOURCES = NewUrlResource.h NewUrlResource.cc NewUrlResource.pb.h NewUrlResource.pb.cc
+#libNewUrlResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+#
+#BUILT_SOURCES += NewUrlResource.pb.h NewUrlResource.pb.cc
+#NewUrlResource.pb.cc NewUrlResource.pb.h: NewUrlResource.proto
+#	$(PROTOC) NewUrlResource.proto --cpp_out=.
+#
+#NewUrlResource_la_SOURCES = NewUrlResource.cc
+#NewUrlResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
+#NewUrlResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+#NewUrlResource_la_LIBADD = libNewUrlResource.la
+
+# TextResource
+
+resources_LTLIBRARIES += libTextResource.la TextResource.la
+hectorinclude_HEADERS += TextResource.h TextResource.pb.h TextResource.i
+EXTRA_DIST += TextResource.i TextResource.proto
+CLEANFILES += TextResource.pb.h TextResource.pb.cc
+ALIASES += TextResource.la
+
+libTextResource_la_SOURCES = TextResource.h TextResource.cc TextResource.pb.h TextResource.pb.cc
+libTextResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
+
+BUILT_SOURCES += TextResource.pb.h TextResource.pb.cc
+TextResource.pb.cc TextResource.pb.h: TextResource.proto
+	$(PROTOC) TextResource.proto --cpp_out=.
+
+TextResource_la_SOURCES = TextResource.cc
+TextResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
+TextResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+TextResource_la_LIBADD = libTextResource.la
+

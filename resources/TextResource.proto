@@ -1,0 +1,24 @@
+package hector.resources;
+
+option optimize_for = SPEED;
+
+enum Flags {
+	SENTENCE_START = 1;
+	NO_SPACE = 2;
+	TILECASE = 4;
+	UPPERCASE = 8;
+	NUMBER = 16;
+};
+
+message TextResource {
+	// original text
+	optional string text = 1;
+
+	// processed text: one item per word
+	repeated Flags flags = 2;
+	repeated string form = 3;
+	repeated string lemma = 4;
+	repeated string postag = 5;
+	repeated int32 head = 6;
+	repeated string deprel = 7;
+}

@@ -9,7 +9,7 @@ using namespace std;
 
 #ifndef WRAPPER
 
-log4cxx::LoggerPtr UrlResource::logger(log4cxx::Logger::getLogger("lib.processing_engine.UrlResource"));
+log4cxx::LoggerPtr UrlResource::logger(log4cxx::Logger::getLogger("resources.UrlResource"));
 UrlResourceInfo UrlResource::resourceInfo;
 
 UrlResourceInfo::UrlResourceInfo() {
@@ -47,7 +47,7 @@ UrlResourceInfo::UrlResourceInfo() {
 string UrlResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[IR %d %d] MD5: %.16llx %.16llx, url: %s\n", GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetUrl().c_str());
+	snprintf(buf, sizeof(buf), "[%s %d %d] MD5: %.16llx %.16llx, url: %s\n", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetUrl().c_str());
 	s = buf;
 	return s;
 }
