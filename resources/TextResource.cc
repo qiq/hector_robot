@@ -13,7 +13,7 @@ log4cxx::LoggerPtr TextResource::logger(log4cxx::Logger::getLogger("resources.Te
 TextResourceInfo TextResource::resourceInfo;
 
 TextResourceInfo::TextResourceInfo() {
-	SetTypeId(12);
+	SetTypeId(15);
 	SetTypeString("TextResource");
 	SetTypeStringTerse("TR");
 	SetObjectName("TextResource");
@@ -71,8 +71,8 @@ string TextResource::ToString(Object::LogLevel logLevel) {
 		s += "\n";
 	}
 	for (int i = 0; i < r.flags_size(); i++) {
-		s += " ";
-		s += r.flags(i);
+		snprintf(buf, sizeof(buf), " %d", (int)r.flags(i));
+		s += buf;
 		if (r.form_size() >= i) {
 			s += "/";
 			s += r.form(i);
@@ -87,14 +87,14 @@ string TextResource::ToString(Object::LogLevel logLevel) {
 		}
 		if (r.head_size() >= i) {
 			s += "/";
-			s += r.head(i);
+			snprintf(buf, sizeof(buf), "%d", r.head(i));
+			s += buf;
 		}
 		if (r.deprel_size() >= i) {
 			s += "/";
 			s += r.deprel(i);
 		}
 	}
-	s += "\n";
 
 	return s;
 }

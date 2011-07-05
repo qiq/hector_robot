@@ -132,6 +132,8 @@ inline const std::string TextResource::GetText() {
 }
 
 inline void TextResource::SetFlags(int index, int flags) {
+	while (index >= r.flags_size())
+		r.add_flags(hector::resources::NONE);
 	r.set_flags(index, (hector::resources::Flags)flags);
 }
 
@@ -148,6 +150,8 @@ inline int TextResource::GetFlagsCount() {
 }
 
 inline void TextResource::SetForm(int index, const std::string &form) {
+	while (index >= r.form_size())
+		r.add_form("");
 	r.set_form(index, form);
 }
 
@@ -164,6 +168,8 @@ inline int TextResource::GetFormCount() {
 }
 
 inline void TextResource::SetLemma(int index, const std::string &lemma) {
+	while (index >= r.lemma_size())
+		r.add_lemma("");
 	r.set_lemma(index, lemma);
 }
 
@@ -180,6 +186,8 @@ inline int TextResource::GetLemmaCount() {
 }
 
 inline void TextResource::SetPosTag(int index, const std::string &postag) {
+	while (index >= r.postag_size())
+		r.add_postag("");
 	r.set_postag(index, postag);
 }
 
@@ -196,6 +204,8 @@ inline int TextResource::GetPosTagCount() {
 }
 
 inline void TextResource::SetHead(int index, int head) {
+	while (index >= r.head_size())
+		r.add_head(0);
 	r.set_head(index, head);
 }
 
@@ -212,6 +222,8 @@ inline int TextResource::GetHeadCount() {
 }
 
 inline void TextResource::SetDepRel(int index, const std::string &deprel) {
+	while (index >= r.deprel_size())
+		r.add_deprel("");
 	r.set_deprel(index, deprel);
 }
 

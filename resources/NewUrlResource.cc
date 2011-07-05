@@ -13,7 +13,7 @@ log4cxx::LoggerPtr NewUrlResource::logger(log4cxx::Logger::getLogger("resources.
 NewUrlResourceInfo NewUrlResource::resourceInfo;
 
 NewUrlResourceInfo::NewUrlResourceInfo() {
-	SetTypeId(12);
+	SetTypeId(99);
 	SetTypeString("NewUrlResource");
 	SetTypeStringTerse("NUR");
 	SetObjectName("NewUrlResource");

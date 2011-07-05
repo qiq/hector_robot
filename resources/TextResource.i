@@ -5,6 +5,24 @@
 %apply unsigned long long { uint64_t }
 
 %{
+#include "TextResource.pb.h"
+%}
+
+// keep synchronized with TextResource.proto
+
+namespace hector {
+        namespace resources {
+                enum Flags {
+                        SENTENCE_START = 1,
+                        NO_SPACE = 2,
+                        TILECASE = 4,
+                        UPPERCASE = 8,
+                        NUMBER = 16,
+                };
+        }
+}
+
+%{
 #include "TextResource.h"
 %}
 

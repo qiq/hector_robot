@@ -13,7 +13,7 @@ log4cxx::LoggerPtr IndexResource::logger(log4cxx::Logger::getLogger("resources.I
 IndexResourceInfo IndexResource::resourceInfo;
 
 IndexResourceInfo::IndexResourceInfo() {
-	SetTypeId(12);
+	SetTypeId(14);
 	SetTypeString("IndexResource");
 	SetTypeStringTerse("IR");
 	SetObjectName("IndexResource");
@@ -63,7 +63,7 @@ string IndexResource::ToString(Object::LogLevel logLevel) {
 		s += buf;
 	}
 	uint32_t is = GetIndexStatus();
-	snprintf(buf, sizeof(buf), "], errors: %d, status: %d\n", (is >> 24) & 0xFF, is & 0x00FFFFFF);
+	snprintf(buf, sizeof(buf), "], errors: %d, status: %d", (is >> 24) & 0xFF, is & 0x00FFFFFF);
 	s += buf;
 	return s;
 }

@@ -3,6 +3,7 @@ package hector.resources;
 option optimize_for = SPEED;
 
 enum Flags {
+	NONE = 0;
 	SENTENCE_START = 1;
 	NO_SPACE = 2;
 	TILECASE = 4;
