@@ -8,7 +8,8 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la #Filter.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la FeaturamaTagger.la Tokenizer.la
+#Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
 PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
@@ -50,3 +51,11 @@ UpdateSites_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libSiteReso
 
 UpdateUrls_la_SOURCES = UpdateUrls.h UpdateUrls.cc
 UpdateUrls_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResource.la ../resources/libPageResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
+
+FeaturamaTagger_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
+FeaturamaTagger_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@
+FeaturamaTagger_la_SOURCES = FeaturamaTagger.h FeaturamaTagger.cc
+FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+
+Tokenizer_la_SOURCES = Tokenizer.h Tokenizer.cc
+Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
