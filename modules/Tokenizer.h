@@ -8,7 +8,7 @@ Dependencies: none
 Parameters:
 items			r/o	Total items processed
 maxSentenceSize		init	Maximum sentence size, default is 200.
-tokenizerLib		init	Language specific library.
+tokenizerLibrary	init	Language specific library.
 */
 
 #ifndef _MODULES_TOKENIZER_H_
@@ -17,6 +17,7 @@ tokenizerLib		init	Language specific library.
 #include <config.h>
 
 #include <string>
+#include <vector>
 #include "common.h"
 #include "Module.h"
 #include "ObjectProperties.h"
@@ -25,7 +26,6 @@ tokenizerLib		init	Language specific library.
 class Token {
 public:
 	Token(): flags(hector::resources::TOKEN_NONE) {};
-	//Token(std::string &token, hector::resources::Flags flags): text(token), flags(flags) {};
 	~Token() {};
 
 	std::string &GetText();
@@ -35,6 +35,7 @@ public:
 	void SetFlag(hector::resources::Flags flag);
 	void ResetFlag(hector::resources::Flags flag);
 	hector::resources::Flags GetFlags();
+	void SetFlags(hector::resources::Flags flags);
 private:
 	std::string text;
 	hector::resources::Flags flags;
@@ -67,6 +68,9 @@ void Token::ResetFlag(hector::resources::Flags flag) {
 hector::resources::Flags Token::GetFlags() {
 	return flags;
 }
+void Token::SetFlags(hector::resources::Flags flags) {
+	this->flags = flags;
+}
 
 class Tokenizer : public Module {
 public:
@@ -80,6 +84,7 @@ private:
 	int items;		// ObjectLock, items processed
 	int maxSentenceSize;
 	char *tokenizerLibrary;
+	char *xxx;
 	bool markParagraphs;	// empty line means new paragraph
 
 	char *GetItems(const char *name);
@@ -100,11 +105,14 @@ private:
 	void FlushSentence(int n);
 	void AppendToken(Token *token);
 
+	TextResource *tr;	// text resource we are currently working on
+	void (*fixup)(std::vector<Token*> &tokens, int index);
+
 	int current;		// current token we consider
 	int lookahead;		// how many tokens we look further while
 				// considering the current token
 	std::vector<Token*> tokens;
-	std::vector<Token*> free;
+	std::vector<Token*> freeTokens;
 };
 
 inline Module::Type Tokenizer::GetType() {

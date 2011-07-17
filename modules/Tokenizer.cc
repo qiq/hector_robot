@@ -2,10 +2,12 @@
  */
 #include <config.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistr.h>
 #include <unictype.h>
+#include "LibraryLoader.h"
 #include "robot_common.h"
 #include "Tokenizer.h"
 #include "TextResource.h"
@@ -22,6 +24,7 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("maxSentenceSize", &Tokenizer::GetMaxSentenceSize, &Tokenizer::SetMaxSentenceSize, true);
 	props->Add("tokenizerLibrary", &Tokenizer::GetTokenizerLibrary, &Tokenizer::SetTokenizerLibrary, true);
 
+	fixup = NULL;
 	lookahead = 2;
 }
 
@@ -73,10 +76,19 @@ bool Tokenizer::Init(vector<pair<string, string> > *params) {
 	// load library
 	if (tokenizerLibrary) {
 		// call fixup_init()
-		// initialize lookahead
-		// TODO
-		LOG_ERROR(this, "xxx");
-		return false;
+		int (*init)() = (int (*)())LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup_init", false);
+		if (!init) {
+			LOG_ERROR(this, "Invalid library: " << tokenizerLibrary << " (no fixup_init())");
+			return false;
+		}
+		lookahead = (*init)();
+		if (lookahead < 2)
+			lookahead = 2;
+		fixup = (void(*)(std::vector<Token*> &tokens, int index))LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup", false);
+		if (!fixup) {
+			LOG_ERROR(this, "Invalid library: " << tokenizerLibrary << " (no fixup())");
+			return false;
+		}
 	}
 
 	return true;
@@ -84,9 +96,9 @@ bool Tokenizer::Init(vector<pair<string, string> > *params) {
 
 Token *Tokenizer::AcquireToken() {
 	Token *result;
-	if (free.size() > 0) {
-		result = free.back();
-		free.pop_back();
+	if (freeTokens.size() > 0) {
+		result = freeTokens.back();
+		freeTokens.pop_back();
 	} else {
 		result = new Token();
 	}
@@ -94,21 +106,16 @@ Token *Tokenizer::AcquireToken() {
 }
 
 void Tokenizer::ReleaseToken(Token *token) {
-	free.push_back(token);
+	freeTokens.push_back(token);
 }
 
-/*
-void fixup(vector<Token*> &tokens, int index) {
-	tokens[index]->SetFlag(hector::resource::TOKEN_SENTENCE_START);
-}
-*/
 
 void Tokenizer::FlushSentence(int n) {
 	int base = tr->GetFormCount();
 	for (int i = 0; i < n; i++) {
 		tr->SetForm(base+i, tokens[i]->GetText());
 		tr->SetFlags(base+i, tokens[i]->GetFlags());
-		free.push_back(tokens[i]);
+		freeTokens.push_back(tokens[i]);
 	}
 	for (int i = n; i < tokens.size(); i++)
 		tokens[i-n] = tokens[i];
@@ -158,7 +165,7 @@ enum state_type {
 Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	if (!TextResource::IsInstance(resource))
 		return resource;
-	TextResource *tr = static_cast<TextResource*>(resource);
+	tr = static_cast<TextResource*>(resource);
 
 	string text = tr->GetText();
 
@@ -281,7 +288,18 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 		}
 	}
 
-	// TODO: more fixups and flush
+	// call fixup for the rest of tokens (append empty tokens)
+	for (int i = 0; i < lookahead; i++) {
+		Token *t = AcquireToken();
+		t->SetText(NULL, 0);
+		t->SetFlags(hector::resources::TOKEN_NONE);
+		AppendToken(t);
+	}
+	// release all tokens
+	while (tokens.size() > 0) {
+		freeTokens.push_back(tokens.back());
+		tokens.pop_back();
+	}
 
 	return resource;
 }

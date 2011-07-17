@@ -8,7 +8,7 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la FeaturamaTagger.la Tokenizer.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
 #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
@@ -59,3 +59,5 @@ FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libText
 
 Tokenizer_la_SOURCES = Tokenizer.h Tokenizer.cc
 Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+
+Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
