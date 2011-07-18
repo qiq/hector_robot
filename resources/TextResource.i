@@ -13,11 +13,15 @@
 namespace hector {
         namespace resources {
                 enum Flags {
-                        SENTENCE_START = 1,
-                        NO_SPACE = 2,
-                        TILECASE = 4,
-                        UPPERCASE = 8,
-                        NUMBER = 16,
+                        TOKEN_NONE = 0,
+                        TOKEN_PARAGRAPH_START = 1,
+                        TOKEN_SENTENCE_START = 2,
+                        TOKEN_NO_SPACE = 4,
+                        TOKEN_ABBR = 8,
+                        TOKEN_PUNCT = 16,
+                        TOKEN_TITLECASE = 32,
+                        TOKEN_UPPERCASE = 64,
+                        TOKEN_NUMERIC = 128,
                 };
         }
 }

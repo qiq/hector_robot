@@ -133,7 +133,7 @@ inline const std::string TextResource::GetText() {
 
 inline void TextResource::SetFlags(int index, int flags) {
 	while (index >= r.flags_size())
-		r.add_flags(hector::resources::NONE);
+		r.add_flags(hector::resources::TOKEN_NONE);
 	r.set_flags(index, (hector::resources::Flags)flags);
 }
 

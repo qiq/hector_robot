@@ -29,6 +29,7 @@ libScheme_la_LDFLAGS = $(AM_LDFLAGS)
 resources_LTLIBRARIES += libIndexResource.la IndexResource.la
 hectorinclude_HEADERS += IndexResource.h IndexResource.i
 EXTRA_DIST += IndexResource.i
+CLEANFILES += IndexResource.pb.h IndexResource.pb.cc
 ALIASES += IndexResource.la
 
 libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc
