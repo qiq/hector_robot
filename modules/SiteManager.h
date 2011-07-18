@@ -14,25 +14,9 @@ items			r/o	Total items processed
 timeTick		r/w	Max time to spend in ProcessMulti()
 dnsEngine		init	ProcessingEngine to call for DNS resolution
 robotsEngine		init	ProcessingEngine to call for robots.txt refresh
-inputSiteResourceFilename init	Load SiteResources from this file
-inputSiteResourceText	init	Whether we expect data to be in text/binary
-ouputSiteResourceFilename init	Save SiteResources to this file
-outputSiteResourceText	init	Whether we expect data to be in text/binary
 robotsMaxRedirects	r/w	Max redirects (default is 5)
 robotsNegativeTTL	r/w	Time to keep negative robots.txt result (too many redirects
 
-Status: FIXME: update following
-- input:
-0 (?):	Plain input WR, WSR should be attached, DNS and robots should be
-	filled correctly in WSR. Also used for outside incoming new-link WRs
-	(TODO).
-2:	Attach WSR, but do not perform DNS and robots resolution. Used for
-	new-link WRs.
-- output:
-0:	WSR attached, DNS and robots filled
-1:	Error in DNS or robots resolution, currently not used
-2:	WSR attached, no DNS and robots.txt resolution performed
-//3:	Output new-link to the supervisor (TODO)
 */
 
 #ifndef _MODULES_SITE_MANAGER_H_
@@ -192,10 +176,6 @@ private:
 	int timeTick;
 	char *dnsEngine;
 	char *robotsEngine;
-	char *inputSiteResourceFilename;
-	bool inputSiteResourceText;
-	char *outputSiteResourceFilename;
-	bool outputSiteResourceText;
 	int robotsMaxRedirects;
 	int robotsNegativeTTL;
 	int siteResources;
@@ -209,14 +189,6 @@ private:
 	void SetDnsEngine(const char *name, const char *value);
 	char *GetRobotsEngine(const char *name);
 	void SetRobotsEngine(const char *name, const char *value);
-	char *GetInputSiteResourceFilename(const char *name);
-	void SetInputSiteResourceFilename(const char *name, const char *value);
-	char *GetInputSiteResourceText(const char *name);
-	void SetInputSiteResourceText(const char *name, const char *value);
-	char *GetOutputSiteResourceFilename(const char *name);
-	void SetOutputSiteResourceFilename(const char *name, const char *value);
-	char *GetOutputSiteResourceText(const char *name);
-	void SetOutputSiteResourceText(const char *name, const char *value);
 	char *GetRobotsMaxRedirects(const char *name);
 	void SetRobotsMaxRedirects(const char *name, const char *value);
 	char *GetRobotsNegativeTTL(const char *name);
@@ -229,8 +201,11 @@ private:
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
 
-	// whether we read all PageResources from the input (not counting redirect resources)
-	bool markerRead;
+	// 0: reading PageResources
+	// 1: all PageResources read, reading SiteResources (and copying them to the output, if not used)
+	// 2: all SiteResources read, processing PageResources
+	// 3: all PageResources processed, writing changed SiteResources
+	int status;
 
 	// entire site resources file read
 	bool siteResourcesRead;
@@ -270,14 +245,6 @@ private:
 
 	// items waiting to be finished
 	int waitingResourcesCount;
-
-	// open file of site resources
-	int ifd;
-	std::ifstream *ifs;
-	ResourceInputStream *istream;
-	int ofd;
-	std::ofstream *ofs;
-	ResourceOutputStream *ostream;
 
 	// cached type of SiteResource
 	int siteResourceTypeId;

@@ -66,7 +66,7 @@ private:
 	void *scanner;
 	scanner_state state;
 
-	int urlResourceTypeId;	// PageResource typeId
+	int urlResourceTypeId;
 };
 
 inline Module::Type UrlExtractor::GetType() {

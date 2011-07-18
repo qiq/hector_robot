@@ -15,7 +15,6 @@
 #include "Resource.h"
 #include "ResourceInputStream.h"
 #include "ResourceOutputStream.h"
-#include "IndexResource.pb.h"
 
 class ResourceAttrInfo;
 
@@ -63,8 +62,16 @@ public:
 	static bool IsInstance(Resource *resource);
 
 protected:
+	struct IndexResourceData {
+		uint64_t site_md5;
+		uint64_t path_md5;
+		uint32_t last_modified;
+		uint32_t modification_history;
+		uint32_t index_status;
+		uint32_t unused;
+	};
 	// saved properties
-	hector::resources::IndexResource r;
+	IndexResourceData r;
 
 	static IndexResourceInfo resourceInfo;
 	static log4cxx::LoggerPtr logger;
@@ -85,26 +92,26 @@ inline Resource *IndexResource::Clone() {
 
 inline void IndexResource::Clear() {
 	Resource::Clear();
-	r.Clear();
+	memset(&r, sizeof(r), 1);
 }
 
 inline bool IndexResource::Serialize(ResourceOutputStream &output) {
-	output.SerializeMessage(r, false);
+	output.WriteRaw((char*)&r, sizeof(r));
 	return true;
 }
 
 inline bool IndexResource::Deserialize(ResourceInputStream &input, bool headerOnly) {
 	if (headerOnly)
 		return true;
-	return input.ParseMessage(r, 32);
+	return input.ReadRaw((char*)&r, sizeof(r));
 }
 
 inline bool IndexResource::Skip(ResourceInputStream &input) {
-	return input.Skip(32);
+	return input.Skip(sizeof(r));
 }
 
 inline int IndexResource::GetSize() {
-	return 32;
+	return sizeof(IndexResourceData);
 }
 
 inline ResourceInfo *IndexResource::GetResourceInfo() {
@@ -112,63 +119,63 @@ inline ResourceInfo *IndexResource::GetResourceInfo() {
 }
 
 inline void IndexResource::SetSiteMD5(uint64_t md5) {
-	r.set_site_md5(md5);
+	r.site_md5 = md5;
 }
 
 inline uint64_t IndexResource::GetSiteMD5() {
-	return r.site_md5();
+	return r.site_md5;
 }
 
 inline void IndexResource::ClearSiteMD5() {
-	r.clear_site_md5();
+	r.site_md5 = 0;
 }
 
 inline void IndexResource::SetPathMD5(uint64_t md5) {
-	r.set_path_md5(md5);
+	r.path_md5 = md5;
 }
 
 inline uint64_t IndexResource::GetPathMD5() {
-	return r.path_md5();
+	return r.path_md5;
 }
 
 inline void IndexResource::ClearPathMD5() {
-	r.clear_path_md5();
+	r.path_md5 = 0;
 }
 
 inline void IndexResource::SetLastModified(uint32_t lastModified) {
-	r.set_last_modified(lastModified);
+	r.last_modified = lastModified;
 }
 
 inline uint32_t IndexResource::GetLastModified() {
-	return r.last_modified();
+	return r.last_modified;
 }
 
 inline void IndexResource::ClearLastModified() {
-	r.clear_last_modified();
+	r.last_modified = 0;
 }
 
 inline void IndexResource::SetModificationHistory(uint32_t history) {
-	r.set_modification_history(history);
+	r.modification_history = history;
 }
 
 inline uint32_t IndexResource::GetModificationHistory() {
-	return r.modification_history();
+	return r.modification_history;
 }
 
 inline void IndexResource::ClearModificationHistory() {
-	r.clear_modification_history();
+	r.modification_history = 0;
 }
 
 inline void IndexResource::SetIndexStatus(uint32_t indexStatus) {
-	r.set_index_status(indexStatus);
+	r.index_status = indexStatus;
 }
 
 inline uint32_t IndexResource::GetIndexStatus() {
-	return r.index_status();
+	return r.index_status;
 }
 
 inline void IndexResource::ClearIndexStatus() {
-	r.clear_index_status();
+	r.index_status = 0;
 }
 
 inline bool IndexResource::IsInstance(Resource *resource) {

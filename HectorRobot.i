@@ -12,6 +12,7 @@ class TestProtobufResourceInfo;
 class MarkerResource;
 class MarkerResourceInfo;
 class PerlResource;
+class TextResource;
 %}
 
 %include std_string.i
@@ -23,4 +24,5 @@ class PerlResource;
 %include UrlResource.i
 %include SiteResource.i
 %include PageResource.i
+%include TextResource.i
 %include robot_common.i

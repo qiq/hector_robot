@@ -10,14 +10,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "MarkerResource.h"
 #include "SiteManager.h"
-#include "ResourceInputStreamBinary.h"
-#include "ResourceInputStreamText.h"
-#include "ResourceOutputStreamBinary.h"
-#include "ResourceOutputStreamText.h"
 
 using namespace std;
 
@@ -83,10 +77,6 @@ SiteManager::SiteManager(ObjectRegistry *objects, const char *id, int threadInde
 	timeTick = DEFAULT_TIME_TICK;
 	dnsEngine = NULL;
 	robotsEngine = NULL;
-	inputSiteResourceFilename = NULL;
-	inputSiteResourceText = false;
-	outputSiteResourceFilename = NULL;
-	outputSiteResourceText = false;
 	robotsMaxRedirects = 5;
 	robotsNegativeTTL = 86400;
 	siteResourcesRead = 0;
@@ -97,27 +87,17 @@ SiteManager::SiteManager(ObjectRegistry *objects, const char *id, int threadInde
 	props->Add("timeTick", &SiteManager::GetTimeTick, &SiteManager::SetTimeTick);
 	props->Add("dnsEngine", &SiteManager::GetDnsEngine, &SiteManager::SetDnsEngine);
 	props->Add("robotsEngine", &SiteManager::GetRobotsEngine, &SiteManager::SetRobotsEngine);
-	props->Add("inputSiteResourceFilename", &SiteManager::GetInputSiteResourceFilename, &SiteManager::SetInputSiteResourceFilename, true);
-	props->Add("inputSiteResourceText", &SiteManager::GetInputSiteResourceText, &SiteManager::SetInputSiteResourceText, true);
-	props->Add("outputSiteResourceFilename", &SiteManager::GetOutputSiteResourceFilename, &SiteManager::SetOutputSiteResourceFilename, true);
-	props->Add("outputSiteResourceText", &SiteManager::GetOutputSiteResourceText, &SiteManager::SetOutputSiteResourceText, true);
 	props->Add("robotsMaxRedirects", &SiteManager::GetRobotsMaxRedirects, &SiteManager::SetRobotsMaxRedirects);
 	props->Add("robotsNegativeTTL", &SiteManager::GetRobotsNegativeTTL, &SiteManager::SetRobotsNegativeTTL);
 	props->Add("siteResources", &SiteManager::GetSiteResources);
 
-	markerRead = false;
+	status = 0;
 	siteResourcesRead = false;
 	siteResourcesWritten = false;
 	ready = NULL;
 
 	runningRequests = 0;
 	waitingResourcesCount = 0;
-	ifd = -1;
-	ifs = NULL;
-	istream = NULL;
-	ofd = -1;
-	ofs = NULL;
-	ostream = NULL;
 
 	siteResourceTypeId = -1;
 }
@@ -131,20 +111,6 @@ SiteManager::~SiteManager() {
 
 	for (tr1::unordered_map<uint64_t, SiteResources*>::iterator iter = resources.begin(); iter != resources.end(); ++iter)
 		delete iter->second;
-
-	delete istream;
-	if (ifd >= 0) {
-		flock(ifd, LOCK_UN);
-		close(ifd);
-	}
-	delete ifs;
-
-	delete ostream;
-	if (ofd >= 0) {
-		flock(ofd, LOCK_UN);
-		close(ofd);
-	}
-	delete ofs;
 }
 
 char *SiteManager::GetItems(const char *name) {
@@ -183,40 +149,6 @@ char *SiteManager::GetRobotsEngine(const char *name) {
 void SiteManager::SetRobotsEngine(const char *name, const char *value) {
 	free(robotsEngine);
 	robotsEngine = strdup(value);
-}
-
-char *SiteManager::GetInputSiteResourceFilename(const char *name) {
-	return strdup(inputSiteResourceFilename);
-}
-
-void SiteManager::SetInputSiteResourceFilename(const char *name, const char *value) {
-	free(inputSiteResourceFilename);
-	inputSiteResourceFilename = strdup(value);
-}
-
-char *SiteManager::GetInputSiteResourceText(const char *name) {
-	return bool2str(inputSiteResourceText);
-}
-
-void SiteManager::SetInputSiteResourceText(const char *name, const char *value) {
-	inputSiteResourceText = str2bool(value);
-}
-
-char *SiteManager::GetOutputSiteResourceFilename(const char *name) {
-	return strdup(outputSiteResourceFilename);
-}
-
-void SiteManager::SetOutputSiteResourceFilename(const char *name, const char *value) {
-	free(outputSiteResourceFilename);
-	outputSiteResourceFilename = strdup(value);
-}
-
-char *SiteManager::GetOutputSiteResourceText(const char *name) {
-	return bool2str(outputSiteResourceText);
-}
-
-void SiteManager::SetOutputSiteResourceText(const char *name, const char *value) {
-	outputSiteResourceText = str2bool(value);
 }
 
 char *SiteManager::GetRobotsMaxRedirects(const char *name) {
@@ -272,59 +204,6 @@ bool SiteManager::Init(vector<pair<string, string> > *params) {
 		return false;
 	}
 	callRobots = new CallRobots(maxRequests);
-
-	// input SiteResource file
-	if (!inputSiteResourceFilename || !strcmp(inputSiteResourceFilename, "")) {
-		LOG_ERROR(this, "No inputSiteResourcesFilename specified");
-		return false;
-	}
-	ifd = open(inputSiteResourceFilename, O_RDONLY);
-	if (ifd < 0) {
-		LOG_ERROR(this, "Cannot open file " << inputSiteResourceFilename << ": " << strerror(errno));
-		return false;
-	}
-	if (flock(ifd, LOCK_SH) < 0) {
-		LOG_ERROR(this, "Cannot lock file " << inputSiteResourceFilename << ": " << strerror(errno));
-		return false;
-	}
-	istream = new ResourceInputStreamBinary(ifd);
-	if (!inputSiteResourceText) {
-		istream = new ResourceInputStreamBinary(ifd);
-	} else {
-		ifs = new ifstream();
-		ifs->open(inputSiteResourceFilename, ifstream::in|ifstream::binary);
-		if (ifs->fail()) {
-			LOG_ERROR(this, "Cannot open input file " << inputSiteResourceFilename);
-			return false;
-		}
-		istream = new ResourceInputStreamText(ifs);
-	}
-
-	// output SiteResource file
-	if (!outputSiteResourceFilename || !strcmp(outputSiteResourceFilename, "")) {
-		LOG_ERROR(this, "No outputSiteResourcesFilename specified");
-		return false;
-	}
-	ofd = open(outputSiteResourceFilename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-	if (ofd < 0) {
-		LOG_ERROR(this, "Cannot open file " << outputSiteResourceFilename << ": " << strerror(errno));
-		return false;
-	}
-	if (flock(ofd, LOCK_EX) < 0) {
-		LOG_ERROR(this, "Cannot lock file " << outputSiteResourceFilename << ": " << strerror(errno));
-		return false;
-	}
-	if (!outputSiteResourceText) {
-		ostream = new ResourceOutputStreamBinary(ofd);
-	} else {
-		ofs = new ofstream();
-		ofs->open(outputSiteResourceFilename, ofstream::out|ifstream::binary);
-		if (ofs->fail()) {
-			LOG_ERROR(this, "Cannot open output file " << outputSiteResourceFilename);
-			return false;
-		}
-		ostream = new ResourceOutputStreamText(ofs);
-	}
 
 	siteResourceTypeId = Resource::GetRegistry()->NameToId("SiteResource");
 	assert(siteResourceTypeId > 0);

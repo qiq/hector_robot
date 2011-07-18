@@ -8,7 +8,7 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
 #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
@@ -37,7 +37,7 @@ SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteReso
 
 UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-UrlExtractor_la_LIBADD = ../resources/libPageResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
+UrlExtractor_la_LIBADD = ../resources/libPageResource.la ../resources/libUrlResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
 UrlExtractorLexer.cc: UrlExtractorLexer.l
 	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
 BUILT_SOURCES += UrlExtractorLexer.cc
@@ -51,6 +51,9 @@ UpdateSites_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libSiteReso
 
 UpdateUrls_la_SOURCES = UpdateUrls.h UpdateUrls.cc
 UpdateUrls_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResource.la ../resources/libPageResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
+
+UpdateIndex_la_SOURCES = UpdateIndex.h UpdateIndex.cc
+UpdateIndex_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResource.la ../resources/libPageResource.la ../resources/libIndexResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
 
 FeaturamaTagger_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
 FeaturamaTagger_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@

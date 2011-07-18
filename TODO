@@ -1,3 +1,8 @@
+- newurlresource (pro urlextractor)
+	- asi zrusit a aplikovat nejdriv updateindex, pak updateurls
+- page + url -> pak index -> page + url, index
+- 
+
 mark aby prosel vsemi moduly
 MergeIndexUrl
 UpdateIndex

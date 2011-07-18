@@ -27,17 +27,12 @@ libScheme_la_LDFLAGS = $(AM_LDFLAGS)
 # IndexResource
 
 resources_LTLIBRARIES += libIndexResource.la IndexResource.la
-hectorinclude_HEADERS += IndexResource.h IndexResource.pb.h IndexResource.i
-EXTRA_DIST += IndexResource.i IndexResource.proto
-CLEANFILES += IndexResource.pb.h IndexResource.pb.cc
+hectorinclude_HEADERS += IndexResource.h IndexResource.i
+EXTRA_DIST += IndexResource.i
 ALIASES += IndexResource.la
 
-libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc IndexResource.pb.h IndexResource.pb.cc
+libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc
 libIndexResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
-
-BUILT_SOURCES += IndexResource.pb.h IndexResource.pb.cc
-IndexResource.pb.cc IndexResource.pb.h: IndexResource.proto
-	$(PROTOC) IndexResource.proto --cpp_out=.
 
 IndexResource_la_SOURCES = IndexResource.cc
 IndexResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
