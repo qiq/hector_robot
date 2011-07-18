@@ -12,8 +12,14 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 AC_ARG_ENABLE(debug, [  --enable-debug          turn on debugging support], use_debug=yes, use_debug=no)
 AC_ARG_ENABLE(featurama-tagger, [  --enable-featurama-tagger          Enable FeaturamaTagger module], enable_featurama_tagger=yes, enable_featurama_tagger=no)
+AM_CONDITIONAL([FEATURAMA_TAGGER_MODULE], [test x$enable_featurama_tagger = xyes])
 AC_ARG_ENABLE(fetch, [  --enable-fetch          Enable Fetch module], enable_fetch=yes, enable_fetch=no)
+AM_CONDITIONAL([FETCH_MODULE], [test x$enable_fetch = xyes])
 AC_ARG_ENABLE(dnsresolve, [  --enable-dnsresolve     Enable DnsResolve module], enable_dnsresolve=yes, enable_dnsresolve=no)
+AM_CONDITIONAL([DNSRESOLVE_MODULE], [test x$enable_dnsresolve = xyes])
+AC_ARG_ENABLE(tokenizer, [  --enable-tokenizer     Enable Tokenizer module], enable_tokenizer=yes, enable_tokenizer=no)
+AM_CONDITIONAL([TOKENIZER_MODULE], [test x$enable_tokenizer = xyes])
+
 
 # Checks for programs.
 AC_PROG_CXX
@@ -53,6 +59,10 @@ fi
 if test "x$enable_fetch" = "xyes"; then
 	LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
 fi
+if test "x$enable_tokenizer" = "xyes"; then
+	AC_CHECK_HEADERS([unistr.h unictype.h], [], [ echo "Please install libunistring"; exit -1])
+	LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
+fi
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
@@ -74,7 +84,11 @@ AC_C_INLINE
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
+AC_TYPE_INT8_T
+AC_TYPE_UINT8_T
+AC_TYPE_INT32_T
 AC_TYPE_UINT32_T
+AC_TYPE_INT64_T
 AC_TYPE_UINT64_T
 
 # Checks for library functions.
