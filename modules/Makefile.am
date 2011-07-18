@@ -8,8 +8,8 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-#modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
+#modules_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la
+modules_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la
 #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
@@ -22,10 +22,13 @@ PageResourceGenerator_la_LIBADD = ../resources/libPageResource.la
 #FilterLexer.cc: FilterLexer.l
 #	flex -8 -f -Cf -Ca -Cr -t FilterLexer.l >FilterLexer.cc
 
+if FETCH_MODULE
+modules_LTLIBRARIES += Fetcher.la
 Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
 Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
 Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
 Fetcher_la_LIBADD = ../resources/libPageResource.la $(top_builddir)/lib/librobot.la
+endif
 
 DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
 DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -56,12 +59,19 @@ UpdateUrls_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResour
 UpdateIndex_la_SOURCES = UpdateIndex.h UpdateIndex.cc
 UpdateIndex_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libUrlResource.la ../resources/libPageResource.la ../resources/libIndexResource.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
 
+if FEATURAMA_TAGGER_MODULE
+modules_LTLIBRARIES += FeaturamaTagger.la
 FeaturamaTagger_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
 FeaturamaTagger_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@
 FeaturamaTagger_la_SOURCES = FeaturamaTagger.h FeaturamaTagger.cc
 FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+endif
 
+if TOKENIZER_MODULE
+modules_LTLIBRARIES += Tokenizer.la
 Tokenizer_la_SOURCES = Tokenizer.h Tokenizer.cc
-Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la -lunistring
 
+modules_LTLIBRARIES += Tokenizer_cs_CZ.la
 Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
+endif

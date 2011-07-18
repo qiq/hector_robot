@@ -18,6 +18,7 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 	items = 0;
 	maxSentenceSize = 200;
 	tokenizerLibrary = NULL;
+	markParagraphs = false;
 
 	props = new ObjectProperties<Tokenizer>(this);
 	props->Add("items", &Tokenizer::GetItems);
@@ -25,6 +26,7 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("tokenizerLibrary", &Tokenizer::GetTokenizerLibrary, &Tokenizer::SetTokenizerLibrary, true);
 
 	fixup = NULL;
+	current = 0;
 	lookahead = 2;
 }
 
@@ -64,8 +66,6 @@ void Tokenizer::SetMarkParagraphs(const char *name, const char *value) {
 }
 
 bool Tokenizer::Init(vector<pair<string, string> > *params) {
-	int result;
-
 	// second stage?
 	if (!params)
 		return true;
@@ -117,7 +117,7 @@ void Tokenizer::FlushSentence(int n) {
 		tr->SetFlags(base+i, tokens[i]->GetFlags());
 		freeTokens.push_back(tokens[i]);
 	}
-	for (int i = n; i < tokens.size(); i++)
+	for (int i = n; i < (int)tokens.size(); i++)
 		tokens[i-n] = tokens[i];
 	tokens.resize(tokens.size()-n);
 }
@@ -136,7 +136,7 @@ void Tokenizer::AppendToken(Token *token) {
 	}
 
 	// call fixup
-	if (fixup && tokens.size() >= current+lookahead+1)
+	if (fixup && (int)tokens.size() >= current+lookahead+1)
 		(*fixup)(tokens, current);
 
 	// test process output (possible sentence start)
@@ -171,6 +171,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 
 	// main tokenizer routine
 	const uint8_t *u8 = (uint8_t*)text.c_str();
+	const uint8_t *next = u8;
 	ucs4_t c;
 	const uint8_t *start = NULL;
 	bool titlecase = true;
@@ -178,18 +179,18 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	bool numeric = false;
 	bool newline = false;
 	state_type state = SPACE;
-	while (u8) {
-		const uint8_t *prev = u8;
-		u8 = u8_next(&c, u8);
+	while (next) {
+		u8 = next;
+		next = u8_next(&c, next);
 		switch (state) {
 		case ALNUM:
 			if (ISALNUM(c)) {
 				if (ISLOWERCASE(c)) {
 					uppercase = false;
-					if (prev == start)
+					if (u8 == start)
 						titlecase = false;
 				} else if (ISUPPERCASE(c)) {
-					if (prev != start)
+					if (u8 != start)
 						titlecase = false;
 				} else if (ISNUMERIC(c)) {
 					numeric = true;

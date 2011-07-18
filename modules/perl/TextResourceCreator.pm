@@ -115,14 +115,15 @@ sub ProcessInput() {
 	}
 	$resource = HectorRobot::ResourceToTextResource($resource);
 	$resource->SetId($self->{'_threadIndex'}*10000+$self->{'items'});
-	$resource->SetFlags(0, $HectorRobot::SENTENCE_START);
+	$resource->SetText("Working example příliš");
+	$resource->SetFlags(0, $HectorRobot::TOKEN_SENTENCE_START);
 	$resource->SetForm(0, "Working");
 	$resource->SetLemma(0, "work");
 	$resource->SetPosTag(0, "V");
 	$resource->SetHead(0, "1");
 	$resource->SetDepRel(0, "test");
-	for (my $i = 1; $i < 100; $i++) {
-		$resource->SetFlags($i, $HectorRobot::NONE);
+	for (my $i = 1; $i < 2; $i++) {
+		$resource->SetFlags($i, $HectorRobot::TOKEN_NONE);
 		$resource->SetForm($i, "example");
 		$resource->SetLemma($i, "example");
 		$resource->SetPosTag($i, "N");

@@ -3,7 +3,7 @@ Tokenizer.la, simple, native
 Tag TextResources sentences with Featurama tagger (first, we apply morphology
 and then we run tagger).
 
-Dependencies: none
+Dependencies: libunistring
 
 Parameters:
 items			r/o	Total items processed
@@ -62,7 +62,7 @@ void Token::SetFlag(hector::resources::Flags flag) {
 }
 
 void Token::ResetFlag(hector::resources::Flags flag) {
-	flags = (hector::resources::Flags)(flags & flag ^ 0xFFFFFFFF);
+	flags = (hector::resources::Flags)(flags & (flag ^ 0xFFFFFFFF));
 }
 
 hector::resources::Flags Token::GetFlags() {
@@ -84,7 +84,6 @@ private:
 	int items;		// ObjectLock, items processed
 	int maxSentenceSize;
 	char *tokenizerLibrary;
-	char *xxx;
 	bool markParagraphs;	// empty line means new paragraph
 
 	char *GetItems(const char *name);
