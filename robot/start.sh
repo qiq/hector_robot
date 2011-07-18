@@ -17,9 +17,10 @@ mkdir refresh 2>/dev/null
 
 # start server
 hector_server_start robot.xml robot "$1"
+# to be sure server is running
+hector_client_wait_dontfail PE_robot.run 0
 
 # load checkpoint data
-hector_client_wait PE_robot.run 0
 if [ -n "$2" ]; then
 	hector_client_restore_checkpoint "$2"
 	hector_client_set M_load[0].filename "$1"

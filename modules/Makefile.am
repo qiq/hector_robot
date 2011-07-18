@@ -8,7 +8,8 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
-modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
+#modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
+modules_LTLIBRARIES = PageResourceGenerator.la Fetcher.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la FeaturamaTagger.la Tokenizer.la Tokenizer_cs_CZ.la
 #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
@@ -31,9 +32,9 @@ DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
 DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
 DnsResolver_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la
 
-SiteManager_la_SOURCES = SiteManager.h SiteManager.cc
-SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
+#SiteManager_la_SOURCES = SiteManager.h SiteManager.cc
+#SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
+#SiteManager_la_LIBADD = ../resources/libPageResource.la ../resources/libSiteResource.la $(top_builddir)/lib/librobot.la @HECTOR_CORE_PREFIX@/lib/hector/resources/libMarkerResource.la
 
 UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl

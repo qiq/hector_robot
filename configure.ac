@@ -11,6 +11,9 @@ AM_INIT_AUTOMAKE(subdir-objects -Wall -Werror)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 AC_ARG_ENABLE(debug, [  --enable-debug          turn on debugging support], use_debug=yes, use_debug=no)
+AC_ARG_ENABLE(featurama-tagger, [  --enable-featurama-tagger          Enable FeaturamaTagger module], enable_featurama_tagger=yes, enable_featurama_tagger=no)
+AC_ARG_ENABLE(fetch, [  --enable-fetch          Enable Fetch module], enable_fetch=yes, enable_fetch=no)
+AC_ARG_ENABLE(dnsresolve, [  --enable-dnsresolve     Enable DnsResolve module], enable_dnsresolve=yes, enable_dnsresolve=no)
 
 # Checks for programs.
 AC_PROG_CXX
@@ -31,15 +34,25 @@ PKG_CHECK_MODULES([PROTOBUF], [protobuf >= 0.22])
 PKG_CHECK_MODULES([HECTOR_CORE], [hector_core >= 0.0.1])
 PKG_CHECK_MODULES([LIBPCRE], [libpcre >= 7.0])
 PKG_CHECK_MODULES([LIBPCRECPP], [libpcrecpp >= 7.0])
+if test "x$enable_featurama_tagger" = "xyes"; then
+	PKG_CHECK_MODULES([CZMORPHOLOGY], [czmorphology >= 1.1.0])
+	PKG_CHECK_MODULES([FEATURAMA], [czmorphology >= 0.0.1])
+fi
 AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
 HECTOR_CORE_PREFIX=`pkg-config --variable=prefix hector_core`
 AC_SUBST(HECTOR_CORE_PREFIX)
-AC_CHECK_LIB(Judy, JudySLIns, [], [ echo "Please install libJudy"; exit -1 ])
-AC_CHECK_LIB(ev, ev_loop, [], [ echo "Please install libev"; exit -1 ])
-AC_CHECK_LIB(ldns, ldns_rr_free, [], [ echo "Please install libldns"; exit -1 ])
-AC_CHECK_LIB(unbound, ub_process, [], [ echo "Please install libunbound"; exit -1 ])
-LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
+#AC_CHECK_LIB(Judy, JudySLIns, [], [ echo "Please install libJudy"; exit -1 ])
+if test "x$enable_dnsresolve" = "xyes" -o "x$enable_fetch" = "xyes"; then
+	AC_CHECK_LIB(ev, ev_loop, [], [ echo "Please install libev"; exit -1 ])
+fi
+if test "x$enable_dnsresolve" = "xyes"; then
+	AC_CHECK_LIB(ldns, ldns_rr_free, [], [ echo "Please install libldns"; exit -1 ])
+	AC_CHECK_LIB(unbound, ub_process, [], [ echo "Please install libunbound"; exit -1 ])
+fi
+if test "x$enable_fetch" = "xyes"; then
+	LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
+fi
 
 # hack: protocol buffers need to be linked statically
 # http://groups.google.com/group/protobuf/msg/d4e3b2a967018a10
@@ -252,6 +265,8 @@ AC_CONFIG_FILES([Makefile
 		modules/python/Makefile
 		servers/Makefile
 		perl/Makefile
+		python/Makefile
+		java/Makefile
 		test/Makefile
 ])
 AC_OUTPUT

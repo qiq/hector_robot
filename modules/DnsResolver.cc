@@ -39,6 +39,7 @@ DnsResolver::DnsResolver(ObjectRegistry *objects, const char *id, int threadInde
 
 DnsResolver::~DnsResolver() {
 	assert(running.size() == 0);
+	free(forwardServer);
 	delete props;
 	ub_ctx_delete(ctx);
 	for (vector<DnsResourceInfo*>::iterator iter = unused.begin(); iter != unused.end(); ++iter)
