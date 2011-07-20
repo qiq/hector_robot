@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "Tokenizer.h"
-#include "TextResource.pb.h"
+#include "TextResource.h"
 
 using namespace std;
 
@@ -11,5 +11,5 @@ extern "C" int fixup_init() {
 }
 
 extern "C" void fixup(vector<Token*> &tokens, int index) {
-	tokens[index]->SetFlag(hector::resources::TOKEN_SENTENCE_START);
+	tokens[index]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 }

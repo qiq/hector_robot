@@ -32,6 +32,11 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 
 Tokenizer::~Tokenizer() {
 	free(tokenizerLibrary);
+
+	for (vector<Token*>::iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
+		delete *iter;
+	for (vector<Token*>::iterator iter = freeTokens.begin(); iter != freeTokens.end(); ++iter)
+		delete *iter;
 	
 	delete props;
 }
@@ -98,6 +103,7 @@ Token *Tokenizer::AcquireToken() {
 	Token *result;
 	if (freeTokens.size() > 0) {
 		result = freeTokens.back();
+		result->Clear();
 		freeTokens.pop_back();
 	} else {
 		result = new Token();
@@ -123,26 +129,32 @@ void Tokenizer::FlushSentence(int n) {
 }
 
 void Tokenizer::AppendToken(Token *token) {
-	if (token)
+	if (token) {
+		if (tokens.size() == 0)
+			token->SetFlag(TextResource::TOKEN_SENTENCE_START);
 		tokens.push_back(token);
+	}
+	// not enough tokens
+	if ((int)tokens.size() <= current+lookahead)
+		return;
 
 	// is current token first in a sentence? (segmentation)
-	if (current == 0) {
-		tokens[current]->SetFlag(hector::resources::TOKEN_SENTENCE_START);
-	} else if (tokens[current-1]->TestFlag(hector::resources::TOKEN_PUNCT)) {
+	if (current > 0 && tokens[current-1]->TestFlag(TextResource::TOKEN_PUNCT)) {
 		string text = tokens[current-1]->GetText();
 		if (text == "." || text == "?" || text == "!")
-			tokens[current]->SetFlag(hector::resources::TOKEN_SENTENCE_START);
+			tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 	}
+	if (current >= maxSentenceSize)
+		tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 
 	// call fixup
 	if (fixup && (int)tokens.size() >= current+lookahead+1)
 		(*fixup)(tokens, current);
 
 	// test process output (possible sentence start)
-	if (current > 0 && tokens[current]->TestFlag(hector::resources::TOKEN_SENTENCE_START)) {
+	if (current > 0 && tokens[current]->TestFlag(TextResource::TOKEN_SENTENCE_START)) {
 		FlushSentence(current);
-		current = 0;
+		current = 1;
 	} else {
 		current++;
 	}
@@ -174,8 +186,8 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	const uint8_t *next = u8;
 	ucs4_t c;
 	const uint8_t *start = NULL;
-	bool titlecase = true;
-	bool uppercase = true;
+	bool titlecase = false;
+	bool uppercase = false;
 	bool numeric = false;
 	bool newline = false;
 	state_type state = SPACE;
@@ -187,11 +199,6 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 			if (ISALNUM(c)) {
 				if (ISLOWERCASE(c)) {
 					uppercase = false;
-					if (u8 == start)
-						titlecase = false;
-				} else if (ISUPPERCASE(c)) {
-					if (u8 != start)
-						titlecase = false;
 				} else if (ISNUMERIC(c)) {
 					numeric = true;
 				}
@@ -199,15 +206,15 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				// text token, no_space = 1
 				Token *t = AcquireToken();
 				t->SetText(start, u8-start);
-				t->SetFlag(hector::resources::TOKEN_NO_SPACE);
+				t->SetFlag(TextResource::TOKEN_NO_SPACE);
 				if (titlecase)
-					t->SetFlag(hector::resources::TOKEN_TITLECASE);
+					t->SetFlag(TextResource::TOKEN_TITLECASE);
 				if (uppercase)
-					t->SetFlag(hector::resources::TOKEN_UPPERCASE);
+					t->SetFlag(TextResource::TOKEN_UPPERCASE);
 				if (numeric)
-					t->SetFlag(hector::resources::TOKEN_NUMERIC);
+					t->SetFlag(TextResource::TOKEN_NUMERIC);
 				if (markParagraphs && newline >= 2)
-					t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PARAGRAPH_START|hector::resources::TOKEN_SENTENCE_START));
+					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = PUNCT;
@@ -217,13 +224,13 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				Token *t = AcquireToken();
 				t->SetText(start, u8-start);
 				if (titlecase)
-					t->SetFlag(hector::resources::TOKEN_TITLECASE);
+					t->SetFlag(TextResource::TOKEN_TITLECASE);
 				if (uppercase)
-					t->SetFlag(hector::resources::TOKEN_UPPERCASE);
+					t->SetFlag(TextResource::TOKEN_UPPERCASE);
 				if (numeric)
-					t->SetFlag(hector::resources::TOKEN_NUMERIC);
+					t->SetFlag(TextResource::TOKEN_NUMERIC);
 				if (markParagraphs && newline >= 2)
-					t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PARAGRAPH_START|hector::resources::TOKEN_SENTENCE_START));
+					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = SPACE;
@@ -236,23 +243,29 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				// punct token, no_space = 1
 				Token *t = AcquireToken();
 				t->SetText(start, u8-start);
-				t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PUNCT|hector::resources::TOKEN_NO_SPACE));
+				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT|TextResource::TOKEN_NO_SPACE));
 				if (markParagraphs && newline >= 2)
-					t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PARAGRAPH_START|hector::resources::TOKEN_SENTENCE_START));
+					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = ALNUM;
 				start = u8;
-				titlecase = true;
-				uppercase = true;
+				titlecase = false;
+				uppercase = false;
 				numeric = false;
+				if (ISUPPERCASE(c)) {
+					titlecase = true;
+					uppercase = true;
+				} else if (ISNUMERIC(c)) {
+					numeric = true;
+				}
 			} else if (ISPUNCT(c)) {
 				// punct token, no_space = 1
 				Token *t = AcquireToken();
 				t->SetText(start, u8-start);
-				t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PUNCT|hector::resources::TOKEN_NO_SPACE));
+				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT|TextResource::TOKEN_NO_SPACE));
 				if (markParagraphs && newline >= 2)
-					t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PARAGRAPH_START|hector::resources::TOKEN_SENTENCE_START));
+					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				start = u8;
@@ -260,9 +273,9 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				// punct token, no_space = 0
 				Token *t = AcquireToken();
 				t->SetText(start, u8-start);
-				t->SetFlag(hector::resources::TOKEN_PUNCT);
+				t->SetFlag(TextResource::TOKEN_PUNCT);
 				if (markParagraphs && newline >= 2)
-					t->SetFlag((hector::resources::Flags)(hector::resources::TOKEN_PARAGRAPH_START|hector::resources::TOKEN_SENTENCE_START));
+					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = SPACE;
@@ -274,9 +287,15 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 			if (ISALNUM(c)) {
 				state = ALNUM;
 				start = u8;
-				titlecase = true;
-				uppercase = true;
 				numeric = false;
+				titlecase = false;
+				uppercase = false;
+				if (ISUPPERCASE(c)) {
+					titlecase = true;
+					uppercase = true;
+				} else if (ISNUMERIC(c)) {
+					numeric = true;
+				}
 			} else if (ISPUNCT(c)) {
 				state = PUNCT;
 				start = u8;
@@ -289,18 +308,53 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 		}
 	}
 
+	switch (state) {
+		case ALNUM: {
+			// text token, no_space = 0
+			Token *t = AcquireToken();
+			t->SetText(start, u8-start);
+			if (titlecase)
+				t->SetFlag(TextResource::TOKEN_TITLECASE);
+			if (uppercase)
+				t->SetFlag(TextResource::TOKEN_UPPERCASE);
+			if (numeric)
+				t->SetFlag(TextResource::TOKEN_NUMERIC);
+			if (markParagraphs && newline >= 2)
+				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
+			AppendToken(t);
+			}
+			break;
+		case PUNCT: {
+			// punct token, no_space = 1
+			Token *t = AcquireToken();
+			t->SetText(start, u8-start);
+			t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT));
+			if (markParagraphs && newline >= 2)
+				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
+			AppendToken(t);
+			}
+			break;
+		case SPACE:
+		default:
+			break;
+	}
+
 	// call fixup for the rest of tokens (append empty tokens)
 	for (int i = 0; i < lookahead; i++) {
 		Token *t = AcquireToken();
 		t->SetText(NULL, 0);
-		t->SetFlags(hector::resources::TOKEN_NONE);
+		t->SetFlags(TextResource::TOKEN_NONE);
 		AppendToken(t);
 	}
+	FlushSentence(current);
+
 	// release all tokens
 	while (tokens.size() > 0) {
 		freeTokens.push_back(tokens.back());
 		tokens.pop_back();
 	}
+
+	tr->ClearText();
 
 	return resource;
 }

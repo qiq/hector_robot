@@ -5,28 +5,6 @@
 %apply unsigned long long { uint64_t }
 
 %{
-#include "TextResource.pb.h"
-%}
-
-// keep synchronized with TextResource.proto
-
-namespace hector {
-        namespace resources {
-                enum Flags {
-                        TOKEN_NONE = 0,
-                        TOKEN_PARAGRAPH_START = 1,
-                        TOKEN_SENTENCE_START = 2,
-                        TOKEN_NO_SPACE = 4,
-                        TOKEN_ABBR = 8,
-                        TOKEN_PUNCT = 16,
-                        TOKEN_TITLECASE = 32,
-                        TOKEN_UPPERCASE = 64,
-                        TOKEN_NUMERIC = 128,
-                };
-        }
-}
-
-%{
 #include "TextResource.h"
 %}
 
@@ -37,6 +15,19 @@ public:
 
 class TextResource : public Resource {
 public:
+        // keep synchronized with TextResource.proto
+        enum Flags {
+                TOKEN_NONE = 0,
+                TOKEN_PARAGRAPH_START = 1,
+                TOKEN_SENTENCE_START = 2,
+                TOKEN_NO_SPACE = 4,
+                TOKEN_ABBR = 8,
+                TOKEN_PUNCT = 16,
+                TOKEN_TITLECASE = 32,
+                TOKEN_UPPERCASE = 64,
+                TOKEN_NUMERIC = 128,
+        };
+
         TextResource();
         TextResource(const TextResource &wr);
         ~TextResource();

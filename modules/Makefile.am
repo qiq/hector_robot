@@ -64,7 +64,7 @@ modules_LTLIBRARIES += FeaturamaTagger.la
 FeaturamaTagger_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
 FeaturamaTagger_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@
 FeaturamaTagger_la_SOURCES = FeaturamaTagger.h FeaturamaTagger.cc
-FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la -lunistring
 endif
 
 if TOKENIZER_MODULE
@@ -74,4 +74,5 @@ Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResour
 
 modules_LTLIBRARIES += Tokenizer_cs_CZ.la
 Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
+Tokenizer_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
 endif

@@ -1,3 +1,5 @@
+Libunistring z debianu, ne z ubuntu:
+sudo dpkg -i libunistring0_0.9.3-4_i386.deb libunistring-dev_0.9.3-4_i386.deb
 
 Pro Resource pouzivat misto dynamic_cast radeji pomoci getId() + kontrolu na typ a static_cast<>
 

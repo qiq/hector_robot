@@ -25,21 +25,27 @@ tokenizerLibrary	init	Language specific library.
 
 class Token {
 public:
-	Token(): flags(hector::resources::TOKEN_NONE) {};
+	Token(): flags(TextResource::TOKEN_NONE) {};
 	~Token() {};
 
+	void Clear();
 	std::string &GetText();
 	void SetText(std::string &text);
 	void SetText(const uint8_t *text, int len);
-	bool TestFlag(hector::resources::Flags flag);
-	void SetFlag(hector::resources::Flags flag);
-	void ResetFlag(hector::resources::Flags flag);
-	hector::resources::Flags GetFlags();
-	void SetFlags(hector::resources::Flags flags);
+	bool TestFlag(TextResource::Flags flag);
+	void SetFlag(TextResource::Flags flag);
+	void ResetFlag(TextResource::Flags flag);
+	TextResource::Flags GetFlags();
+	void SetFlags(TextResource::Flags flags);
 private:
 	std::string text;
-	hector::resources::Flags flags;
+	TextResource::Flags flags;
 };
+
+void Token::Clear() {
+	text.clear();
+	flags = TextResource::TOKEN_NONE;
+}
 
 std::string &Token::GetText() {
 	return text;
@@ -53,22 +59,22 @@ void Token::SetText(const uint8_t *text, int len) {
 	this->text.assign((const char*)text, len);
 }
 
-bool Token::TestFlag(hector::resources::Flags flag) {
+bool Token::TestFlag(TextResource::Flags flag) {
 	return flags & flag;
 }
 
-void Token::SetFlag(hector::resources::Flags flag) {
-	flags = (hector::resources::Flags)(flags|flag);
+void Token::SetFlag(TextResource::Flags flag) {
+	flags = (TextResource::Flags)(flags|flag);
 }
 
-void Token::ResetFlag(hector::resources::Flags flag) {
-	flags = (hector::resources::Flags)(flags & (flag ^ 0xFFFFFFFF));
+void Token::ResetFlag(TextResource::Flags flag) {
+	flags = (TextResource::Flags)(flags & (flag ^ 0xFFFFFFFF));
 }
 
-hector::resources::Flags Token::GetFlags() {
+TextResource::Flags Token::GetFlags() {
 	return flags;
 }
-void Token::SetFlags(hector::resources::Flags flags) {
+void Token::SetFlags(TextResource::Flags flags) {
 	this->flags = flags;
 }
 

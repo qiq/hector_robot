@@ -100,9 +100,9 @@ bool FeaturamaTagger::Init(vector<pair<string, string> > *params) {
 	char featureFile[1024];
 	char dictFile[1024];
 	char alphaFile[1024];
-	snprintf(featureFile, sizeof(featureFile), "%s.dict", taggerPrefix);
+	snprintf(featureFile, sizeof(featureFile), "%s.f", taggerPrefix);
 	snprintf(dictFile, sizeof(dictFile), "%s.dict", taggerPrefix);
-	snprintf(alphaFile, sizeof(alphaFile), "%s.dict", taggerPrefix);
+	snprintf(alphaFile, sizeof(alphaFile), "%s.alpha", taggerPrefix);
 	char header[] = "Form	Prefix1	Prefix2	Prefix3	Prefix4	Suffix1	Suffix2	Suffix3	Suffix4	Num	Cap	Dash	FollowingVerbTag	FollowingVerbLemma	Tag";
 	if (!perc_test_init(perc, featureFile, dictFile, alphaFile, header, 0, 0, 3))
 		return false;
@@ -121,9 +121,10 @@ string MorphologyToOffer(char *s) {
 		case '\t':
 			if (t) {
 				// tag: t..s
-				result.append(l, llen);
-				result.append(1, ' ');
 				result.append(t, s-t);
+				result.append(1, ' ');
+				result.append(l, llen);
+				result.append(1, '\t');
 			}
 			t = NULL;
 			l = s+1;
@@ -134,9 +135,10 @@ string MorphologyToOffer(char *s) {
 				llen = s-l;
 			} else if (t) {
 				// tag: t..s
-				result.append(l, llen);
-				result.append(1, ' ');
 				result.append(t, s-t);
+				result.append(1, ' ');
+				result.append(l, llen);
+				result.append(1, '\t');
 			}
 			t = s+1;
 			break;
@@ -144,6 +146,13 @@ string MorphologyToOffer(char *s) {
 			break;
 		}
 		s++;
+	}
+	if (t) {
+		// tag: t..s
+		result.append(t, s-t);
+		result.append(1, ' ');
+		result.append(l, llen);
+		result.append(1, '\t');
 	}
 	return result;
 }
@@ -161,7 +170,7 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 		int flags = tr->GetFlags(idx);
 
 		// start of a sentence
-		if (flags & hector::resources::TOKEN_SENTENCE_START && idx > 0) {
+		if (flags & TextResource::TOKEN_SENTENCE_START && idx > 0) {
 			int sentenceSize = features.size();
 			perc_begin_sentence(perc);
 			while (verbs.size() < features.size())
@@ -172,6 +181,7 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 				line.append(verbs[i]);
 				line.append("\tNULL\t");
 				line.append(offers[i]);
+fprintf(stderr, "line: %s\n", line.c_str());
 				perc_append_word(perc, line.c_str());
 			}
 			perc_end_sentence(perc);
@@ -187,16 +197,16 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 		// morphology of a word
 		int dot_follows = 0;
 		int hyphen_follows = 0;
-		if (idx < nwords-1 && tr->GetFlags(idx+1) & hector::resources::TOKEN_PUNCT) {
+		if (idx < nwords-1 && tr->GetFlags(idx+1) & TextResource::TOKEN_PUNCT) {
 			string form = tr->GetForm(idx+1);
 			if (form.c_str()[0] == '.')
 				dot_follows = 1;
 			else if (form.c_str()[0] == '-')
 				hyphen_follows = 1;
 		}
-		int next = idx < nwords-1 ? tr->GetFlags(idx+1) : 0;
+//		int next = idx < nwords-1 ? tr->GetFlags(idx+1) : 0;
 		string form = tr->GetForm(idx);
-		char *morph = lemmatize_token(form.c_str(), flags & hector::resources::TOKEN_PUNCT, flags & hector::resources::TOKEN_ABBR, flags & hector::resources::TOKEN_NUMERIC, dot_follows, hyphen_follows);
+		char *morph = lemmatize_token(form.c_str(), flags & TextResource::TOKEN_PUNCT, flags & TextResource::TOKEN_ABBR, flags & TextResource::TOKEN_NUMERIC, dot_follows, hyphen_follows);
 		if (!morph) {
 			LOG_ERROR(this, "Cannot lemmatize word: " << form << "(" << idx << ")");
 			return resource;
@@ -204,51 +214,50 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 		string offer = MorphologyToOffer(morph);
 
 		// construct features for the tagger
-		const char *s = form.c_str();
 		string line;
 		line.append(form);
-		line.append(1, '\t');
 
+		const char *s = form.c_str();
+		ucs4_t c;
 		const uint8_t *u8 = (uint8_t*)s;
 		for (int i = 0; i < 4; i++) {
 			const uint8_t *save = u8;
-			const uint8_t *u8 = u8_next(NULL, u8);
+			u8 = u8_next(&c, u8);
 			if (!u8)
 				u8 = save;
-			line.append(s, u8-(uint8_t*)s);
 			line.append(1, '\t');
+			line.append(s, u8-(uint8_t*)s);
 		}
 
 		u8 = (uint8_t*)s+strlen(s);
 		for (int i = 0; i < 4; i++) {
 			const uint8_t *save = u8;
-			const uint8_t *u8 = u8_prev(NULL, u8, (uint8_t*)s);
+			u8 = u8_prev(&c, u8, (uint8_t*)s);
 			if (!u8)
 				u8 = save;
-			line.append(s, u8-(uint8_t*)s);
 			line.append(1, '\t');
+			line.append((char*)u8);
 		}
 
 		u8 = (uint8_t*)s;
-		ucs4_t c;
 		bool num = false;
 		bool cap = false;
 		bool dash = false;
 		while (u8) {
 			u8 = u8_next(&c, u8);
-			if (uc_is_general_category(c, UC_DECIMAL_DIGIT_NUMBER))
+			if (uc_is_general_category_withtable(c, UC_CATEGORY_MASK_N))
 				num = true;
-			if (uc_is_general_category(c, UC_UPPERCASE_LETTER))
+			if (uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Lu))
 				cap = true;
-			if (uc_is_general_category(c, UC_DASH_PUNCTUATION))
+			if (uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Pd))
 				dash = true;
 		}
+		line.append(1, '\t');
 		line.append(1, num ? '1' : '0');
 		line.append(1, '\t');
 		line.append(1, cap ? '1' : '0');
 		line.append(1, '\t');
 		line.append(1, dash ? '1' : '0');
-		line.append(1, '\t');
 
 		// fill previous verbs
 		size_t off = 0;
@@ -280,6 +289,7 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 			line.append(verbs[i]);
 			line.append("\tNULL\t");
 			line.append(offers[i]);
+fprintf(stderr, "line: %s\n", line.c_str());
 			perc_append_word(perc, line.c_str());
 		}
 		perc_end_sentence(perc);

@@ -26,7 +26,7 @@ CLEANFILES += test5.log test5.log.result
 
 TESTS += test6.sh
 EXTRA_DIST += test6.sh test6_config.xml test6.log.correct
-CLEANFILES += test6.log test6.log.result test6.data.in test6.data.out
+CLEANFILES += test6.log test6.log.result test6.data.out
 
 TESTS += test7.sh
 EXTRA_DIST += test7.sh test7_config.xml test7.log.correct

@@ -2,24 +2,12 @@ package hector.resources;
 
 option optimize_for = SPEED;
 
-enum Flags {
-	TOKEN_NONE = 0;
-	TOKEN_PARAGRAPH_START = 1;
-	TOKEN_SENTENCE_START = 2;
-	TOKEN_NO_SPACE = 4;
-	TOKEN_ABBR = 8;
-	TOKEN_PUNCT = 16;
-	TOKEN_TITLECASE = 32;
-	TOKEN_UPPERCASE = 64;
-	TOKEN_NUMERIC = 128;
-};
-
 message TextResource {
 	// original text
 	optional string text = 1;
 
 	// processed text: one item per word
-	repeated Flags flags = 2;
+	repeated int32 flags = 2;
 	repeated string form = 3;
 	repeated string lemma = 4;
 	repeated string postag = 5;

@@ -35,6 +35,10 @@ ALIASES += IndexResource.la
 libIndexResource_la_SOURCES = IndexResource.h IndexResource.cc
 libIndexResource_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version
 
+BUILT_SOURCES += IndexResource.pb.h IndexResource.pb.cc
+IndexResource.pb.cc IndexResource.pb.h: IndexResource.proto
+	$(PROTOC) IndexResource.proto --cpp_out=.
+
 IndexResource_la_SOURCES = IndexResource.cc
 IndexResource_la_CXXFLAGS = $(AM_CXXFLAGS) -DWRAPPER
 IndexResource_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version

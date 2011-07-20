@@ -15,7 +15,8 @@ HectorRobot_wrap.cc: $(top_srcdir)/HectorRobot.i
 
 HectorRobot_la_SOURCES = \
 	HectorRobot_wrap.cc
-HectorRobot_la_LIBADD = $(top_builddir)/resources/libWebResource.la $(top_builddir)/resources/libWebSiteResource.la $(top_builddir)/lib/librobot.la
+HectorRobot_la_LIBADD = $(top_builddir)/resources/libIndexResource.la $(top_builddir)/resources/libUrlResource.la $(top_builddir)/resources/libSiteResource.la $(top_builddir)/resources/libPageResource.la $(top_builddir)/resources/libTextResource.la $(top_builddir)/lib/librobot.la
+
 HectorRobot_la_LDFLAGS = -module -avoid-version
 
 endif

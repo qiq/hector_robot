@@ -27,6 +27,18 @@ public:
 
 class TextResource : public Resource {
 public:
+	enum Flags {
+		TOKEN_NONE = 0,
+		TOKEN_PARAGRAPH_START = 1,
+		TOKEN_SENTENCE_START = 2,
+		TOKEN_NO_SPACE = 4,
+		TOKEN_ABBR = 8,
+		TOKEN_PUNCT = 16,
+		TOKEN_TITLECASE = 32,
+		TOKEN_UPPERCASE = 64,
+		TOKEN_NUMERIC = 128,
+	};
+
 	TextResource();
 	TextResource(const TextResource &wr);
 	~TextResource();
@@ -47,6 +59,7 @@ public:
 	// TextResource-specific
 	void SetText(const std::string &text);
 	const std::string GetText();
+	void ClearText();
 	void SetFlags(int index, int flags);
 	int GetFlags(int index);
 	void ClearFlags();
@@ -131,10 +144,14 @@ inline const std::string TextResource::GetText() {
 	return r.text();
 }
 
+inline void TextResource::ClearText() {
+	r.clear_text();
+}
+
 inline void TextResource::SetFlags(int index, int flags) {
 	while (index >= r.flags_size())
-		r.add_flags(hector::resources::TOKEN_NONE);
-	r.set_flags(index, (hector::resources::Flags)flags);
+		r.add_flags(TOKEN_NONE);
+	r.set_flags(index, flags);
 }
 
 inline int TextResource::GetFlags(int index) {

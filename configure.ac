@@ -42,7 +42,7 @@ PKG_CHECK_MODULES([LIBPCRE], [libpcre >= 7.0])
 PKG_CHECK_MODULES([LIBPCRECPP], [libpcrecpp >= 7.0])
 if test "x$enable_featurama_tagger" = "xyes"; then
 	PKG_CHECK_MODULES([CZMORPHOLOGY], [czmorphology >= 1.1.0])
-	PKG_CHECK_MODULES([FEATURAMA], [czmorphology >= 0.0.1])
+	PKG_CHECK_MODULES([FEATURAMA], [featurama >= 1.0])
 fi
 AX_CHECK_ICU([4])
 HECTOR_CORE_CFLAGS=`echo $HECTOR_CORE_CFLAGS|sed -e 's/ *$/\/hector/'`
@@ -59,9 +59,8 @@ fi
 if test "x$enable_fetch" = "xyes"; then
 	LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
 fi
-if test "x$enable_tokenizer" = "xyes"; then
+if test "x$enable_tokenizer" = "xyes" -o "x$enable_featurama_tagger" = "xyes"; then
 	AC_CHECK_HEADERS([unistr.h unictype.h], [], [ echo "Please install libunistring"; exit -1])
-	LIBCURL_CHECK_CONFIG([yes], [7.21.5-DEV], [], [ echo "Please install patched libcurl version"; exit -1])
 fi
 
 # hack: protocol buffers need to be linked statically

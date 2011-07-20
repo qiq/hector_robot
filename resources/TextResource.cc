@@ -73,24 +73,24 @@ string TextResource::ToString(Object::LogLevel logLevel) {
 	for (int i = 0; i < r.flags_size(); i++) {
 		snprintf(buf, sizeof(buf), " %d", (int)r.flags(i));
 		s += buf;
-		if (r.form_size() >= i) {
+		if (r.form_size() > i) {
 			s += "/";
 			s += r.form(i);
 		}
-		if (r.lemma_size() >= i) {
+		if (r.lemma_size() > i) {
 			s += "/";
 			s += r.lemma(i);
 		}
-		if (r.postag_size() >= i) {
+		if (r.postag_size() > i) {
 			s += "/";
 			s += r.postag(i);
 		}
-		if (r.head_size() >= i) {
+		if (r.head_size() > i) {
 			s += "/";
 			snprintf(buf, sizeof(buf), "%d", r.head(i));
 			s += buf;
 		}
-		if (r.deprel_size() >= i) {
+		if (r.deprel_size() > i) {
 			s += "/";
 			s += r.deprel(i);
 		}
