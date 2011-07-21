@@ -24,6 +24,7 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("items", &Tokenizer::GetItems);
 	props->Add("maxSentenceSize", &Tokenizer::GetMaxSentenceSize, &Tokenizer::SetMaxSentenceSize, true);
 	props->Add("tokenizerLibrary", &Tokenizer::GetTokenizerLibrary, &Tokenizer::SetTokenizerLibrary, true);
+	props->Add("markParagraphs", &Tokenizer::GetMarkParagraphs, &Tokenizer::SetMarkParagraphs);
 
 	fixup = NULL;
 	current = 0;
@@ -115,7 +116,6 @@ void Tokenizer::ReleaseToken(Token *token) {
 	freeTokens.push_back(token);
 }
 
-
 void Tokenizer::FlushSentence(int n) {
 	int base = tr->GetFormCount();
 	for (int i = 0; i < n; i++) {
@@ -165,8 +165,8 @@ void Tokenizer::AppendToken(Token *token) {
 #define ISUPPERCASE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Lu)
 #define ISNUMERIC(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_N)
 #define ISPUNCT(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_P)
-#define ISSPACE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Z)
-#define ISNEWLINE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Zl)
+#define ISSPACE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Z|UC_CATEGORY_MASK_C)
+#define ISNEWLINE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Zl|UC_CATEGORY_MASK_C)
 
 enum state_type {
 	ALNUM = 1,
@@ -189,7 +189,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	bool titlecase = false;
 	bool uppercase = false;
 	bool numeric = false;
-	bool newline = false;
+	int newline = 2;
 	state_type state = SPACE;
 	while (next) {
 		u8 = next;
@@ -219,6 +219,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 
 				state = PUNCT;
 				start = u8;
+				newline = 0;
 			} else if (ISSPACE(c)) {
 				// text token, no_space = 0
 				Token *t = AcquireToken();
@@ -235,7 +236,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 
 				state = SPACE;
 				start = NULL;
-				newline = 0;
+				newline = ISNEWLINE(c) ? 1 : 0;
 			}
 			break;
 		case PUNCT:
@@ -259,6 +260,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				} else if (ISNUMERIC(c)) {
 					numeric = true;
 				}
+				newline = 0;
 			} else if (ISPUNCT(c)) {
 				// punct token, no_space = 1
 				Token *t = AcquireToken();
@@ -269,6 +271,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				AppendToken(t);
 
 				start = u8;
+				newline = 0;
 			} else if (ISSPACE(c)) {
 				// punct token, no_space = 0
 				Token *t = AcquireToken();
@@ -280,7 +283,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 
 				state = SPACE;
 				start = NULL;
-				newline = 0;
+				newline = ISNEWLINE(c) ? 1 : 0;
 			}
 			break;
 		case SPACE:

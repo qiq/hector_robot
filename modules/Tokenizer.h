@@ -9,6 +9,7 @@ Parameters:
 items			r/o	Total items processed
 maxSentenceSize		init	Maximum sentence size, default is 200.
 tokenizerLibrary	init	Language specific library.
+markParagraphs		r/w	Empty line means end-of-paragraph.
 */
 
 #ifndef _MODULES_TOKENIZER_H_
