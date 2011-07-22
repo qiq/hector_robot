@@ -27,11 +27,15 @@ Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("markParagraphs", &Tokenizer::GetMarkParagraphs, &Tokenizer::SetMarkParagraphs);
 
 	fixup = NULL;
+	finish = NULL;
 	current = 0;
 	lookahead = 2;
 }
 
 Tokenizer::~Tokenizer() {
+	if (finish)
+		(*finish)();
+
 	free(tokenizerLibrary);
 
 	for (vector<Token*>::iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
@@ -95,6 +99,7 @@ bool Tokenizer::Init(vector<pair<string, string> > *params) {
 			LOG_ERROR(this, "Invalid library: " << tokenizerLibrary << " (no fixup())");
 			return false;
 		}
+		void (*finish)() = (void (*)())LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup_finish", false);
 	}
 
 	return true;

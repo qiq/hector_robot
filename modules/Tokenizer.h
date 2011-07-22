@@ -113,6 +113,7 @@ private:
 
 	TextResource *tr;	// text resource we are currently working on
 	void (*fixup)(std::vector<Token*> &tokens, int index);
+	void (*finish)();
 
 	int current;		// current token we consider
 	int lookahead;		// how many tokens we look further while
