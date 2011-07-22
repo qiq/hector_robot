@@ -181,7 +181,7 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 				line.append(verbs[i]);
 				line.append("\tNULL\t");
 				line.append(offers[i]);
-fprintf(stderr, "line: %s\n", line.c_str());
+//fprintf(stderr, "line: %s\n", line.c_str());
 				perc_append_word(perc, line.c_str());
 			}
 			perc_end_sentence(perc);
@@ -204,7 +204,6 @@ fprintf(stderr, "line: %s\n", line.c_str());
 			else if (form.c_str()[0] == '-')
 				hyphen_follows = 1;
 		}
-//		int next = idx < nwords-1 ? tr->GetFlags(idx+1) : 0;
 		string form = tr->GetForm(idx);
 		char *morph = lemmatize_token(form.c_str(), flags & TextResource::TOKEN_PUNCT, flags & TextResource::TOKEN_ABBR, flags & TextResource::TOKEN_NUMERIC, dot_follows, hyphen_follows);
 		if (!morph) {
@@ -289,7 +288,7 @@ fprintf(stderr, "line: %s\n", line.c_str());
 			line.append(verbs[i]);
 			line.append("\tNULL\t");
 			line.append(offers[i]);
-fprintf(stderr, "line: %s\n", line.c_str());
+//fprintf(stderr, "line: %s\n", line.c_str());
 			perc_append_word(perc, line.c_str());
 		}
 		perc_end_sentence(perc);

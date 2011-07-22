@@ -9,7 +9,7 @@ EXTRA_DIST =
 
 modulesdir = $(libdir)/hector/modules
 #modules_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la
-modules_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la
+modules_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la RawTextRead.la TextResourcePrint.la
 #Filter.la
 
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
@@ -76,3 +76,9 @@ modules_LTLIBRARIES += Tokenizer_cs_CZ.la
 Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
 Tokenizer_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
 endif
+
+RawTextRead_la_SOURCES = RawTextRead.h RawTextRead.cc
+RawTextRead_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
+
+TextResourcePrint_la_SOURCES = TextResourcePrint.h TextResourcePrint.cc
+TextResourcePrint_la_LIBADD = $(top_builddir)/lib/librobot.la ../resources/libTextResource.la
