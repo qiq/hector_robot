@@ -99,7 +99,7 @@ bool Tokenizer::Init(vector<pair<string, string> > *params) {
 			LOG_ERROR(this, "Invalid library: " << tokenizerLibrary << " (no fixup())");
 			return false;
 		}
-		void (*finish)() = (void (*)())LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup_finish", false);
+		finish = (void (*)())LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup_finish", false);
 	}
 
 	return true;
@@ -144,7 +144,7 @@ void Tokenizer::AppendToken(Token *token) {
 		return;
 
 	// is current token first in a sentence? (segmentation)
-	if (current > 0 && tokens[current-1]->TestFlag(TextResource::TOKEN_PUNCT)) {
+	if (current > 0 && tokens[current]->TestFlag(TextResource::TOKEN_TITLECASE) && tokens[current-1]->TestFlag(TextResource::TOKEN_PUNCT)) {
 		string text = tokens[current-1]->GetText();
 		if (text == "." || text == "?" || text == "!")
 			tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
@@ -196,6 +196,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	bool numeric = false;
 	int newline = 2;
 	state_type state = SPACE;
+	current = 0;
 	while (next) {
 		u8 = next;
 		next = u8_next(&c, next);
