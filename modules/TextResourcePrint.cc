@@ -13,13 +13,13 @@ using namespace std;
 
 TextResourcePrint::TextResourcePrint(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	vertical = true;
-	outputFile = NULL;
+	horizontal = false;
+	filename = NULL;
 
 	props = new ObjectProperties<TextResourcePrint>(this);
 	props->Add("items", &TextResourcePrint::GetItems);
-	props->Add("vertical", &TextResourcePrint::GetVertical, &TextResourcePrint::SetVertical);
-	props->Add("outputFile", &TextResourcePrint::GetOutputFile, &TextResourcePrint::SetOutputFile, true);
+	props->Add("horizontal", &TextResourcePrint::GetHorizontal, &TextResourcePrint::SetHorizontal);
+	props->Add("filename", &TextResourcePrint::GetFilename, &TextResourcePrint::SetFilename, true);
 
 	ofs = NULL;
 }
@@ -29,7 +29,7 @@ TextResourcePrint::~TextResourcePrint() {
 		ofs->close();
 		delete ofs;
 	}
-	free(outputFile);
+	free(filename);
 
 	delete props;
 }
@@ -38,21 +38,21 @@ char *TextResourcePrint::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *TextResourcePrint::GetVertical(const char *name) {
-	return bool2str(vertical);
+char *TextResourcePrint::GetHorizontal(const char *name) {
+	return bool2str(horizontal);
 }
 
-void TextResourcePrint::SetVertical(const char *name, const char *value) {
-	vertical = str2bool(value);
+void TextResourcePrint::SetHorizontal(const char *name, const char *value) {
+	horizontal = str2bool(value);
 }
 
-char *TextResourcePrint::GetOutputFile(const char *name) {
-	return strdup(outputFile);
+char *TextResourcePrint::GetFilename(const char *name) {
+	return strdup(filename);
 }
 
-void TextResourcePrint::SetOutputFile(const char *name, const char *value) {
-	free(outputFile);
-	outputFile = strdup(value);
+void TextResourcePrint::SetFilename(const char *name, const char *value) {
+	free(filename);
+	filename = strdup(value);
 }
 
 bool TextResourcePrint::Init(vector<pair<string, string> > *params) {
@@ -64,14 +64,14 @@ bool TextResourcePrint::Init(vector<pair<string, string> > *params) {
 		return false;
 
 	// open output file
-	if (!outputFile) {
-		LOG_ERROR(this, "outputFile not defined");
+	if (!filename) {
+		LOG_ERROR(this, "filename not defined");
 		return false;
 	}
 
-	ofs = new ofstream(outputFile);
+	ofs = new ofstream(filename);
 	if (!ofs->is_open()) {
-		LOG_ERROR(this, "Cannot open file: " << outputFile);
+		LOG_ERROR(this, "Cannot open file: " << filename);
 		return false;
 	}
 
@@ -90,14 +90,14 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 	int nPosTags = tr->GetPosTagCount();
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
-	if (vertical) {
+	if (!horizontal) {
 		for (int i = 0; i < nForms; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : 0;
 			if (flags & TextResource::TOKEN_PARAGRAPH_START)
-				*ofs << "\n<p>\n";
+				*ofs << "<p>\n";
 			if (i > 0 && flags & TextResource::TOKEN_SENTENCE_START)
-				*ofs << "\n\n";
-			ofs << tr->GetForm(i);
+				*ofs << "\n";
+			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
 				*ofs << "\t" << tr->GetForm(i);
 			if (i < nPosTags)
@@ -106,12 +106,13 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 				*ofs << "\t" << tr->GetHead(i);
 			if (i < nDepRels)
 				*ofs << "\t" << tr->GetDepRel(i);
+			*ofs << "\n";
 			if (flags & TextResource::TOKEN_NO_SPACE)
-				*ofs << "\n<d>\n";
+				*ofs << "<d>\n";
 		}
 	} else {
 		for (int i = 0; i < nForms; i++) {
-			int flags = i < nFlags ? tr->GetFlags() : 0;
+			int flags = i < nFlags ? tr->GetFlags(i) : 0;
 			if (i > 0) {
 				if (flags & TextResource::TOKEN_SENTENCE_START)
 					*ofs << "\n";

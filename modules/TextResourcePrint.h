@@ -1,14 +1,14 @@
 /**
 TextResourcePrint.la, output, native
-Print TextResource in vertical or horizontal form.
+Print TextResource in horizontal or horizontal form.
 
 Dependencies: none
 
 Parameters:
 items		r/o	Total items processed.
-vertical	r/w	Whether to print vertical (or horizontal)
+horizontal	r/w	Whether to print horizontal (or horizontal)
 			tab-separated-fields format.
-outputFile	init	File to print to.
+filename	init	File to print to.
 */
 
 #ifndef _MODULES_TEXT_RESOURCE_PRINT_H_
@@ -34,14 +34,14 @@ public:
 
 private:
 	int items;		// ObjectLock, items processed
-	bool vertical;
-	char *outputFile;
+	bool horizontal;
+	char *filename;
 
 	char *GetItems(const char *name);
-	char *GetVertical(const char *name);
-        void SetVertical(const char *name, const char *value);
-	char *GetOutputFile(const char *name);
-	void SetOutputFile(const char *name, const char *value);
+	char *GetHorizontal(const char *name);
+        void SetHorizontal(const char *name, const char *value);
+	char *GetFilename(const char *name);
+	void SetFilename(const char *name, const char *value);
 
 	ObjectProperties<TextResourcePrint> *props;
 	char *GetPropertySync(const char *name);
