@@ -34,6 +34,10 @@ TextResourceInfo::TextResourceInfo() {
 	l->push_back(ai);
 
 	ai = new ResourceAttrInfoT<TextResource>(GetTypeId());
+	ai->InitString("textId", &TextResource::GetTextId, &TextResource::SetTextId);
+	l->push_back(ai);
+
+	ai = new ResourceAttrInfoT<TextResource>(GetTypeId());
 	ai->InitArrayInt32("flags", &TextResource::GetFlags, &TextResource::SetFlags, &TextResource::ClearFlags, &TextResource::GetFlagsCount);
 	l->push_back(ai);
 
@@ -65,13 +69,18 @@ string TextResource::ToString(Object::LogLevel logLevel) {
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "[%s %d %d] ", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus());
 	s += buf;
+	if (r.has_text_id() && r.text_id().size() > 0) {
+		s += "TextId: ";
+		s += r.text_id();
+		s += "\n";
+	}
 	if (r.has_text() && r.text().size() > 0) {
 		s += "Text: ";
 		s += r.text();
 		s += "\n";
 	}
 	for (int i = 0; i < r.flags_size(); i++) {
-		snprintf(buf, sizeof(buf), " %d", (int)r.flags(i));
+		snprintf(buf, sizeof(buf), "%s%d", i > 0 ? " " : "", (int)r.flags(i));
 		s += buf;
 		if (r.form_size() > i) {
 			s += "/";

@@ -5,12 +5,13 @@ option optimize_for = SPEED;
 message TextResource {
 	// original text
 	optional string text = 1;
+	optional string text_id = 2;
 
 	// processed text: one item per word
-	repeated int32 flags = 2;
-	repeated string form = 3;
-	repeated string lemma = 4;
-	repeated string postag = 5;
-	repeated int32 head = 6;
-	repeated string deprel = 7;
+	repeated int32 flags = 3;
+	repeated string form = 4;
+	repeated string lemma = 5;
+	repeated string postag = 6;
+	repeated int32 head = 7;
+	repeated string deprel = 8;
 }

@@ -60,6 +60,9 @@ public:
 	void SetText(const std::string &text);
 	const std::string GetText();
 	void ClearText();
+	void SetTextId(const std::string &text);
+	const std::string GetTextId();
+	void ClearTextId();
 	void SetFlags(int index, int flags);
 	int GetFlags(int index);
 	void ClearFlags();
@@ -146,6 +149,18 @@ inline const std::string TextResource::GetText() {
 
 inline void TextResource::ClearText() {
 	r.clear_text();
+}
+
+inline void TextResource::SetTextId(const std::string &textId) {
+	r.set_text_id(textId);
+}
+
+inline const std::string TextResource::GetTextId() {
+	return r.text_id();
+}
+
+inline void TextResource::ClearTextId() {
+	r.clear_text_id();
 }
 
 inline void TextResource::SetFlags(int index, int flags) {
