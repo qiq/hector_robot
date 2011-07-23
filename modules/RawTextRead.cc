@@ -141,6 +141,7 @@ Resource *RawTextRead::ProcessInputSync(bool sleep) {
 			data.append(buffer, size);
 		fclose(f);
 		TextResource *tr = static_cast<TextResource*>(Resource::GetRegistry()->AcquireResource(textResourceTypeId));
+		tr->SetTextId(filename);
 		tr->SetText(data);
 		return tr;
 	}
