@@ -27,6 +27,26 @@ FeaturamaTagger::FeaturamaTagger(ObjectRegistry *objects, const char *id, int th
 	props->Add("taggerPrefix", &FeaturamaTagger::GetTaggerPrefix, &FeaturamaTagger::SetTaggerPrefix, true);
 
 	perc = NULL;
+
+	memset(csts_encode_table, 0, sizeof(csts_encode_table));
+	csts_encode_table['%'] = "&percnt;";
+	csts_encode_table['&'] = "&amp;";
+	csts_encode_table['#'] = "&num;";
+	csts_encode_table['*'] = "&ast;";
+	csts_encode_table['$'] = "&dollar;";
+	csts_encode_table['<'] = "&lt;";
+	csts_encode_table['>'] = "&gt;";
+	csts_encode_table['_'] = "&lowbar;";
+	csts_encode_table['['] = "&lsqb;";
+	csts_encode_table[']'] = "&rsqb;";
+	csts_encode_table['|'] = "&verbar;";
+	csts_encode_table['\\'] = "&bsol;";
+	csts_encode_table['^'] = "&circ;";
+	csts_encode_table['@'] = "&commat;";
+	csts_encode_table['{'] = "&lcub;";
+	csts_encode_table['}'] = "&rcub;";
+	// "&agrave"	-- special treatement
+	// &macron;	-- ignored
 }
 
 FeaturamaTagger::~FeaturamaTagger() {
@@ -110,35 +130,79 @@ bool FeaturamaTagger::Init(vector<pair<string, string> > *params) {
 	return true;
 }
 
-string MorphologyToOffer(char *s) {
+string FeaturamaTagger::CstsEncode(const char *src) {
+	string result;
+	while (*src) {
+		const char *entity = csts_encode_table[(unsigned char)*src];
+		if (entity) {
+			result.append(entity);
+		} else if (!strncmp(src, "\xC3\xA0", 2)) {
+			result.append("&agrave;");
+		} else {
+			result.append(1, *src);
+		}
+		src++;
+	}
+	return result;
+}
+
+string FeaturamaTagger::CstsEncodeLemma(const char *src, int len) {
+	string result;
+	while (len) {
+		if (*src == '-' || *src == '_') {
+			result.append(src, len);
+			return result;
+		}
+		const char *entity = csts_encode_table[(unsigned char)*src];
+		if (entity) {
+			result.append(entity);
+		} else if (!strncmp(src, "\xC3\xA0", 2)) {
+			result.append("&agrave;");
+		} else {
+			result.append(1, *src);
+		}
+		src++;
+		len--;
+	}
+	return result;
+}
+
+string FeaturamaTagger::MorphologyToOffer(const char *s) {
 	string result;
 	string lemma;
-	char *l = s;
-	int llen = 0;
-	char *t = NULL;
+	const char *l = s;
+	const char *t = NULL;
+	bool first = true;
 	while (*s) {
 		switch (*s) {
 		case '\t':
 			if (t) {
 				// tag: t..s
+				if (first)
+					first = false;
+				else
+					result.append(1, '\t');
 				result.append(t, s-t);
 				result.append(1, ' ');
-				result.append(l, llen);
-				result.append(1, '\t');
+				result.append(lemma);
 			}
 			t = NULL;
 			l = s+1;
-			llen = 0;
+			lemma.clear();
 			break;
 		case ' ':
-			if (l && llen == 0) {
-				llen = s-l;
+			if (l) {
+				lemma = CstsEncodeLemma(l, s-l);
+				l = NULL;
 			} else if (t) {
 				// tag: t..s
+				if (first)
+					first = false;
+				else
+					result.append(1, '\t');
 				result.append(t, s-t);
 				result.append(1, ' ');
-				result.append(l, llen);
-				result.append(1, '\t');
+				result.append(lemma);
 			}
 			t = s+1;
 			break;
@@ -149,10 +213,13 @@ string MorphologyToOffer(char *s) {
 	}
 	if (t) {
 		// tag: t..s
+		if (first)
+			first = false;
+		else
+			result.append(1, '\t');
 		result.append(t, s-t);
 		result.append(1, ' ');
-		result.append(l, llen);
-		result.append(1, '\t');
+		result.append(lemma);
 	}
 	return result;
 }
@@ -210,7 +277,9 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 			LOG_ERROR(this, "Cannot lemmatize word: " << form << "(" << idx << ")");
 			return resource;
 		}
+		form = CstsEncode(form.c_str());
 		string offer = MorphologyToOffer(morph);
+		free(morph);
 
 		// construct features for the tagger
 		string line;
@@ -266,7 +335,8 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 				off++;
 		}
 		if (off != string::npos) {
-			string verb = offer.substr(off, offer.find('\t', off));
+			size_t end = offer.find('\t', off);
+			string verb = offer.substr(off, end != string::npos ? end-off : string::npos);
 			size_t space = verb.find(' ');
 			if (space != string::npos)
 				verb[space] = '\t';
