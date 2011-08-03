@@ -99,7 +99,7 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 				*ofs << "\n";
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
-				*ofs << "\t" << tr->GetForm(i);
+				*ofs << "\t" << tr->GetLemma(i);
 			if (i < nPosTags)
 				*ofs << "\t" << tr->GetPosTag(i);
 			if (i < nHeads)
@@ -121,7 +121,7 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 			}
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
-				*ofs << " " << tr->GetForm(i);
+				*ofs << " " << tr->GetLemma(i);
 			if (i < nPosTags)
 				*ofs << " " << tr->GetPosTag(i);
 			if (i < nHeads)
