@@ -1,4 +1,4 @@
-TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(top_srcdir)/test:$(PATH)' LD_LIBRARY_PATH=$(HECTOR_CORE_PREFIX)/lib:$(HECTOR_CORE_PREFIX)/lib/hector:$(HECTOR_CORE_PREFIX)/lib/hector/resources:$(HECTOR_CORE_PREFIX)/lib/hector/modules:$(top_builddir)/resources:$(top_builddir)/modules:$(top_builddir)/servers:$(top_builddir)/perl/.libs:$(LD_LIBRARY_PATH) PERL5LIB=$(HECTOR_CORE_PREFIX)/lib/hector/modules/perl:$(top_builddir)/perl:$(top_builddir)/modules/perl $(SHELL)
+TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(top_srcdir)/test:$(PATH)' LD_LIBRARY_PATH=$(HECTOR_CORE_PREFIX)/lib:$(HECTOR_CORE_PREFIX)/lib/hector:$(HECTOR_CORE_PREFIX)/lib/hector/resource:$(HECTOR_CORE_PREFIX)/lib/hector/module:$(top_builddir)/resource:$(top_builddir)/module:$(top_builddir)/server:$(top_builddir)/perl/.libs:$(LD_LIBRARY_PATH) PERL5LIB=$(HECTOR_CORE_PREFIX)/lib/hector/module/perl:$(top_builddir)/perl:$(top_builddir)/module/perl $(SHELL)
 
 TESTS =
 EXTRA_DIST = test_common.sh dns_server.pl http_server.pl

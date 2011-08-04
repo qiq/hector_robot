@@ -271,12 +271,12 @@ AM_CONDITIONAL(WITH_PYTHON, [test "x$PYTHON" != x])
 
 AC_CONFIG_FILES([Makefile
 		lib/Makefile
-		resources/Makefile
-                modules/Makefile
-		modules/perl/Makefile
-		modules/java/Makefile
-		modules/python/Makefile
-		servers/Makefile
+		resource/Makefile
+                module/Makefile
+		module/perl/Makefile
+		module/java/Makefile
+		module/python/Makefile
+		server/Makefile
 		perl/Makefile
 		python/Makefile
 		java/Makefile

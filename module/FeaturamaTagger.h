@@ -50,12 +50,7 @@ private:
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
 
-	std::string MorphologyToOffer(const char *s);
-	std::string CstsEncode(const char *src);
-	std::string CstsEncodeLemma(const char *src, int len);
-
 	PERC *perc;
-	const char *csts_encode_table[256];
 };
 
 inline Module::Type FeaturamaTagger::GetType() {

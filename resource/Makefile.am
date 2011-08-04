@@ -7,13 +7,13 @@ BUILT_SOURCES =
 CLEANFILES =
 ALIASES =
 
-resourcesdir = $(libdir)/hector/resources
-resources_LTLIBRARIES =
+resourcedir = $(libdir)/hector/resource
+resource_LTLIBRARIES =
 
 hectorincludedir = $(includedir)/hector
 hectorinclude_HEADERS = 
 
-resources_LTLIBRARIES += libScheme.la
+resource_LTLIBRARIES += libScheme.la
 EXTRA_DIST += Scheme.proto Scheme.i
 CLEANFILES += Scheme.pb.h Scheme.pb.cc
 
@@ -26,7 +26,7 @@ libScheme_la_LDFLAGS = $(AM_LDFLAGS)
 
 # IndexResource
 
-resources_LTLIBRARIES += libIndexResource.la IndexResource.la
+resource_LTLIBRARIES += libIndexResource.la IndexResource.la
 hectorinclude_HEADERS += IndexResource.h IndexResource.i
 EXTRA_DIST += IndexResource.i
 CLEANFILES += IndexResource.pb.h IndexResource.pb.cc
@@ -46,7 +46,7 @@ IndexResource_la_LIBADD = libIndexResource.la
 
 # UrlResource
 
-resources_LTLIBRARIES += libUrlResource.la UrlResource.la
+resource_LTLIBRARIES += libUrlResource.la UrlResource.la
 hectorinclude_HEADERS += UrlResource.h UrlResource.pb.h UrlResource.i
 EXTRA_DIST += UrlResource.i UrlResource.proto
 CLEANFILES += UrlResource.pb.h UrlResource.pb.cc
@@ -66,7 +66,7 @@ UrlResource_la_LIBADD = libUrlResource.la
 
 # SiteResource
 
-resources_LTLIBRARIES += libSiteResource.la SiteResource.la
+resource_LTLIBRARIES += libSiteResource.la SiteResource.la
 hectorinclude_HEADERS += SiteResource.h SiteResource.pb.h SiteResource.i
 EXTRA_DIST += SiteResource.i SiteResource.proto
 CLEANFILES += SiteResource.pb.h SiteResource.pb.cc
@@ -86,7 +86,7 @@ SiteResource_la_LIBADD = libSiteResource.la
 
 # PageResource
 
-resources_LTLIBRARIES += libPageResource.la PageResource.la
+resource_LTLIBRARIES += libPageResource.la PageResource.la
 hectorinclude_HEADERS += PageResource.h PageResource.pb.h PageResource.i
 EXTRA_DIST += PageResource.i PageResource.proto
 CLEANFILES += PageResource.pb.h PageResource.pb.cc
@@ -107,7 +107,7 @@ PageResource_la_LIBADD = libPageResource.la
 
 # NewUrlResource
 #
-#resources_LTLIBRARIES += libNewUrlResource.la NewUrlResource.la
+#resource_LTLIBRARIES += libNewUrlResource.la NewUrlResource.la
 #hectorinclude_HEADERS += NewUrlResource.h NewUrlResource.pb.h NewUrlResource.i
 #EXTRA_DIST += NewUrlResource.i NewUrlResource.proto
 #CLEANFILES += NewUrlResource.pb.h NewUrlResource.pb.cc
@@ -127,7 +127,7 @@ PageResource_la_LIBADD = libPageResource.la
 
 # TextResource
 
-resources_LTLIBRARIES += libTextResource.la TextResource.la
+resource_LTLIBRARIES += libTextResource.la TextResource.la
 hectorinclude_HEADERS += TextResource.h TextResource.pb.h TextResource.i
 EXTRA_DIST += TextResource.i TextResource.proto
 CLEANFILES += TextResource.pb.h TextResource.pb.cc

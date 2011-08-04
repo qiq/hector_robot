@@ -91,22 +91,15 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
 	if (!horizontal) {
-		bool para = false;
 		for (int i = 0; i < nForms; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : 0;
-			if (i > 0 && flags & TextResource::TOKEN_SENTENCE_START)
-				*ofs << "</s>\n";
-			if (para && flags & TextResource::TOKEN_PARAGRAPH_START)
-				*ofs << "</p>\n";
-			if (flags & TextResource::TOKEN_PARAGRAPH_START) {
+			if (flags & TextResource::TOKEN_PARAGRAPH_START)
 				*ofs << "<p>\n";
-				para = true;
-			}
 			if (i > 0 && flags & TextResource::TOKEN_SENTENCE_START)
-				*ofs << "<s>\n";
+				*ofs << "\n";
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
-				*ofs << "\t" << tr->GetLemma(i);
+				*ofs << "\t" << tr->GetForm(i);
 			if (i < nPosTags)
 				*ofs << "\t" << tr->GetPosTag(i);
 			if (i < nHeads)
@@ -128,7 +121,7 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 			}
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
-				*ofs << " " << tr->GetLemma(i);
+				*ofs << " " << tr->GetForm(i);
 			if (i < nPosTags)
 				*ofs << " " << tr->GetPosTag(i);
 			if (i < nHeads)
