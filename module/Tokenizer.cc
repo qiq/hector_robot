@@ -145,8 +145,8 @@ void Tokenizer::AppendToken(Token *token) {
 
 	// is current token first in a sentence? (segmentation)
 	if (current > 0 && tokens[current]->TestFlag(TextResource::TOKEN_TITLECASE) && tokens[current-1]->TestFlag(TextResource::TOKEN_PUNCT)) {
-		string text = tokens[current-1]->GetText();
-		if (text == "." || text == "?" || text == "!")
+		string prev = tokens[current-1]->GetText();
+		if (prev == "." || prev == "?" || prev == "!")
 			tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 	}
 	if (current >= maxSentenceSize)
