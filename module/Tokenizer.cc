@@ -165,11 +165,11 @@ void Tokenizer::AppendToken(Token *token) {
 	}
 }
 
-#define ISALNUM(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_L|UC_CATEGORY_MASK_N|UC_CATEGORY_MASK_S)
+#define ISALNUM(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_L|UC_CATEGORY_MASK_N)
 #define ISLOWERCASE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Ll)
 #define ISUPPERCASE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Lu)
 #define ISNUMERIC(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_N)
-#define ISPUNCT(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_P)
+#define ISPUNCT(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_P|UC_CATEGORY_MASK_S)
 #define ISSPACE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Z|UC_CATEGORY_MASK_C)
 #define ISNEWLINE(c) uc_is_general_category_withtable(c, UC_CATEGORY_MASK_Zl|UC_CATEGORY_MASK_C)
 
