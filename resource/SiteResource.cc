@@ -118,7 +118,7 @@ string SiteResource::ToString(Object::LogLevel logLevel) {
 	string s;
 
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[%s %d %d] (%s://%s:%d), md5: %llu, ip: ", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), Scheme_Name((Scheme)GetUrlScheme()).c_str(), GetUrlHost().c_str(), GetUrlPort(), site_md5);
+	snprintf(buf, sizeof(buf), "[%s %d %d] (%s://%s:%d), md5: %.16llx, ip: ", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), Scheme_Name((Scheme)GetUrlScheme()).c_str(), GetUrlHost().c_str(), GetUrlPort(), (unsigned long long)site_md5);
 	s = buf;
 	s += addr.ToString();
 	if (GetIpAddrExpire()) {

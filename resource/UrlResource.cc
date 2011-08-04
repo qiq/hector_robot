@@ -47,7 +47,7 @@ UrlResourceInfo::UrlResourceInfo() {
 string UrlResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[%s %d %d] MD5: %.16llx %.16llx, url: %s\n", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetUrl().c_str());
+	snprintf(buf, sizeof(buf), "[%s %d %d] MD5: %.16llx %.16llx, url: %s\n", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), (unsigned long long)GetSiteMD5(), (unsigned long long)GetPathMD5(), GetUrl().c_str());
 	s = buf;
 	return s;
 }

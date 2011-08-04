@@ -55,7 +55,7 @@ IndexResourceInfo::IndexResourceInfo() {
 string IndexResource::ToString(Object::LogLevel logLevel) {
 	string s;
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "[%s %d %d] MD5: %.16llx %.16llx, modified: %u, history: [", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), GetSiteMD5(), GetPathMD5(), GetLastModified());
+	snprintf(buf, sizeof(buf), "[%s %d %d] MD5: %.16llx %.16llx, modified: %u, history: [", resourceInfo.GetTypeStringTerse(), GetId(), GetStatus(), (unsigned long long)GetSiteMD5(), (unsigned long long)GetPathMD5(), GetLastModified());
 	s = buf;
 	uint32_t mh = GetModificationHistory();
 	for (int i = 0; i < 4; i++) {
