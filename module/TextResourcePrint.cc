@@ -102,7 +102,7 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 				*ofs << "<p>\n";
 				para = true;
 			}
-			if (i > 0 && flags & TextResource::TOKEN_SENTENCE_START)
+			if (flags & TextResource::TOKEN_SENTENCE_START)
 				*ofs << "<s>\n";
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
@@ -116,6 +116,11 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 			*ofs << "\n";
 			if (flags & TextResource::TOKEN_NO_SPACE)
 				*ofs << "<d>\n";
+		}
+		if (nForms > 0) {
+			*ofs << "</s>\n";
+			if (para)
+				*ofs << "</p>\n";
 		}
 	} else {
 		for (int i = 0; i < nForms; i++) {
