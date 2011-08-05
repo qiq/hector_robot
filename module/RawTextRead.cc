@@ -76,10 +76,10 @@ bool RawTextRead::Init(vector<pair<string, string> > *params) {
 
 	// append input files
 	if (inputFiles) {
+		vector<string> v;
 		string s(inputFiles);
-		vector<string> *v = splitOnWs(s);
-		files.insert(files.end(), v->begin(), v->end());
-		delete v;
+		splitOnWs(v, s);
+		files.insert(files.end(), v.begin(), v.end());
 	}
 	// read file and append all files
 	if (inputListFile) {
