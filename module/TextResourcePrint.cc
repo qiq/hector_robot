@@ -83,25 +83,18 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 		return resource;
 	TextResource *tr = static_cast<TextResource*>(resource);
 
-	*ofs << "Id: " << tr->GetTextId() << "\n";
 	int nForms = tr->GetFormCount();
 	int nFlags = tr->GetFlagsCount();
 	int nLemmas = tr->GetLemmaCount();
 	int nPosTags = tr->GetPosTagCount();
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
+	*ofs << "<doc id=\"" << tr->GetTextId() << "\">\n";
 	if (!horizontal) {
-		bool para = false;
 		for (int i = 0; i < nForms; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : 0;
-			if (i > 0 && flags & TextResource::TOKEN_SENTENCE_START)
-				*ofs << "</s>\n";
-			if (para && flags & TextResource::TOKEN_PARAGRAPH_START)
-				*ofs << "</p>\n";
-			if (flags & TextResource::TOKEN_PARAGRAPH_START) {
+			if (flags & TextResource::TOKEN_PARAGRAPH_START)
 				*ofs << "<p>\n";
-				para = true;
-			}
 			if (flags & TextResource::TOKEN_SENTENCE_START)
 				*ofs << "<s>\n";
 			*ofs << tr->GetForm(i);
@@ -115,12 +108,7 @@ Resource *TextResourcePrint::ProcessOutputSync(Resource *resource) {
 				*ofs << "\t" << tr->GetDepRel(i);
 			*ofs << "\n";
 			if (flags & TextResource::TOKEN_NO_SPACE)
-				*ofs << "<d>\n";
-		}
-		if (nForms > 0) {
-			*ofs << "</s>\n";
-			if (para)
-				*ofs << "</p>\n";
+				*ofs << "<g/>\n";
 		}
 	} else {
 		for (int i = 0; i < nForms; i++) {
