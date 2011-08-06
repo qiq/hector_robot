@@ -45,8 +45,9 @@ FeaturamaTagger::FeaturamaTagger(ObjectRegistry *objects, const char *id, int th
 	csts_encode_table['@'] = "&commat;";
 	csts_encode_table['{'] = "&lcub;";
 	csts_encode_table['}'] = "&rcub;";
-	// "&agrave"	-- special treatement
-	// &macron;	-- ignored
+	csts_encode_table['`'] = "&grave;";
+	// &agrave	-- special treatement
+	// &macron;	-- special treatement
 }
 
 FeaturamaTagger::~FeaturamaTagger() {
@@ -138,6 +139,8 @@ string FeaturamaTagger::CstsEncode(const char *src) {
 			result.append(entity);
 		} else if (!strncmp(src, "\xC3\xA0", 2)) {
 			result.append("&agrave;");
+		} else if (!strncmp(src, "\xCB\x87", 2)) {
+			result.append("&macron;");
 		} else {
 			result.append(1, *src);
 		}
@@ -158,6 +161,8 @@ string FeaturamaTagger::CstsEncodeLemma(const char *src, int len) {
 			result.append(entity);
 		} else if (!strncmp(src, "\xC3\xA0", 2)) {
 			result.append("&agrave;");
+		} else if (!strncmp(src, "\xCB\x87", 2)) {
+			result.append("&macron;");
 		} else {
 			result.append(1, *src);
 		}
