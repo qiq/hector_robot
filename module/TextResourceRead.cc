@@ -135,15 +135,17 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 				chomp(s);
 				split(v, s, '\t');
 				if (v.size() > 0)
-					tr->SetForm(index, v[0]);
+					flags |= atoi(v[0].c_str());
 				if (v.size() > 1)
-					tr->SetLemma(index, v[1]);
+					tr->SetForm(index, v[1]);
 				if (v.size() > 2)
-					tr->SetPosTag(index, v[2]);
+					tr->SetLemma(index, v[2]);
 				if (v.size() > 3)
-					tr->SetHead(index, atoi(v[3].c_str()));
+					tr->SetPosTag(index, v[3]);
 				if (v.size() > 4)
-					tr->SetDepRel(index, v[4]);
+					tr->SetHead(index, atoi(v[4].c_str()));
+				if (v.size() > 5)
+					tr->SetDepRel(index, v[5]);
 				tr->SetFlags(index, flags);
 				flags = TextResource::TOKEN_NONE;
 				index++;
