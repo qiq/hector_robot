@@ -152,7 +152,7 @@ string FeaturamaTagger::CstsEncode(const char *src) {
 string FeaturamaTagger::CstsEncodeLemma(const char *src, int len) {
 	string result;
 	while (len) {
-		if (*src == '-' || *src == '_') {
+		if (*src == '-' || *src == '_' || *src == '`') {
 			result.append(src, len);
 			return result;
 		}
