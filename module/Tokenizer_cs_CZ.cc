@@ -57,7 +57,7 @@ extern "C" int fixup_init() {
 extern "C" void fixup_finish() {
 }
 
-extern "C" void fixup(vector<Token*> &tokens, int index) {
+extern "C" int fixup(vector<Token*> &tokens, int index) {
 	// mark abbreviations
 	Token *current = tokens[index];
 	if (abbr.find(current->GetText()) != abbr.end())
@@ -67,7 +67,6 @@ extern "C" void fixup(vector<Token*> &tokens, int index) {
 	// no_space tokens and find a upper-cased word. Then, we go left and
 	// look for a word. If found (and not abbreviation), we mark current
 	// token as start-of-sentence.
-
 	int state = 0;
 	int upperIndex = -1;
 	if (index >= 2) {
@@ -117,4 +116,33 @@ extern "C" void fixup(vector<Token*> &tokens, int index) {
 			}
 		}
 	}
-}
+
+	// deal with numbers ([+-]123.33)
+	if (current->TestFlag(TextResource::TOKEN_NO_SPACE)) {
+		int last = -1;
+		if (current->TestFlag(TextResource::TOKEN_NUMERIC)) {
+			last = index;
+		} else {
+			string &s = current->GetText();
+			if ((s == "+" || s == "-") && tokens[index+1]->TestFlag(TextResource::TOKEN_NUMERIC))
+				last = index+1;
+		}
+		if (last >= index && tokens[last]->TestFlag(TextResource::TOKEN_NO_SPACE)
+				&& tokens[last+1]->GetText() == "." && tokens[last+1]->TestFlag(TextResource::TOKEN_NO_SPACE)
+				&& tokens[last+2]->TestFlag(TextResource::TOKEN_NUMERIC)) {
+			last += 2;
+		}
+		if (last > index) {
+			// concatenate tokens index..last
+			string s;
+			for (int i = index; i <= last; i++)
+				s.append(tokens[i]->GetText());
+			tokens[index]->SetText(s);
+			tokens[index]->SetFlags(tokens[last]->GetFlags());
+			tokens.erase(tokens.begin()+index+1, tokens.begin()+last);
+		}
+	}
+
+	// no need to restart (either not deleted tokens, or lookahead is
+	// sufficient (for numbers)
+	return 0; }
