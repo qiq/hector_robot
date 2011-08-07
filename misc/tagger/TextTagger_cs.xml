@@ -21,11 +21,6 @@ Tag TextResources using Featurama Tagger for Czech.
 					<Module id="M_input" lib="TextResourceRead.la">
 						<param name="filename" value="/dev/stdin"/>
 					</Module>
-					<Module id="M_tokenizer" lib="Tokenizer.la">
-						<!--param name="maxSentenceSize" value="100"/-->
-						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
-						<param name="markParagraphs" value="true"/>
-					</Module>
 					<Module id="M_tagger" lib="FeaturamaTagger.la">
 						<param name="useGuesser" value="true"/>
 						<param name="morphologyPrefix" value="share/czmorphology/CZ100404a"/>
