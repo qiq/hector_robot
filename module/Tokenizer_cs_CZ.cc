@@ -127,8 +127,9 @@ extern "C" int fixup(vector<Token*> &tokens, int index) {
 	}
 
 	if (last >= 0) {
-		int prev = last;
+		int prev;
 		do {
+ 			prev = last;
 			while (last+1 < (int)tokens.size() && tokens[last+1]->TestFlag(TextResource::TOKEN_NUMERIC))
 				last++;
 			if (last+2 < (int)tokens.size() && tokens[last]->TestFlag(TextResource::TOKEN_NO_SPACE) && tokens[last+1]->TestFlag(TextResource::TOKEN_NO_SPACE) && tokens[last+2]->TestFlag(TextResource::TOKEN_NUMERIC) && (tokens[last+1]->GetText() == "." || tokens[last+1]->GetText() == ",")) {
@@ -137,16 +138,15 @@ extern "C" int fixup(vector<Token*> &tokens, int index) {
 		} while (last != prev);
 
 		if (last > index) {
-			// need to restat if consumed all tokens
-			bool restart = last+1 == (int)tokens.size();
 			// concatenate tokens index..last
 			string s;
 			for (int i = index; i <= last; i++)
 				s.append(tokens[i]->GetText());
 			tokens[index]->SetText(s);
 			tokens[index]->SetFlags(tokens[last]->GetFlags());
-			tokens.erase(tokens.begin()+index+1, tokens.begin()+last);
-			return restart;
+			tokens.erase(tokens.begin()+index+1, tokens.begin()+last+1);
+			// need to restat as we consumed some tokens
+			return true;
 		}
 	}
 
