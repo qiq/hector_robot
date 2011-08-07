@@ -87,10 +87,10 @@ bool TextResourceRead::Init(vector<pair<string, string> > *params) {
 }
 
 string GetDocId(string &s) {
-	if (!s.compare(0, 6, "<doc ")) {
-		size_t idb = s.find("id=\"", 6);
+	if (!s.compare(0, 5, "<doc ")) {
+		size_t idb = s.find("id=\"", 5);
 		if (idb != string::npos) {
-			idb += 6;
+			idb += 4;
 			size_t ide = s.find("\"", idb);
 			if (ide != string::npos)
 				return s.substr(idb, ide-idb);
@@ -107,27 +107,30 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 	}
 	TextResource *tr = static_cast<TextResource*>(Resource::GetRegistry()->AcquireResource(textResourceTypeId));
 	tr->SetTextId(docId);
+	docId.clear();
 	string s;
 	int flags = TextResource::TOKEN_NONE;
 	int index = 0;
 	vector<string> v;
 	vector<string> v2;
 	while (!getline(*ifs, s).eof()) {
-		if (!s.compare(0, 6, "<doc ")) {
+		if (!s.compare(0, 5, "<doc ")) {
 			docId = GetDocId(s);
 			break;
 		}
 		if (!horizontal) {
 			skipWs(s);
 			if (s.length() == 0) {
-				flags |= TextResource::TOKEN_PARAGRAPH_START;
+				flags |= TextResource::TOKEN_SENTENCE_START;
 			} else if (s[0] == '<') {
-				if (s.compare(1, 2, "p>"))
+				if (!s.compare(1, 2, "p>")) {
 					flags |= TextResource::TOKEN_PARAGRAPH_START;
-				else if (s.compare(1, 2, "s>"))
-					flags |= TextResource::TOKEN_PARAGRAPH_START;
-				else if (s.compare(1, 3, "g/>"))
-					flags |= TextResource::TOKEN_NO_SPACE;
+				} else if (!s.compare(1, 2, "s>")) {
+					flags |= TextResource::TOKEN_SENTENCE_START;
+				} else if (!s.compare(1, 3, "g/>")) {
+					if (index > 0)
+						tr->SetFlags(index-1, tr->GetFlags(index-1)|TextResource::TOKEN_NO_SPACE);
+				}
 			} else {
 				chomp(s);
 				split(v, s, '\t');
@@ -143,6 +146,7 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 					tr->SetDepRel(index, v[4]);
 				tr->SetFlags(index, flags);
 				flags = TextResource::TOKEN_NONE;
+				index++;
 			}
 		} else {
 			// split on tabs, then on white-spaces
@@ -166,6 +170,7 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 					tr->SetDepRel(index, v2[4]);
 				tr->SetFlags(index, flags);
 				flags = TextResource::TOKEN_NONE;
+				index++;
 			}
 		}
 	}
