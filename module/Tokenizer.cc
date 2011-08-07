@@ -94,7 +94,7 @@ bool Tokenizer::Init(vector<pair<string, string> > *params) {
 		lookahead = (*init)();
 		if (lookahead < 2)
 			lookahead = 2;
-		fixup = (int(*)(std::vector<Token*> &tokens, int index))LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup", false);
+		fixup = (bool(*)(std::vector<Token*> &tokens, int index))LibraryLoader::LoadLibrary(tokenizerLibrary, "fixup", false);
 		if (!fixup) {
 			LOG_ERROR(this, "Invalid library: " << tokenizerLibrary << " (no fixup())");
 			return false;
@@ -154,7 +154,7 @@ void Tokenizer::AppendToken(Token *token) {
 
 	// call fixup
 	if (fixup && (int)tokens.size() >= current+lookahead+1) {
-		int restart = (*fixup)(tokens, current);
+		bool restart = (*fixup)(tokens, current);
 		// we do not advance, as some tokens were consumed and fixup
 		// indicated that it needs to check again
 		if (restart && (int)tokens.size() < current+lookahead+1)

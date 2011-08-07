@@ -117,22 +117,28 @@ extern "C" int fixup(vector<Token*> &tokens, int index) {
 		}
 	}
 
-	// deal with numbers ([+-]123.33)
-	if (current->TestFlag(TextResource::TOKEN_NO_SPACE)) {
-		int last = -1;
-		if (current->TestFlag(TextResource::TOKEN_NUMERIC)) {
-			last = index;
-		} else {
-			string &s = current->GetText();
-			if ((s == "+" || s == "-") && tokens[index+1]->TestFlag(TextResource::TOKEN_NUMERIC))
-				last = index+1;
-		}
-		if (last >= index && tokens[last]->TestFlag(TextResource::TOKEN_NO_SPACE)
-				&& tokens[last+1]->GetText() == "." && tokens[last+1]->TestFlag(TextResource::TOKEN_NO_SPACE)
-				&& tokens[last+2]->TestFlag(TextResource::TOKEN_NUMERIC)) {
-			last += 2;
-		}
+	// deal with numbers: [+-]123[ .,]123
+	int last = -1;
+	if (current->TestFlag(TextResource::TOKEN_NUMERIC)) {
+		last = index;
+	} else if (current->TestFlag(TextResource::TOKEN_NO_SPACE) && tokens[index+1]->TestFlag(TextResource::TOKEN_NUMERIC)
+		&& (current->GetText() == "+" || current->GetText() == "-")) {
+		last = index + 1;
+	}
+
+	if (last >= 0) {
+		int prev = last;
+		do {
+			while (last+1 < (int)tokens.size() && tokens[last+1]->TestFlag(TextResource::TOKEN_NUMERIC))
+				last++;
+			if (last+2 < (int)tokens.size() && tokens[last]->TestFlag(TextResource::TOKEN_NO_SPACE) && tokens[last+1]->TestFlag(TextResource::TOKEN_NO_SPACE) && tokens[last+2]->TestFlag(TextResource::TOKEN_NUMERIC) && (tokens[last+1]->GetText() == "." || tokens[last+1]->GetText() == ",")) {
+				last += 2;
+			}
+		} while (last != prev);
+
 		if (last > index) {
+			// need to restat if consumed all tokens
+			bool restart = last+1 == (int)tokens.size();
 			// concatenate tokens index..last
 			string s;
 			for (int i = index; i <= last; i++)
@@ -140,9 +146,11 @@ extern "C" int fixup(vector<Token*> &tokens, int index) {
 			tokens[index]->SetText(s);
 			tokens[index]->SetFlags(tokens[last]->GetFlags());
 			tokens.erase(tokens.begin()+index+1, tokens.begin()+last);
+			return restart;
 		}
 	}
 
 	// no need to restart (either not deleted tokens, or lookahead is
 	// sufficient (for numbers)
-	return 0; }
+	return false;
+}

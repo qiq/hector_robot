@@ -112,7 +112,7 @@ private:
 	void AppendToken(Token *token);
 
 	TextResource *tr;	// text resource we are currently working on
-	int (*fixup)(std::vector<Token*> &tokens, int index);
+	bool (*fixup)(std::vector<Token*> &tokens, int index);
 	void (*finish)();
 
 	int current;		// current token we consider
