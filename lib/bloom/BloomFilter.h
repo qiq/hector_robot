@@ -8,6 +8,7 @@
 //#include <config.h>
 #include <math.h>
 #include <stdint.h>
+#include <string.h>
 #include <vector>
 
 // Copy from MurmurHash3.cc
@@ -58,7 +59,7 @@ void MurmurHash3_x86_32 ( const void * key, int len,
     k1 *= c2;
     
     h1 ^= k1;
-    h1 = ROTL32(h1,13); 
+    h1 = ROTL32(h1, 13); 
     h1 = h1*5+0xe6546b64;
   }
 
@@ -105,6 +106,7 @@ protected:
 	void InitH1(int index);
 	void UpdateH1(int index, uint32_t k1);
 	void FinishH1(int index);
+void PrintH1();
 
 private:
 	// how many n-grams we compute
@@ -125,14 +127,17 @@ private:
 };
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
-	data = new unsigned char[m/8];
+	data = new unsigned char[m/8+1];
+	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
 }
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
-	m = (double)-n*log(false_positive_probability)/(log(2)*log(2));
+	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
 	k = ((double)m/n)*log(2);
-	data = new unsigned char[m/8];
+fprintf(stderr, "n: %lld, m: %lld, k: %d, %lf\n", n, m, k, ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2))));
+	data = new unsigned char[m/8+1];
+	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
 }
 
@@ -142,101 +147,180 @@ inline NgramBloomFilter::~NgramBloomFilter() {
 }
 
 inline bool NgramBloomFilter::TestAndSet(uint64_t offset) {
-	int index = offset >> 3;
+	offset %= m;
+	uint64_t index = offset >> 3;
+printf("index: %llu -> ", offset);
 	unsigned char mask = 1 << (offset & 0x7);
 	if ((data[index] & mask) == 0) {
 		data[index] |= mask;
+printf("0\n");
 		return false;
 	}
+printf("1\n");
 	return true;
 }
 
 inline void NgramBloomFilter::Reset(uint64_t offset) {
-	int index = offset >> 3;
+	offset %= m;
+printf("reset: index %llu\n", offset);
+	uint64_t index = offset >> 3;
 	unsigned char mask = 1 << (offset & 0x7);
 	data[index] &= (mask ^ 0xFF);
 }
 
 inline void NgramBloomFilter::InitH1(int index) {
 	uint32_t *h1p = h1+index*k*2;
-	int x = index*k*2;
-	for (int i = 0; i < k*2; i++)
-		*h1p = x++;;
+	for (int i = 0; i < k*2; i++) {
+		*h1p = i;
+		h1p++;
+	}
 }
 
 inline void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
 	uint32_t *h1p = h1+(index+1)*k*2-1;
 	switch (k) {
-	case 8:
+	case 16:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 15:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 14:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 13:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 12:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 11:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 10:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 9:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+	case 8:
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
+		*h1p = (*h1p)*5+0xe6546b64;
+		h1p--;
+		*h1p ^= k1;
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 7:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 6:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 5:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 4:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 3:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 2:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 1:
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 		*h1p ^= k1;
-		*h1p = ROTL32(*h1p,13); 
+		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	}
@@ -245,6 +329,62 @@ inline void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
 inline void NgramBloomFilter::FinishH1(int index) {
 	uint32_t *h1p = h1+(index+1)*k*2-1;
 	switch (k) {
+	case 16:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 15:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 14:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 13:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 12:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 11:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 10:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+	case 9:
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
+		*h1p ^= 4;
+  		*h1p = fmix(*h1p);
+		h1p--;
 	case 8:
 		*h1p ^= 4;
   		*h1p = fmix(*h1p);
@@ -302,6 +442,17 @@ inline void NgramBloomFilter::FinishH1(int index) {
   		*h1p = fmix(*h1p);
 		h1p--;
 	}
+}
+
+void NgramBloomFilter::PrintH1() {
+	for (int i = 0; i < ngram-1; i++) {
+		uint32_t *h1p = h1+i*k*2;
+		for (int j = 0; j < k*2; j++) {
+			printf("%x ", *(h1p+j));
+		}
+		printf("\n");
+	}
+	printf("\n");
 }
 
 bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
@@ -321,9 +472,9 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 	for (int i = 0; i < valuesSize; i++) {
 		uint32_t k1 = values[i];
 		k1 *= c1;
-		k1 = ROTL32(k1,15);
+		k1 = ROTL32(k1, 15);
 		k1 *= c2;
-		for (int j = 0; j < ngram-1; j++)
+		for (int j = 0; j < ngram-1 && j <= size; j++)
 			UpdateH1(j, k1);
 
 		// we have seen at least ngram-1 words?
@@ -333,6 +484,54 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			int total = 0;
 			uint64_t key;
 			switch (k) {
+			case 16:
+				key = *(uint64_t*)(h1+current*k*2+15*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 15:
+				key = *(uint64_t*)(h1+current*k*2+14*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 14:
+				key = *(uint64_t*)(h1+current*k*2+13*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 13:
+				key = *(uint64_t*)(h1+current*k*2+12*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 12:
+				key = *(uint64_t*)(h1+current*k*2+11*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 11:
+				key = *(uint64_t*)(h1+current*k*2+10*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 10:
+				key = *(uint64_t*)(h1+current*k*2+9*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 9:
+				key = *(uint64_t*)(h1+current*k*2+8*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
 			case 8:
 				key = *(uint64_t*)(h1+current*k*2+7*2);
 				if (TestAndSet(key))
@@ -386,13 +585,11 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			if (k == total)
 				duplicates++;
 
-			if ((double)duplicates/valuesSize*100 > duplicateThreshold) {
-				for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter) {
+			if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
+				for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
 					Reset(*iter);
-				}
-				return false;
+				return true;
 			}
-
 			InitH1(current);
 			UpdateH1(current, k1);
 			current = (current+1) % (ngram-1);
@@ -400,7 +597,7 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			size++;
 		}
 	}
-	return true;
+	return false;
 }
 
 #endif
