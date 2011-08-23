@@ -5,7 +5,8 @@
 #ifndef _LIB_BLOOMFILTER_H_
 #define _LIB_BLOOMFILTER_H_
 
-#include <config.h>
+//#include <config.h>
+#include <math.h>
 #include <stdint.h>
 #include <vector>
 
@@ -90,7 +91,8 @@ void MurmurHash3_x86_32 ( const void * key, int len,
 
 class NgramBloomFilter {
 public:
-	NgramBloomFilter(uint64_t m, int k, int ngram, int duplicateThreshold);
+	NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t m, int k);
+	NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability);
 	~NgramBloomFilter();
 
 	bool TestDuplicate(std::vector<uint32_t> &values);
@@ -100,26 +102,26 @@ protected:
 	bool TestAndSet(uint64_t offset);
 	void Reset(uint64_t offset);
 
-	void InitH1(int ngram);
+	void InitH1(int index);
 	void UpdateH1(int index, uint32_t k1);
 	void FinishH1(int index);
 
 private:
-	// bit array of size m
-	unsigned char *data;
+	// how many n-grams we compute
+	int ngram;
+	// percent of duplicate n-grams when we consider docs to be duplicates
+	int duplicateThreshold;
 	// number of bytes to allocate for the data
 	uint64_t m;
 	// number of hash functions
 	int k;
 
-	// how many n-grams we compute
-	int ngram;
-	// percent of duplicate n-grams when we consider docs to be duplicates
-	int duplicateThreshold;
+	// bit array of size m
+	unsigned char *data;
 	// h1 coeficients for computing Murmur hash 3
 	uint32_t *h1;
 	// keys that were 0 and are 1 now -> in case of reset, we need to clear them
-	vector<uint64_t> reset;
+	std::vector<uint64_t> reset;
 };
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
@@ -128,62 +130,13 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uin
 }
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
-- zvolime m = -n * ln(p)/ln(2)^2
-- zvolime k = m/n*ln2
-
-- zvolime optimalni k
-
-	double min_m = std::numeric_limits<double>::infinity();
-	double min_k = 0.0;
-	double curr_m = 0.0;
-	for (int curr_k = 0; curr_k < 8; curr_k++) {
-		if ((curr_m = ((-curr_k*n)/std::log(1.0-std::pow(false_positive_probability, 1.0/curr_k)))) < min_m) {
--k*n/log(1-fp^1/k)
-			min_m = curr_m;
-			min_k = curr_k;
-		}
-	}
-	k = (int)min_k;
-	m = (uint64_t)min_m;
-	m += 8-((m%8) & 0x7);
-
+	m = (double)-n*log(false_positive_probability)/(log(2)*log(2));
+	k = ((double)m/n)*log(2);
 	data = new unsigned char[m/8];
 	h1 = new uint32_t[(ngram-1)*k*2];
 }
 
-///
-   void find_optimal_parameters()
-   {
-      /*
-        Note:
-        The following will attempt to find the number of hash functions
-        and minimum amount of storage bits required to construct a bloom
-        filter consistent with the user defined false positive probability
-        and estimated element insertion count.
-      */
-   
-      double min_m = std::numeric_limits<double>::infinity();
-      double min_k = 0.0;
-      double curr_m = 0.0;
-      for(double k = 0.0; k < 1000.0; ++k)
-      {
-         if ((curr_m = ((- k * predicted_element_count_) / std::log(1.0 - std::pow(desired_false_positive_probability_, 1.0 / k)))) < min_m)
-         {
-            min_m = curr_m;
-            min_k = k;
-         }
-      }
-     
-      salt_count_ = static_cast<std::size_t>(min_k);
-      table_size_ = static_cast<std::size_t>(min_m);
-      table_size_ += (((table_size_ % bits_per_char) != 0) ? (bits_per_char - (table_size_ % bits_per_char)) : 0);
-   }            
-
-
-
-// TODO: constructor with just N -- length of the data and target probability
-
-inline NgramBloomFilter::~NgramBloomFilter {
+inline NgramBloomFilter::~NgramBloomFilter() {
 	delete[] data;
 	delete[] h1;
 }
@@ -191,7 +144,7 @@ inline NgramBloomFilter::~NgramBloomFilter {
 inline bool NgramBloomFilter::TestAndSet(uint64_t offset) {
 	int index = offset >> 3;
 	unsigned char mask = 1 << (offset & 0x7);
-	if (data[index] & mask == 0) {
+	if ((data[index] & mask) == 0) {
 		data[index] |= mask;
 		return false;
 	}
@@ -204,10 +157,10 @@ inline void NgramBloomFilter::Reset(uint64_t offset) {
 	data[index] &= (mask ^ 0xFF);
 }
 
-inline void NgramBloomFilter::InitH1(int ngram) {
+inline void NgramBloomFilter::InitH1(int index) {
 	uint32_t *h1p = h1+index*k*2;
 	int x = index*k*2;
-	for (int i = 0; i < k*2 i++)
+	for (int i = 0; i < k*2; i++)
 		*h1p = x++;;
 }
 
@@ -357,13 +310,14 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 
 	// initialize n-gram buffer: fill-in h1 seeds
 	for (int i = 0; i < ngram-1; i++)
-		InitH1(h1, k, i);
+		InitH1(i);
 
 	reset.clear();
 
 	int valuesSize = values.size();
 	int size = 0;
 	int current = 0;
+	int duplicates = 0;
 	for (int i = 0; i < valuesSize; i++) {
 		uint32_t k1 = values[i];
 		k1 *= c1;
@@ -446,6 +400,7 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			size++;
 		}
 	}
+	return true;
 }
 
 #endif
