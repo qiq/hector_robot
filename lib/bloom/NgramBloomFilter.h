@@ -31,64 +31,64 @@ FORCE_INLINE uint32_t fmix(uint32_t h) {
 	return h;
 }
 
-/*
-void MurmurHash3_x86_32  ( const void * key, int len, uint32_t seed, void * out );
+// only for MurmurHash3_x86_32
+FORCE_INLINE uint32_t getblock(const uint32_t *p, int i) {
+	return p[i];
+}
 
-void MurmurHash3_x86_32 ( const void * key, int len,
-                          uint32_t seed, void * out )
-{
-  const uint8_t * data = (const uint8_t*)key;
-  const int nblocks = len / 4;
+// original implementation of the MurmurHash3_x86_32
+void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out) {
+	const uint8_t * data = (const uint8_t*)key;
+	const int nblocks = len / 4;
 
-  uint32_t h1 = seed;
+	uint32_t h1 = seed;
 
-  uint32_t c1 = 0xcc9e2d51;
-  uint32_t c2 = 0x1b873593;
+	uint32_t c1 = 0xcc9e2d51;
+	uint32_t c2 = 0x1b873593;
 
-  //----------
-  // body
+	//----------
+	// body
 
-  const uint32_t * blocks = (const uint32_t *)(data + nblocks*4);
+	const uint32_t * blocks = (const uint32_t *)(data + nblocks*4);
 
-  for(int i = -nblocks; i; i++)
-  {
-    uint32_t k1 = getblock(blocks,i);
+	for (int i = -nblocks; i; i++) {
+		uint32_t k1 = getblock(blocks,i);
 
-    k1 *= c1;
-    k1 = ROTL32(k1,15);
-    k1 *= c2;
-    
-    h1 ^= k1;
-    h1 = ROTL32(h1, 13); 
-    h1 = h1*5+0xe6546b64;
-  }
+		k1 *= c1;
+		k1 = ROTL32(k1,15);
+		k1 *= c2;
 
-  //----------
-  // tail
+//printf("M update %x -> ", h1);    
+		h1 ^= k1;
+		h1 = ROTL32(h1, 13); 
+		h1 = h1*5+0xe6546b64;
+//printf("%x\n", h1);    
+	}
 
-  const uint8_t * tail = (const uint8_t*)(data + nblocks*4);
+	//----------
+	// tail
 
-  uint32_t k1 = 0;
+	const uint8_t * tail = (const uint8_t*)(data + nblocks*4);
 
-  switch(len & 3)
-  {
-  case 3: k1 ^= tail[2] << 16;
-  case 2: k1 ^= tail[1] << 8;
-  case 1: k1 ^= tail[0];
-          k1 *= c1; k1 = ROTL32(k1,15); k1 *= c2; h1 ^= k1;
-  };
+	uint32_t k1 = 0;
 
-  //----------
-  // finalization
+	switch (len & 3) {
+		case 3: k1 ^= tail[2] << 16;
+		case 2: k1 ^= tail[1] << 8;
+		case 1: k1 ^= tail[0];
+		k1 *= c1; k1 = ROTL32(k1,15); k1 *= c2; h1 ^= k1;
+	};
 
-  h1 ^= len;
+	//----------
+	// finalization
+//printf("M finish %x -> ", h1);    
+  	h1 ^= len;
 
-  h1 = fmix(h1);
+	h1 = fmix(h1);
+//printf("%x\n", h1);    
 
-  *(uint32_t*)out = h1;
-} 
-
-*/
+	*(uint32_t*)out = h1;
+}
 
 class NgramBloomFilter {
 public:
@@ -97,6 +97,7 @@ public:
 	~NgramBloomFilter();
 
 	bool TestDuplicate(std::vector<uint32_t> &values);
+	bool TestDuplicateSlow(std::vector<uint32_t> &values);
 //	bool TestDuplicate(std::vector<std::string> &values);
 
 protected:
@@ -106,7 +107,7 @@ protected:
 	void InitH1(int index);
 	void UpdateH1(int index, uint32_t k1);
 	void FinishH1(int index);
-void PrintH1();
+	void PrintH1();
 
 private:
 	// how many n-grams we compute
@@ -135,7 +136,9 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uin
 inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
 	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
 	k = ((double)m/n)*log(2);
-fprintf(stderr, "n: %lld, m: %lld, k: %d, %lf\n", n, m, k, ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2))));
+#ifdef DEBUG
+	fprintf(stderr, "n: %lld, m: %lld, k: %d\n", n, m, k);
+#endif
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
@@ -147,22 +150,25 @@ inline NgramBloomFilter::~NgramBloomFilter() {
 }
 
 inline bool NgramBloomFilter::TestAndSet(uint64_t offset) {
+//printf("%llx = 0\n", offset);
 	offset %= m;
 	uint64_t index = offset >> 3;
-printf("index: %llu -> ", offset);
 	unsigned char mask = 1 << (offset & 0x7);
 	if ((data[index] & mask) == 0) {
 		data[index] |= mask;
-printf("0\n");
+#ifdef DEBUG
+		printf("%llu = 0\n", offset);
+#endif
 		return false;
 	}
-printf("1\n");
+#ifdef DEBUG
+	printf("%llu = 1\n", offset);
+#endif
 	return true;
 }
 
 inline void NgramBloomFilter::Reset(uint64_t offset) {
 	offset %= m;
-printf("reset: index %llu\n", offset);
 	uint64_t index = offset >> 3;
 	unsigned char mask = 1 << (offset & 0x7);
 	data[index] &= (mask ^ 0xFF);
@@ -315,13 +321,17 @@ inline void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
 		*h1p = (*h1p)*5+0xe6546b64;
 		h1p--;
 	case 1:
+//printf("update: %x -> ", *h1p);
 		*h1p ^= k1;
 		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
+//printf("%x\n", *h1p);
 		h1p--;
+//printf("update: %x -> ", *h1p);
 		*h1p ^= k1;
 		*h1p = ROTL32(*h1p, 13); 
 		*h1p = (*h1p)*5+0xe6546b64;
+//printf("%x\n", *h1p);
 		h1p--;
 	}
 }
@@ -330,116 +340,120 @@ inline void NgramBloomFilter::FinishH1(int index) {
 	uint32_t *h1p = h1+(index+1)*k*2-1;
 	switch (k) {
 	case 16:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 15:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 14:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 13:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 12:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 11:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 10:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 9:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 8:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 7:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 6:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 5:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 4:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 3:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 2:
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
-		*h1p ^= 4;
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
 		h1p--;
 	case 1:
-		*h1p ^= 4;
+//printf("finish: %x -> ", *h1p);
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
+//printf("%x\n", *h1p);
 		h1p--;
-		*h1p ^= 4;
+//printf("finish: %x -> ", *h1p);
+		*h1p ^= 4*ngram;
   		*h1p = fmix(*h1p);
+//printf("%x\n", *h1p);
 		h1p--;
 	}
 }
@@ -582,19 +596,78 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 					reset.push_back(key);
 			}
 			// all bits are 1 => duplicate
-			if (k == total)
+			if (k == total) {
 				duplicates++;
 
-			if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
-				for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
-					Reset(*iter);
-				return true;
+				if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
+					for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
+						Reset(*iter);
+					return true;
+				}
 			}
+
 			InitH1(current);
 			UpdateH1(current, k1);
 			current = (current+1) % (ngram-1);
 		} else {
 			size++;
+		}
+	}
+	return false;
+}
+
+bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
+	uint32_t *ng = new uint32_t[ngram];
+
+	int duplicates = 0;
+	for (int i = ngram-1; i < (int)values.size(); i++) {
+		for (int j = 0; j < ngram; j++)
+			ng[j] = values[i-ngram+1+j];
+		int ones = 0;
+		for (int k2 = 0; k2 < k; k2++) {
+			uint32_t hash[2];
+//printf("MurmurHash3(");
+//for (int x = 0; x < ngram; x++) {
+//	printf("%x ", ng[x]);
+//}
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
+//printf(", %d, %d) = %x\n", ngram*4, k2*2+0, hash[0]);
+//printf("MurmurHash3(");
+//for (int x = 0; x < ngram; x++) {
+//	printf("%x ", ng[x]);
+//}
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
+//printf(", %d, %d) = %x\n", ngram*4, k2*2+1, hash[1]);
+			uint64_t offset = (*(uint64_t*)hash) % m;
+//printf("hash = %llu\n", offset);
+			uint64_t index = offset >> 3;
+			unsigned char mask = 1 << (offset & 0x7);
+			if ((data[index] & mask) != 0) {
+#ifdef DEBUG
+				printf("%llu = 1\n", offset);
+#endif
+				ones++;
+			} else {
+#ifdef DEBUG
+				printf("%llu = 0\n", offset);
+#endif
+			}
+		}
+		if (ones == k) {
+			duplicates++;
+
+			if ((double)duplicates/(values.size()-ngram+1)*100 > duplicateThreshold)
+				return true;
+		} else {
+			for (int k2 = 0; k2 < k; k2++) {
+				uint32_t hash[2];
+				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
+				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
+				uint64_t offset = (*(uint64_t*)hash) % m;
+				uint64_t index = offset >> 3;
+				unsigned char mask = 1 << (offset & 0x7);
+				data[index] |= mask;
+			}
 		}
 	}
 	return false;
