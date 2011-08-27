@@ -1,19 +1,21 @@
 #include <stdio.h>
+#include <string>
 #include <vector>
-//#define DEBUG
+#include <iostream>
+#define DEBUG
 #include "NgramBloomFilter.h"
 
 using namespace std;
 
 int main(int argc, char **argv) {
 	NgramBloomFilter bloom(10, 0.5, 17430483, 0.01);
-	vector<uint32_t> words;
-	uint32_t data;
+	vector<string> words;
 	bool finish;
+	string data;
 	int doc = 1;
 	do {
-		finish = fread((void*)&data, 4, 1, stdin) != 1;
-		if (finish || data == 0) {
+		finish = getline(cin, data).eof();
+		if (finish || data.length() == 0) {
 			if (words.size() > 0) {
 				// process
 				if (bloom.TestDuplicate(words)) {
@@ -21,7 +23,7 @@ int main(int argc, char **argv) {
 					for (int i = 0; i < (int)words.size(); i++) {
 						if (i > 0)
 							putchar(' ');
-						printf("%d", words[i]);
+						fputs(words[i].c_str(), stdout);
 					}
 					putchar('\n');
 				}

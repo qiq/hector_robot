@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <vector>
-//#define DEBUG
+#define DEBUG
 #include "NgramBloomFilter.h"
 
 using namespace std;
@@ -15,7 +15,8 @@ int main(int argc, char **argv) {
 		finish = fread((void*)&data, 4, 1, stdin) != 1;
 		if (finish || data == 0) {
 			if (words.size() > 0) {
-				// process
+				// proces
+				//bloom.TestDuplicateSlow(words);
 				if (bloom.TestDuplicate(words)) {
 					printf("DUP %d\n", doc);
 					for (int i = 0; i < (int)words.size(); i++) {

@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
 // Copy from MurmurHash3.cc
@@ -98,7 +99,8 @@ public:
 
 	bool TestDuplicate(std::vector<uint32_t> &values);
 	bool TestDuplicateSlow(std::vector<uint32_t> &values);
-//	bool TestDuplicate(std::vector<std::string> &values);
+	bool TestDuplicate(std::vector<std::string> &values);
+	bool TestDuplicateSlow(std::vector<std::string> &values);
 
 protected:
 	bool TestAndSet(uint64_t offset);
@@ -616,6 +618,155 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 	return false;
 }
 
+bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
+	const uint32_t c1 = 0xcc9e2d51;
+	const uint32_t c2 = 0x1b873593;
+
+	// initialize n-gram buffer: fill-in h1 seeds
+	for (int i = 0; i < ngram-1; i++)
+		InitH1(i);
+
+	reset.clear();
+
+	int valuesSize = values.size();
+	int size = 0;
+	int current = 0;
+	int duplicates = 0;
+	for (int i = 0; i < valuesSize; i++) {
+		uint32_t k1;
+		std::string *s = &values[i];
+		MurmurHash3_x86_32(s->data(), s->length(), 0, &k1);
+		k1 *= c1;
+		k1 = ROTL32(k1, 15);
+		k1 *= c2;
+		for (int j = 0; j < ngram-1 && j <= size; j++)
+			UpdateH1(j, k1);
+
+		// we have seen at least ngram-1 words?
+		if (size == ngram-1) {
+			// finish position at bufferStart
+			FinishH1(current);
+			int total = 0;
+			uint64_t key;
+			switch (k) {
+			case 16:
+				key = *(uint64_t*)(h1+current*k*2+15*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 15:
+				key = *(uint64_t*)(h1+current*k*2+14*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 14:
+				key = *(uint64_t*)(h1+current*k*2+13*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 13:
+				key = *(uint64_t*)(h1+current*k*2+12*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 12:
+				key = *(uint64_t*)(h1+current*k*2+11*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 11:
+				key = *(uint64_t*)(h1+current*k*2+10*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 10:
+				key = *(uint64_t*)(h1+current*k*2+9*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 9:
+				key = *(uint64_t*)(h1+current*k*2+8*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 8:
+				key = *(uint64_t*)(h1+current*k*2+7*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 7:
+				key = *(uint64_t*)(h1+current*k*2+6*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 6:
+				key = *(uint64_t*)(h1+current*k*2+5*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 5:
+				key = *(uint64_t*)(h1+current*k*2+4*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 4:
+				key = *(uint64_t*)(h1+current*k*2+3*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 3:
+				key = *(uint64_t*)(h1+current*k*2+2*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 2:
+				key = *(uint64_t*)(h1+current*k*2+1*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			case 1:
+				key = *(uint64_t*)(h1+current*k*2+0*2);
+				if (TestAndSet(key))
+					total++;
+				else
+					reset.push_back(key);
+			}
+			// all bits are 1 => duplicate
+			if (k == total) {
+				duplicates++;
+
+				if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
+					for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
+						Reset(*iter);
+					return true;
+				}
+			}
+
+			InitH1(current);
+			UpdateH1(current, k1);
+			current = (current+1) % (ngram-1);
+		} else {
+			size++;
+		}
+	}
+	return false;
+}
+
 bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 	uint32_t *ng = new uint32_t[ngram];
 
@@ -657,6 +808,65 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 			duplicates++;
 
 			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
+				return true;
+		} else {
+			for (int k2 = 0; k2 < k; k2++) {
+				uint32_t hash[2];
+				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
+				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
+				uint64_t offset = (*(uint64_t*)hash) % m;
+				uint64_t index = offset >> 3;
+				unsigned char mask = 1 << (offset & 0x7);
+				data[index] |= mask;
+			}
+		}
+	}
+	return false;
+}
+
+bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
+	uint32_t *ng = new uint32_t[ngram];
+
+	int duplicates = 0;
+	for (int i = ngram-1; i < (int)values.size(); i++) {
+		for (int j = 0; j < ngram; j++) {
+			std::string *s = &values[i-ngram+1+j];
+			MurmurHash3_x86_32(s->data(), s->length(), 0, &ng[j]);
+		}
+		int ones = 0;
+		for (int k2 = 0; k2 < k; k2++) {
+			uint32_t hash[2];
+//printf("MurmurHash3(");
+//for (int x = 0; x < ngram; x++) {
+//	printf("%x ", ng[x]);
+//}
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
+//printf(", %d, %d) = %x\n", ngram*4, k2*2+0, hash[0]);
+//printf("MurmurHash3(");
+//for (int x = 0; x < ngram; x++) {
+//	printf("%x ", ng[x]);
+//}
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
+//printf(", %d, %d) = %x\n", ngram*4, k2*2+1, hash[1]);
+			uint64_t offset = (*(uint64_t*)hash) % m;
+//printf("hash = %llu\n", offset);
+			uint64_t index = offset >> 3;
+			unsigned char mask = 1 << (offset & 0x7);
+			if ((data[index] & mask) != 0) {
+#ifdef DEBUG
+				printf("%llu = 1\n", offset);
+#endif
+				ones++;
+			} else {
+#ifdef DEBUG
+				printf("%llu = 0\n", offset);
+#endif
+			}
+		}
+		if (ones == k) {
+			duplicates++;
+
+			if ((double)duplicates/(values.size()-ngram+1)*100 > duplicateThreshold)
 				return true;
 		} else {
 			for (int k2 = 0; k2 < k; k2++) {

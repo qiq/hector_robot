@@ -1,5 +1,10 @@
-bloom: bloom.cc NgramBloomFilter.h
-	g++ -o bloom bloom.cc -lm -Wall -ggdb -O3
+all: bloomb bloomt
+
+bloomb: bloomb.cc NgramBloomFilter.h
+	g++ -o bloomb bloomb.cc -lm -Wall -ggdb -O0
+
+bloomt: bloomt.cc NgramBloomFilter.h
+	g++ -o bloomt bloomt.cc -lm -Wall -ggdb -O0
 
 clean:
-	rm -f bloom
+	rm -f bloomb bloomt
