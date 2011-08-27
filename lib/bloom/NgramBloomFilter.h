@@ -92,8 +92,8 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out) {
 
 class NgramBloomFilter {
 public:
-	NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t m, int k);
-	NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability);
+	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k);
+	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability);
 	~NgramBloomFilter();
 
 	bool TestDuplicate(std::vector<uint32_t> &values);
@@ -113,7 +113,7 @@ private:
 	// how many n-grams we compute
 	int ngram;
 	// percent of duplicate n-grams when we consider docs to be duplicates
-	int duplicateThreshold;
+	double duplicateThreshold;
 	// number of bytes to allocate for the data
 	uint64_t m;
 	// number of hash functions
@@ -127,17 +127,17 @@ private:
 	std::vector<uint64_t> reset;
 };
 
-inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
+inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
 }
 
-inline NgramBloomFilter::NgramBloomFilter(int ngram, int duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
+inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
 	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
 	k = ((double)m/n)*log(2);
 #ifdef DEBUG
-	fprintf(stderr, "n: %lld, m: %lld, k: %d\n", n, m, k);
+	printf("n: %lld, m: %lld, k: %d\n", n, m, k);
 #endif
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
@@ -599,7 +599,7 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			if (k == total) {
 				duplicates++;
 
-				if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
+				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
 					for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
 						Reset(*iter);
 					return true;
@@ -656,7 +656,7 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 		if (ones == k) {
 			duplicates++;
 
-			if ((double)duplicates/(values.size()-ngram+1)*100 > duplicateThreshold)
+			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
 				return true;
 		} else {
 			for (int k2 = 0; k2 < k; k2++) {
