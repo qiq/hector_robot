@@ -60,11 +60,9 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, uint32_t *out) 
 		k1 = ROTL32(k1,15);
 		k1 *= c2;
 
-//printf("M update %x -> ", h1);    
 		h1 ^= k1;
 		h1 = ROTL32(h1, 13); 
 		h1 = h1*5+0xe6546b64;
-//printf("%x\n", h1);    
 	}
 
 	//----------
@@ -83,11 +81,9 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, uint32_t *out) 
 
 	//----------
 	// finalization
-//printf("M finish %x -> ", h1);    
   	h1 ^= len;
 
 	h1 = fmix(h1);
-//printf("%x\n", h1);    
 
 	*out = h1;
 }
