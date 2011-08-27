@@ -1,5 +1,7 @@
 /**
   BloomFilter.h
+
+  Possible optimization: do not test, when it may not be duplicate, just set
 */
 
 #ifndef _LIB_BLOOMFILTER_H_
