@@ -6,6 +6,7 @@
 #define _LIB_BLOOMFILTER_H_
 
 //#include <config.h>
+#include <iostream>
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
@@ -38,7 +39,7 @@ FORCE_INLINE uint32_t getblock(const uint32_t *p, int i) {
 }
 
 // original implementation of the MurmurHash3_x86_32
-void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out) {
+void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, uint32_t *out) {
 	const uint8_t * data = (const uint8_t*)key;
 	const int nblocks = len / 4;
 
@@ -88,7 +89,7 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out) {
 	h1 = fmix(h1);
 //printf("%x\n", h1);    
 
-	*(uint32_t*)out = h1;
+	*out = h1;
 }
 
 class NgramBloomFilter {
@@ -139,7 +140,7 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
 	k = ((double)m/n)*log(2);
 #ifdef DEBUG
-	printf("n: %lld, m: %lld, k: %d\n", n, m, k);
+	std::cout << "n: " << n << ", m: " << m << ", k: " << k << "\n";
 #endif
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
@@ -151,7 +152,7 @@ inline NgramBloomFilter::~NgramBloomFilter() {
 	delete[] h1;
 }
 
-inline bool NgramBloomFilter::TestAndSet(uint64_t offset) {
+FORCE_INLINE bool NgramBloomFilter::TestAndSet(uint64_t offset) {
 //printf("%llx = 0\n", offset);
 	offset %= m;
 	uint64_t index = offset >> 3;
@@ -159,17 +160,17 @@ inline bool NgramBloomFilter::TestAndSet(uint64_t offset) {
 	if ((data[index] & mask) == 0) {
 		data[index] |= mask;
 #ifdef DEBUG
-		printf("%llu = 0\n", offset);
+		std::cout << offset << " = 0\n";
 #endif
 		return false;
 	}
 #ifdef DEBUG
-	printf("%llu = 1\n", offset);
+	std::cout << offset << " = 1\n";
 #endif
 	return true;
 }
 
-inline void NgramBloomFilter::Reset(uint64_t offset) {
+FORCE_INLINE void NgramBloomFilter::Reset(uint64_t offset) {
 	offset %= m;
 	uint64_t index = offset >> 3;
 	unsigned char mask = 1 << (offset & 0x7);
@@ -184,7 +185,7 @@ inline void NgramBloomFilter::InitH1(int index) {
 	}
 }
 
-inline void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
+FORCE_INLINE void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
 	uint32_t *h1p = h1+(index+1)*k*2-1;
 	switch (k) {
 	case 16:
@@ -338,7 +339,7 @@ inline void NgramBloomFilter::UpdateH1(int index, uint32_t k1) {
 	}
 }
 
-inline void NgramBloomFilter::FinishH1(int index) {
+FORCE_INLINE void NgramBloomFilter::FinishH1(int index) {
 	uint32_t *h1p = h1+(index+1)*k*2-1;
 	switch (k) {
 	case 16:
@@ -750,7 +751,7 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 			if (k == total) {
 				duplicates++;
 
-				if ((double)duplicates/(valuesSize-ngram+1)*100 > duplicateThreshold) {
+				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
 					for (std::vector<uint64_t>::iterator iter = reset.begin(); iter != reset.end(); ++iter)
 						Reset(*iter);
 					return true;
@@ -789,18 +790,19 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 //}
 			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
 //printf(", %d, %d) = %x\n", ngram*4, k2*2+1, hash[1]);
-			uint64_t offset = (*(uint64_t*)hash) % m;
+			uint64_t offset = hash[1];
+			offset = (offset << 32 | hash[0]) % m;
 //printf("hash = %llu\n", offset);
 			uint64_t index = offset >> 3;
 			unsigned char mask = 1 << (offset & 0x7);
 			if ((data[index] & mask) != 0) {
 #ifdef DEBUG
-				printf("%llu = 1\n", offset);
+				std::cout << offset << " = 1\n";
 #endif
 				ones++;
 			} else {
 #ifdef DEBUG
-				printf("%llu = 0\n", offset);
+				std::cout << offset << " = 0\n";
 #endif
 			}
 		}
@@ -814,7 +816,8 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 				uint32_t hash[2];
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
-				uint64_t offset = (*(uint64_t*)hash) % m;
+				uint64_t offset = hash[1];
+				offset = (offset << 32 | hash[0]) % m;
 				uint64_t index = offset >> 3;
 				unsigned char mask = 1 << (offset & 0x7);
 				data[index] |= mask;
@@ -836,44 +839,35 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
 		int ones = 0;
 		for (int k2 = 0; k2 < k; k2++) {
 			uint32_t hash[2];
-//printf("MurmurHash3(");
-//for (int x = 0; x < ngram; x++) {
-//	printf("%x ", ng[x]);
-//}
 			MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
-//printf(", %d, %d) = %x\n", ngram*4, k2*2+0, hash[0]);
-//printf("MurmurHash3(");
-//for (int x = 0; x < ngram; x++) {
-//	printf("%x ", ng[x]);
-//}
 			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
-//printf(", %d, %d) = %x\n", ngram*4, k2*2+1, hash[1]);
-			uint64_t offset = (*(uint64_t*)hash) % m;
-//printf("hash = %llu\n", offset);
+			uint64_t offset = hash[1];
+			offset = (offset << 32 | hash[0]) % m;
 			uint64_t index = offset >> 3;
 			unsigned char mask = 1 << (offset & 0x7);
 			if ((data[index] & mask) != 0) {
 #ifdef DEBUG
-				printf("%llu = 1\n", offset);
+				std::cout << offset << " = 1\n";
 #endif
 				ones++;
 			} else {
 #ifdef DEBUG
-				printf("%llu = 0\n", offset);
+				std::cout << offset << " = 0\n";
 #endif
 			}
 		}
 		if (ones == k) {
 			duplicates++;
 
-			if ((double)duplicates/(values.size()-ngram+1)*100 > duplicateThreshold)
+			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
 				return true;
 		} else {
 			for (int k2 = 0; k2 < k; k2++) {
 				uint32_t hash[2];
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
-				uint64_t offset = (*(uint64_t*)hash) % m;
+				uint64_t offset = hash[1];
+				offset = (offset << 32 | hash[0]) % m;
 				uint64_t index = offset >> 3;
 				unsigned char mask = 1 << (offset & 0x7);
 				data[index] |= mask;

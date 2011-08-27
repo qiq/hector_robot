@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#define DEBUG
+//#define DEBUG
 #include "NgramBloomFilter.h"
 
 using namespace std;
