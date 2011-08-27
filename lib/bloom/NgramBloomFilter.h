@@ -128,12 +128,15 @@ private:
 	uint32_t *h1;
 	// keys that were 0 and are 1 now -> in case of reset, we need to clear them
 	std::vector<uint64_t> reset;
+
+	uint32_t *ng;
 };
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
+	ng = new uint32_t[ngram];
 }
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
@@ -145,11 +148,13 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
+	ng = new uint32_t[ngram];
 }
 
 inline NgramBloomFilter::~NgramBloomFilter() {
 	delete[] data;
 	delete[] h1;
+	delete[] ng;
 }
 
 FORCE_INLINE bool NgramBloomFilter::TestAndSet(uint64_t offset) {
@@ -769,14 +774,12 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 }
 
 bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
-	uint32_t *ng = new uint32_t[ngram];
-
 	int duplicates = 0;
 	for (int i = ngram-1; i < (int)values.size(); i++) {
 		for (int j = 0; j < ngram; j++)
 			ng[j] = values[i-ngram+1+j];
 		int ones = 0;
-		for (int k2 = 0; k2 < k; k2++) {
+		for (int k2 = k-1; k2 >= 0; k2--) {
 			uint32_t hash[2];
 //printf("MurmurHash3(");
 //for (int x = 0; x < ngram; x++) {
@@ -812,7 +815,7 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
 				return true;
 		} else {
-			for (int k2 = 0; k2 < k; k2++) {
+			for (int k2 = k-1; k2 >= 0; k2--) {
 				uint32_t hash[2];
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
 				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
@@ -828,8 +831,6 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 }
 
 bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
-	uint32_t *ng = new uint32_t[ngram];
-
 	int duplicates = 0;
 	for (int i = ngram-1; i < (int)values.size(); i++) {
 		for (int j = 0; j < ngram; j++) {
@@ -837,7 +838,7 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
 			MurmurHash3_x86_32(s->data(), s->length(), 0, &ng[j]);
 		}
 		int ones = 0;
-		for (int k2 = 0; k2 < k; k2++) {
+		for (int k2 = k-1; k2 >= 0; k2--) {
 			uint32_t hash[2];
 			MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
 			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
@@ -861,19 +862,26 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
 
 			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
 				return true;
-		} else {
-			for (int k2 = 0; k2 < k; k2++) {
-				uint32_t hash[2];
-				MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
-				MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
-				uint64_t offset = hash[1];
-				offset = (offset << 32 | hash[0]) % m;
-				uint64_t index = offset >> 3;
-				unsigned char mask = 1 << (offset & 0x7);
-				data[index] |= mask;
-			}
 		}
 	}
+
+	for (int i = ngram-1; i < (int)values.size(); i++) {
+		for (int j = 0; j < ngram; j++) {
+			std::string *s = &values[i-ngram+1+j];
+			MurmurHash3_x86_32(s->data(), s->length(), 0, &ng[j]);
+		}
+		for (int k2 = k-1; k2 >= 0; k2--) {
+			uint32_t hash[2];
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+0, &hash[0]);
+			MurmurHash3_x86_32(ng, ngram*4, k2*2+1, &hash[1]);
+			uint64_t offset = hash[1];
+			offset = (offset << 32 | hash[0]) % m;
+			uint64_t index = offset >> 3;
+			unsigned char mask = 1 << (offset & 0x7);
+			data[index] |= mask;
+		}
+	}
+
 	return false;
 }
 

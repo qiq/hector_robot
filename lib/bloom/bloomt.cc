@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-//#define DEBUG
+#define DEBUG
 #include "NgramBloomFilter.h"
 
 using namespace std;
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 		if (finish || data.length() == 0) {
 			if (words.size() > 0) {
 				// process
-				if (bloom.TestDuplicate(words)) {
+				if (bloom.TestDuplicateSlow(words)) {
 					printf("DUP %d\n", doc);
 					for (int i = 0; i < (int)words.size(); i++) {
 						if (i > 0)
@@ -26,6 +26,8 @@ int main(int argc, char **argv) {
 						fputs(words[i].c_str(), stdout);
 					}
 					putchar('\n');
+				} else {
+					printf("DOC %d\n", doc);
 				}
 			}
 			doc++;
