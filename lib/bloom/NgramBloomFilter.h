@@ -125,8 +125,10 @@ private:
 	// h1 coeficients for computing Murmur hash 3
 	uint32_t *h1;
 	// keys that were 0 and should be 1 now
-	std::vector<uint64_t> set;
+	uint64_t *set;
+	int setSize;
 
+	// ngrams
 	uint32_t *ng;
 };
 
@@ -135,6 +137,8 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
 	ng = new uint32_t[ngram];
+	set = NULL;
+	setSize = 0;
 }
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
@@ -147,56 +151,55 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
 	ng = new uint32_t[ngram];
+	set = NULL;
+	setSize = 0;
 }
 
 inline NgramBloomFilter::~NgramBloomFilter() {
 	delete[] data;
 	delete[] h1;
 	delete[] ng;
+	delete[] set;
 }
 
-FORCE_INLINE bool NgramBloomFilter::Test(uint64_t offset) {
-	offset %= m;
-	uint64_t index = offset >> 3;
-	unsigned char mask = 1 << (offset & 0x7);
+FORCE_INLINE bool NgramBloomFilter::Test(uint64_t index) {
+	uint64_t offset = index >> 3;
+	unsigned char mask = 1 << (index & 0x7);
 #ifdef DEBUG
-	if (data[index] & mask)
-		std::cout << offset << " = 1\n";
+	if (data[offset] & mask)
+		std::cout << index << " = 1\n";
 	else
-		std::cout << offset << " = 0\n";
+		std::cout << index << " = 0\n";
 #endif
-	return (data[index] & mask) != 0;
+	return (data[offset] & mask) != 0;
 }
 
-FORCE_INLINE void NgramBloomFilter::Set(uint64_t offset) {
-	offset %= m;
-	uint64_t index = offset >> 3;
-	unsigned char mask = 1 << (offset & 0x7);
-	data[index] |= mask;
+FORCE_INLINE void NgramBloomFilter::Set(uint64_t index) {
+	uint64_t offset = index >> 3;
+	unsigned char mask = 1 << (index & 0x7);
+	data[offset] |= mask;
 }
 
-FORCE_INLINE bool NgramBloomFilter::TestAndSet(uint64_t offset) {
-	offset %= m;
-	uint64_t index = offset >> 3;
-	unsigned char mask = 1 << (offset & 0x7);
-	if ((data[index] & mask) == 0) {
-		data[index] |= mask;
+FORCE_INLINE bool NgramBloomFilter::TestAndSet(uint64_t index) {
+	uint64_t offset = index >> 3;
+	unsigned char mask = 1 << (index & 0x7);
+	if ((data[offset] & mask) == 0) {
+		data[offset] |= mask;
 #ifdef DEBUG
-		std::cout << offset << " = 0\n";
+		std::cout << index << " = 0\n";
 #endif
 		return false;
 	}
 #ifdef DEBUG
-	std::cout << offset << " = 1\n";
+	std::cout << index << " = 1\n";
 #endif
 	return true;
 }
 
-FORCE_INLINE void NgramBloomFilter::Reset(uint64_t offset) {
-	offset %= m;
-	uint64_t index = offset >> 3;
-	unsigned char mask = 1 << (offset & 0x7);
-	data[index] &= (mask ^ 0xFF);
+FORCE_INLINE void NgramBloomFilter::Reset(uint64_t index) {
+	uint64_t offset = index >> 3;
+	unsigned char mask = 1 << (index & 0x7);
+	data[offset] &= (mask ^ 0xFF);
 }
 
 inline void NgramBloomFilter::InitH1(int index) {
@@ -494,7 +497,12 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 	for (int i = 0; i < ngram-1; i++)
 		InitH1(i);
 
-	set.clear();
+	if (setSize < (int)values.size()-ngram+1) {
+		delete[] set;
+		setSize = (int)values.size()-ngram+1;
+		set = new uint64_t[setSize*k];
+	}
+	int setTop = 0;
 
 	int valuesSize = values.size();
 	int size = 0;
@@ -516,101 +524,101 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			uint64_t key;
 			switch (k) {
 			case 16:
-				key = *(uint64_t*)(h1+current*k*2+15*2);
+				key = *(uint64_t*)(h1+current*k*2+15*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 15:
-				key = *(uint64_t*)(h1+current*k*2+14*2);
+				key = *(uint64_t*)(h1+current*k*2+14*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 14:
-				key = *(uint64_t*)(h1+current*k*2+13*2);
+				key = *(uint64_t*)(h1+current*k*2+13*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 13:
-				key = *(uint64_t*)(h1+current*k*2+12*2);
+				key = *(uint64_t*)(h1+current*k*2+12*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 12:
-				key = *(uint64_t*)(h1+current*k*2+11*2);
+				key = *(uint64_t*)(h1+current*k*2+11*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 11:
-				key = *(uint64_t*)(h1+current*k*2+10*2);
+				key = *(uint64_t*)(h1+current*k*2+10*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 10:
-				key = *(uint64_t*)(h1+current*k*2+9*2);
+				key = *(uint64_t*)(h1+current*k*2+9*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 9:
-				key = *(uint64_t*)(h1+current*k*2+8*2);
+				key = *(uint64_t*)(h1+current*k*2+8*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 8:
-				key = *(uint64_t*)(h1+current*k*2+7*2);
+				key = *(uint64_t*)(h1+current*k*2+7*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 7:
-				key = *(uint64_t*)(h1+current*k*2+6*2);
+				key = *(uint64_t*)(h1+current*k*2+6*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 6:
-				key = *(uint64_t*)(h1+current*k*2+5*2);
+				key = *(uint64_t*)(h1+current*k*2+5*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 5:
-				key = *(uint64_t*)(h1+current*k*2+4*2);
+				key = *(uint64_t*)(h1+current*k*2+4*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 4:
-				key = *(uint64_t*)(h1+current*k*2+3*2);
+				key = *(uint64_t*)(h1+current*k*2+3*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 3:
-				key = *(uint64_t*)(h1+current*k*2+2*2);
+				key = *(uint64_t*)(h1+current*k*2+2*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 2:
-				key = *(uint64_t*)(h1+current*k*2+1*2);
+				key = *(uint64_t*)(h1+current*k*2+1*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 1:
-				key = *(uint64_t*)(h1+current*k*2+0*2);
+				key = *(uint64_t*)(h1+current*k*2+0*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			}
 			// all bits are 1 => duplicate
 			if (k == total) {
@@ -628,8 +636,8 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 		}
 	}
 
-	for (std::vector<uint64_t>::iterator iter = set.begin(); iter != set.end(); ++iter)
-		Set(*iter);
+	for (int i = 0; i < setTop; i++)
+		Set(set[i]);
 
 	return false;
 }
@@ -642,7 +650,12 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 	for (int i = 0; i < ngram-1; i++)
 		InitH1(i);
 
-	set.clear();
+	if (setSize < (int)values.size()-ngram+1) {
+		delete[] set;
+		setSize = (int)values.size()-ngram+1;
+		set = new uint64_t[setSize*k];
+	}
+	int setTop = 0;
 
 	int valuesSize = values.size();
 	int size = 0;
@@ -666,101 +679,101 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 			uint64_t key;
 			switch (k) {
 			case 16:
-				key = *(uint64_t*)(h1+current*k*2+15*2);
+				key = *(uint64_t*)(h1+current*k*2+15*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 15:
-				key = *(uint64_t*)(h1+current*k*2+14*2);
+				key = *(uint64_t*)(h1+current*k*2+14*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 14:
-				key = *(uint64_t*)(h1+current*k*2+13*2);
+				key = *(uint64_t*)(h1+current*k*2+13*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 13:
-				key = *(uint64_t*)(h1+current*k*2+12*2);
+				key = *(uint64_t*)(h1+current*k*2+12*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 12:
-				key = *(uint64_t*)(h1+current*k*2+11*2);
+				key = *(uint64_t*)(h1+current*k*2+11*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 11:
-				key = *(uint64_t*)(h1+current*k*2+10*2);
+				key = *(uint64_t*)(h1+current*k*2+10*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 10:
-				key = *(uint64_t*)(h1+current*k*2+9*2);
+				key = *(uint64_t*)(h1+current*k*2+9*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 9:
-				key = *(uint64_t*)(h1+current*k*2+8*2);
+				key = *(uint64_t*)(h1+current*k*2+8*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 8:
-				key = *(uint64_t*)(h1+current*k*2+7*2);
+				key = *(uint64_t*)(h1+current*k*2+7*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 7:
-				key = *(uint64_t*)(h1+current*k*2+6*2);
+				key = *(uint64_t*)(h1+current*k*2+6*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 6:
-				key = *(uint64_t*)(h1+current*k*2+5*2);
+				key = *(uint64_t*)(h1+current*k*2+5*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 5:
-				key = *(uint64_t*)(h1+current*k*2+4*2);
+				key = *(uint64_t*)(h1+current*k*2+4*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 4:
-				key = *(uint64_t*)(h1+current*k*2+3*2);
+				key = *(uint64_t*)(h1+current*k*2+3*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 3:
-				key = *(uint64_t*)(h1+current*k*2+2*2);
+				key = *(uint64_t*)(h1+current*k*2+2*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 2:
-				key = *(uint64_t*)(h1+current*k*2+1*2);
+				key = *(uint64_t*)(h1+current*k*2+1*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			case 1:
-				key = *(uint64_t*)(h1+current*k*2+0*2);
+				key = *(uint64_t*)(h1+current*k*2+0*2) % m;
 				if (Test(key))
 					total++;
 				else
-					set.push_back(key);
+					set[setTop++] = key;
 			}
 			// all bits are 1 => duplicate
 			if (k == total) {
@@ -778,8 +791,8 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 		}
 	}
 
-	for (std::vector<uint64_t>::iterator iter = set.begin(); iter != set.end(); ++iter)
-		Set(*iter);
+	for (int i = 0; i < setTop; i++)
+		Set(set[i]);
 
 	return false;
 }
