@@ -25,7 +25,7 @@ function test_server_start {
 	fi
 	shift
 	hector_server_shutdown 2>/dev/null
-	hector_server_start "$test_base/test/${id}_config.xml" $server $@
+	hector_server_start "$test_base/test/${id}.xml" $server $@
 	hector_client_wait_dontfail PE_test.run 0
 }
 
@@ -41,7 +41,7 @@ function test_server_batch {
 		return
 	fi
 	shift; shift
-	hector_server_start "$test_base/test/${id}_config.xml" -f -b $server $@
+	hector_server_start "$test_base/test/${id}.xml" -f -b $server $@
 }
 
 function test_compare_result {

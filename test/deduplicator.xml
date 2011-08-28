@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+Test deduplicator module.
+-->
+<Config>
+	<Server id="test" lib="TestServer.la">
+		<threads>1</threads>
+		<logConfig><![CDATA[
+			log4j.rootLogger=TRACE, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=deduplicator.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=TRACE
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_test">
+			<Processor id="P_input">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_load" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="text" value="true"/>
+					</Module>
+					<Module id="M_deduplicate" lib="Deduplicator.la">
+						<param name="deduplicateParagraphs" value="false"/>
+						<param name="totalSize" value="500"/>
+						<param name="threshold" value="0.8"/>
+						<param name="ngram" value="8"/>
+					</Module>
+					<Module id="M_save" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="text" value="true"/>
+						<param name="overwrite" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
