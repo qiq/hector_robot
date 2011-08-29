@@ -8,10 +8,9 @@ BUILT_SOURCES =
 EXTRA_DIST =
 
 moduledir = $(libdir)/hector/module
-#module_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la SiteManager.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la
-module_LTLIBRARIES = PageResourceGenerator.la DnsResolver.la UrlExtractor.la ResourceTypeToStatus.la UpdateSites.la UpdateUrls.la UpdateIndex.la RawTextRead.la TextResourcePrint.la TextResourceRead.la Deduplicator.la
-#Filter.la
+module_LTLIBRARIES = 
 
+module_LTLIBRARIES += PageResourceGenerator.la
 PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
 PageResourceGenerator_la_LIBADD = ../resource/libPageResource.la
 
@@ -30,6 +29,7 @@ Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
 Fetcher_la_LIBADD = ../resource/libPageResource.la $(top_builddir)/lib/librobot.la
 endif
 
+module_LTLIBRARIES += DnsResolver.la
 DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
 DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
 DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
@@ -39,6 +39,7 @@ DnsResolver_la_LIBADD = ../resource/libPageResource.la ../resource/libSiteResour
 #SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
 #SiteManager_la_LIBADD = ../resource/libPageResource.la ../resource/libSiteResource.la $(top_builddir)/lib/librobot.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
+module_LTLIBRARIES += UrlExtractor.la
 UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
 UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
 UrlExtractor_la_LIBADD = ../resource/libPageResource.la ../resource/libUrlResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
@@ -47,15 +48,19 @@ UrlExtractorLexer.cc: UrlExtractorLexer.l
 BUILT_SOURCES += UrlExtractorLexer.cc
 EXTRA_DIST += UrlExtractorLexer.l
 
+module_LTLIBRARIES += ResourceTypeToStatus.la
 ResourceTypeToStatus_la_SOURCES = ResourceTypeToStatus.h ResourceTypeToStatus.cc
 ResourceTypeToStatus_la_LIBADD = $(top_builddir)/lib/librobot.la
 
+module_LTLIBRARIES += UpdateSites.la
 UpdateSites_la_SOURCES = UpdateSites.h UpdateSites.cc
 UpdateSites_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libSiteResource.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
+module_LTLIBRARIES += UpdateUrls.la
 UpdateUrls_la_SOURCES = UpdateUrls.h UpdateUrls.cc
 UpdateUrls_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libUrlResource.la ../resource/libPageResource.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
+module_LTLIBRARIES += UpdateIndex.la
 UpdateIndex_la_SOURCES = UpdateIndex.h UpdateIndex.cc
 UpdateIndex_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libUrlResource.la ../resource/libPageResource.la ../resource/libIndexResource.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
@@ -77,14 +82,22 @@ Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
 Tokenizer_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 endif
 
+module_LTLIBRARIES += RawTextRead.la
 RawTextRead_la_SOURCES = RawTextRead.h RawTextRead.cc
 RawTextRead_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
+module_LTLIBRARIES += TextResourcePrint.la
 TextResourcePrint_la_SOURCES = TextResourcePrint.h TextResourcePrint.cc
 TextResourcePrint_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
+module_LTLIBRARIES += TextResourceRead.la
 TextResourceRead_la_SOURCES = TextResourceRead.h TextResourceRead.cc
 TextResourceRead_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
+module_LTLIBRARIES += Deduplicator.la
 Deduplicator_la_SOURCES = Deduplicator.h Deduplicator.cc
 Deduplicator_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += WordCount.la
+WordCount_la_SOURCES = WordCount.h WordCount.cc
+WordCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
