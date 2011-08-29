@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+WebCorpus: several task that process web corpus files:
+
+- tokenize: read many small files with raw (UTF-8) text and create one big file
+  with the contents.
+- wordcount: count all words in the file. Useful for deduplication parameter
+  settings later.
+- deduplicate: run paragraph-level de-duplication on the file.
+- tag: run Czech morphology and tagger on the file.
+- parse: run Ryan McDonald's parser on the file.
+
+-->
+<Config>
+	<Server id="tokenize">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=tokenized/tokenizer_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="RawTextRead.la">
+						<param name="inputListFile" value="$1.list"/>
+					</Module>
+					<Module id="M_tokenizer" lib="Tokenizer.la">
+						<param name="maxSentenceSize" value="200"/>
+						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
+						<param name="markParagraphs" value="true"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="tokenized/$1.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="wordcount">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=wordcount_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="tokenized/$1.hr"/>
+						<param name="resourceType" value="TextResource"/>
+					</Module>
+					<Module id="M_wordcount" lib="WordCount.la"/>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="deduplicate">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=deduplicated/deduplicate_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="tokenized/$1.hr"/>
+						<param name="resourceType" value="TextResource"/>
+					</Module>
+					<Module id="M_deduplicate" lib="Deduplicator.la">
+						<param name="deduplicateParagraphs" value="true"/>
+						<param name="totalSize" value="$2"/>
+						<param name="threshold" value="0.3"/>
+						<param name="ngram" value="8"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="deduplicated/$1.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="tag">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=tagged/tag_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="deduplicated/$1.hr"/>
+						<param name="resourceType" value="TextResource"/>
+					</Module>
+					<Module id="M_tag" lib="FeaturamaTagger.la">
+						<param name="useGuesser" value="true"/>
+						<param name="morphologyPrefix" value="share/czmorphology/CZ100404a"/>
+						<param name="taggerPrefix" value="share/featurama/cs/default"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="tagged/$1.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
