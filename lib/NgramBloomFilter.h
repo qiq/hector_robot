@@ -96,10 +96,10 @@ public:
 	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability);
 	~NgramBloomFilter();
 
-	bool TestDuplicate(std::vector<uint32_t> &values);
-	bool TestDuplicateSlow(std::vector<uint32_t> &values);
-	bool TestDuplicate(std::vector<std::string> &values);
-	bool TestDuplicateSlow(std::vector<std::string> &values);
+	bool TestDuplicate(std::vector<uint32_t> &values, double *ratio = NULL);
+	bool TestDuplicateSlow(std::vector<uint32_t> &values, double *ratio = NULL);
+	bool TestDuplicate(std::vector<std::string> &values, double *ratio = NULL);
+	bool TestDuplicateSlow(std::vector<std::string> &values, double *ratio = NULL);
 
 protected:
 	bool Test(uint64_t offset);
@@ -491,7 +491,7 @@ void NgramBloomFilter::PrintH1() {
 	printf("\n");
 }
 
-bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
+bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values, double *ratio) {
 	const uint32_t c1 = 0xcc9e2d51;
 	const uint32_t c2 = 0x1b873593;
 
@@ -626,8 +626,11 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 			if (k == total) {
 				duplicates++;
 
-				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold)
+				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
+					if (ratio)
+						*ratio = (double)duplicates/(valuesSize-ngram+1);
 					return true;
+				}
 			}
 
 			InitH1(current);
@@ -641,10 +644,12 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values) {
 	for (int i = 0; i < setTop; i++)
 		Set(set[i]);
 
+	if (ratio)
+		*ratio = (double)duplicates/(valuesSize-ngram+1);
 	return false;
 }
 
-bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
+bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values, double *ratio) {
 	const uint32_t c1 = 0xcc9e2d51;
 	const uint32_t c2 = 0x1b873593;
 
@@ -781,8 +786,11 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 			if (k == total) {
 				duplicates++;
 
-				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold)
+				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
+					if (ratio)
+						*ratio = (double)duplicates/(valuesSize-ngram+1);
 					return true;
+				}
 			}
 
 			InitH1(current);
@@ -796,10 +804,12 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values) {
 	for (int i = 0; i < setTop; i++)
 		Set(set[i]);
 
+	if (ratio)
+		*ratio = (double)duplicates/(valuesSize-ngram+1);
 	return false;
 }
 
-bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
+bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values, double *ratio) {
 	int duplicates = 0;
 	for (int i = ngram-1; i < (int)values.size(); i++) {
 		for (int j = 0; j < ngram; j++)
@@ -827,8 +837,11 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 		if (ones == k) {
 			duplicates++;
 
-			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
+			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold) {
+				if (ratio)
+					*ratio = (double)duplicates/(values.size()-ngram+1);
 				return true;
+			}
 		}
 	}
 
@@ -847,10 +860,12 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<uint32_t> &values) {
 		}
 	}
 
+	if (ratio)
+		*ratio = (double)duplicates/(values.size()-ngram+1);
 	return false;
 }
 
-bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
+bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values, double *ratio) {
 	int duplicates = 0;
 	for (int i = ngram-1; i < (int)values.size(); i++) {
 		for (int j = 0; j < ngram; j++) {
@@ -880,8 +895,10 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
 		if (ones == k) {
 			duplicates++;
 
-			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold)
-				return true;
+			if ((double)duplicates/(values.size()-ngram+1) > duplicateThreshold) {
+				if (ratio)
+					*ratio = (double)duplicates/(values.size()-ngram+1);
+			}
 		}
 	}
 
@@ -902,6 +919,8 @@ bool NgramBloomFilter::TestDuplicateSlow(std::vector<std::string> &values) {
 		}
 	}
 
+	if (ratio)
+		*ratio = (double)duplicates/(values.size()-ngram+1);
 	return false;
 }
 

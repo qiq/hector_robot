@@ -5,7 +5,7 @@ lib_LTLIBRARIES = librobot.la
 noinst_LTLIBRARIES = libgoogleurl.la
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = robot_common.h SuperFastHash.h SitePathMD5.h \
+hectorinclude_HEADERS = robot_common.h SuperFastHash.h SitePathMD5.h NgramBloomFilter.h \
 	robot_common.i
 
 librobot_la_SOURCES = \
