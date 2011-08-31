@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+// NB: SuperFastHash has problematic properties when used for e.g. Bloom filter
 uint32_t SuperFastHash(const char *data, int len);
 
 #endif
