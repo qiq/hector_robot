@@ -101,3 +101,7 @@ Deduplicator_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextReso
 module_LTLIBRARIES += WordCount.la
 WordCount_la_SOURCES = WordCount.h WordCount.cc
 WordCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += MstParser.la
+MstParser_la_SOURCES = MstParser.h MstParser.cc
+MstParser_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la

@@ -39,7 +39,7 @@ public:
 private:
 	int items;		// ObjectLock, items processed
 	bool deduplicateParagraphs;
-	uint64_t totalSize;
+	int64_t totalSize;
 	double threshold;
 	int ngram;
 

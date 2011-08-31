@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+Split: split input file according to the TextResource TextId prefix.
+-->
+<Config>
+	<Server id="split">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=split.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="out.hr"/>
+						<param name="resourceType" value="TextResource"/>
+					</Module>
+					<Module id="M_wordcount" lib="IdPrefixToStatus.pm" type="perl">
+					</Module>
+				</modules>
+				<output>
+					<nextProcessor ref="P_1" filter="1"/>
+					<nextProcessor ref="P_2" filter="2"/>
+					<nextProcessor ref="P_3" filter="3"/>
+					<nextProcessor ref="P_4" filter="4"/>
+					<nextProcessor ref="P_5" filter="5"/>
+					<nextProcessor ref="P_6" filter="6"/>
+					<nextProcessor ref="P_7" filter="7"/>
+					<nextProcessor ref="P_8" filter="8"/>
+					<nextProcessor ref="P_9" filter="9"/>
+					<nextProcessor ref="P_10" filter="10"/>
+					<nextProcessor ref="P_11" filter="11"/>
+					<nextProcessor ref="P_12" filter="12"/>
+					<nextProcessor ref="P_13" filter="13"/>
+					<nextProcessor ref="P_14" filter="14"/>
+					<nextProcessor ref="P_15" filter="15"/>
+					<nextProcessor ref="P_16" filter="16"/>
+					<nextProcessor ref="P_17" filter="17"/>
+					<nextProcessor ref="P_18" filter="18"/>
+					<nextProcessor ref="P_19" filter="19"/>
+					<nextProcessor ref="P_20" filter="20"/>
+					<nextProcessor ref="P_21" filter="21"/>
+					<nextProcessor ref="P_22" filter="22"/>
+					<nextProcessor ref="P_23" filter="23"/>
+					<nextProcessor ref="P_24" filter="24"/>
+					<nextProcessor ref="P_25" filter="25"/>
+					<nextProcessor ref="P_26" filter="26"/>
+					<nextProcessor ref="P_27" filter="27"/>
+					<nextProcessor ref="P_28" filter="28"/>
+					<nextProcessor ref="P_29" filter="29"/>
+					<nextProcessor ref="P_30" filter="30"/>
+					<nextProcessor ref="P_31" filter="31"/>
+					<nextProcessor ref="P_32" filter="32"/>
+					<nextProcessor ref="P_33" filter="33"/>
+					<nextProcessor ref="P_34" filter="34"/>
+					<nextProcessor ref="P_35" filter="35"/>
+					<nextProcessor ref="P_36" filter="36"/>
+					<nextProcessor ref="P_37" filter="37"/>
+					<nextProcessor ref="P_38" filter="38"/>
+					<nextProcessor ref="P_39" filter="39"/>
+					<nextProcessor ref="P_40" filter="40"/>
+					<nextProcessor ref="P_41" filter="41"/>
+					<nextProcessor ref="P_42" filter="42"/>
+					<nextProcessor ref="P_43" filter="43"/>
+					<nextProcessor ref="P_44" filter="44"/>
+					<nextProcessor ref="P_45" filter="45"/>
+					<nextProcessor ref="P_46" filter="46"/>
+					<nextProcessor ref="P_47" filter="47"/>
+					<nextProcessor ref="P_48" filter="48"/>
+					<nextProcessor ref="P_49" filter="49"/>
+					<nextProcessor ref="P_50" filter="50"/>
+					<nextProcessor ref="P_51" filter="51"/>
+
+                                        <nextProcessor ref="P_default"/>
+				</output>
+			</Processor>
+
+			<Processor id="P_1">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_1" lib="Save.la">
+						<param name="filename" value="ahaonline-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_2">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_2" lib="Save.la">
+						<param name="filename" value="auto-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_3">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_3" lib="Save.la">
+						<param name="filename" value="auto-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_4">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_4" lib="Save.la">
+						<param name="filename" value="auto-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_5">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_5" lib="Save.la">
+						<param name="filename" value="babinet-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_6">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_6" lib="Save.la">
+						<param name="filename" value="babinet-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_7">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_7" lib="Save.la">
+						<param name="filename" value="babycafe-denicky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_8">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_8" lib="Save.la">
+						<param name="filename" value="babycafe-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_9">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_9" lib="Save.la">
+						<param name="filename" value="beremese-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_10">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_10" lib="Save.la">
+						<param name="filename" value="blesk-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_11">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_11" lib="Save.la">
+						<param name="filename" value="blog-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_12">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_12" lib="Save.la">
+						<param name="filename" value="blogspot-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_13">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_13" lib="Save.la">
+						<param name="filename" value="blog-stranky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_14">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_14" lib="Save.la">
+						<param name="filename" value="bloguje-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_15">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_15" lib="Save.la">
+						<param name="filename" value="csfd-recenze.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_16">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_16" lib="Save.la">
+						<param name="filename" value="dama-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_17">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_17" lib="Save.la">
+						<param name="filename" value="doktorka-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_18">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_18" lib="Save.la">
+						<param name="filename" value="doktorka-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_19">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_19" lib="Save.la">
+						<param name="filename" value="doupe-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_20">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_20" lib="Save.la">
+						<param name="filename" value="emimino-denicky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_21">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_21" lib="Save.la">
+						<param name="filename" value="emimino-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_22">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_22" lib="Save.la">
+						<param name="filename" value="garaz-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_23">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_23" lib="Save.la">
+						<param name="filename" value="hokej-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_24">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_24" lib="Save.la">
+						<param name="filename" value="idnes-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_25">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_25" lib="Save.la">
+						<param name="filename" value="idnes-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_26">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_26" lib="Save.la">
+						<param name="filename" value="idnes-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_27">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_27" lib="Save.la">
+						<param name="filename" value="isport-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_28">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_28" lib="Save.la">
+						<param name="filename" value="lidovky-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_29">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_29" lib="Save.la">
+						<param name="filename" value="lidovky-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_30">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_30" lib="Save.la">
+						<param name="filename" value="living-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_31">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_31" lib="Save.la">
+						<param name="filename" value="mobilmania-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_32">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_32" lib="Save.la">
+						<param name="filename" value="mobilmania-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_33">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_33" lib="Save.la">
+						<param name="filename" value="mobilmania-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_34">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_34" lib="Save.la">
+						<param name="filename" value="modrykonik-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_35">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_35" lib="Save.la">
+						<param name="filename" value="novinky-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_36">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_36" lib="Save.la">
+						<param name="filename" value="omlazeni-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_37">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_37" lib="Save.la">
+						<param name="filename" value="ordinace-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_38">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_38" lib="Save.la">
+						<param name="filename" value="penize-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_39">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_39" lib="Save.la">
+						<param name="filename" value="pismak-basne.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_40">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_40" lib="Save.la">
+						<param name="filename" value="respekt-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_41">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_41" lib="Save.la">
+						<param name="filename" value="rodina-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_42">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_42" lib="Save.la">
+						<param name="filename" value="rodina-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_43">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_43" lib="Save.la">
+						<param name="filename" value="rodina-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_44">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_44" lib="Save.la">
+						<param name="filename" value="root-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_45">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_45" lib="Save.la">
+						<param name="filename" value="sblog-blogy.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_46">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_46" lib="Save.la">
+						<param name="filename" value="tzbinfo-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_47">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_47" lib="Save.la">
+						<param name="filename" value="zena-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_48">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_48" lib="Save.la">
+						<param name="filename" value="zena-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_49">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_49" lib="Save.la">
+						<param name="filename" value="zive-clanky.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_50">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_50" lib="Save.la">
+						<param name="filename" value="zive-cldisk.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_51">
+				<input>
+					<queue/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_51" lib="Save.la">
+						<param name="filename" value="zive-diskuse.hr"/>
+						<param name="saveResourceType" value="false"/>
+					</Module>
+				</modules>
+			</Processor>
+
+			<Processor id="P_default">
+                                <input>
+                                        <queue/>
+                                </input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_dump" lib="Dump.la"/>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>

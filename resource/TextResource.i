@@ -42,6 +42,10 @@ public:
 
         void SetText(const std::string &text);
         const std::string GetText();
+        void ClearText();
+        void SetTextId(const std::string &text);
+        const std::string GetTextId();
+        void ClearTextId();
         void SetFlags(int index, int flags);
         int GetFlags(int index);
         void ClearFlags();
