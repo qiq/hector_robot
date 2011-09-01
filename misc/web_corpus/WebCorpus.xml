@@ -31,7 +31,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="inputListFile" value="$1.list"/>
 					</Module>
 					<Module id="M_tokenizer" lib="Tokenizer.la">
-						<param name="maxSentenceSize" value="200"/>
+						<param name="maxSentenceLength" value="200"/>
 						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
