@@ -139,8 +139,10 @@ string FeaturamaTagger::CstsEncode(const char *src) {
 			result.append(entity);
 		} else if (!strncmp(src, "\xC3\xA0", 2)) {
 			result.append("&agrave;");
+			src++;
 		} else if (!strncmp(src, "\xCB\x87", 2)) {
 			result.append("&macron;");
+			src++;
 		} else {
 			result.append(1, *src);
 		}
@@ -161,8 +163,10 @@ string FeaturamaTagger::CstsEncodeLemma(const char *src, int len) {
 			result.append(entity);
 		} else if (!strncmp(src, "\xC3\xA0", 2)) {
 			result.append("&agrave;");
+			src++;
 		} else if (!strncmp(src, "\xCB\x87", 2)) {
 			result.append("&macron;");
+			src++;
 		} else {
 			result.append(1, *src);
 		}
