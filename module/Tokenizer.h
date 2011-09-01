@@ -7,7 +7,8 @@ Dependencies: libunistring
 
 Parameters:
 items			r/o	Total items processed
-maxSentenceSize		init	Maximum sentence size, default is 200.
+maxSentenceLength	init	Maximum sentence lengths in tokens, default is 200.
+maxWordLength		r/w	Maximum length of a word (in chars), default if 100.
 tokenizerLibrary	init	Language specific library.
 markParagraphs		r/w	Empty line means end-of-paragraph.
 */
@@ -89,13 +90,16 @@ public:
 
 private:
 	int items;		// ObjectLock, items processed
-	int maxSentenceSize;
+	int maxSentenceLength;
+	int maxWordLength;
 	char *tokenizerLibrary;
 	bool markParagraphs;	// empty line means new paragraph
 
 	char *GetItems(const char *name);
-	char *GetMaxSentenceSize(const char *name);
-        void SetMaxSentenceSize(const char *name, const char *value);
+	char *GetMaxSentenceLength(const char *name);
+        void SetMaxSentenceLength(const char *name, const char *value);
+	char *GetMaxWordLength(const char *name);
+        void SetMaxWordLength(const char *name, const char *value);
 	char *GetTokenizerLibrary(const char *name);
         void SetTokenizerLibrary(const char *name, const char *value);
 	char *GetMarkParagraphs(const char *name);

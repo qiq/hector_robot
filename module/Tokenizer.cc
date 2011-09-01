@@ -16,13 +16,15 @@ using namespace std;
 
 Tokenizer::Tokenizer(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	maxSentenceSize = 200;
+	maxWordLength = 100;
+	maxSentenceLength = 200;
 	tokenizerLibrary = NULL;
 	markParagraphs = false;
 
 	props = new ObjectProperties<Tokenizer>(this);
 	props->Add("items", &Tokenizer::GetItems);
-	props->Add("maxSentenceSize", &Tokenizer::GetMaxSentenceSize, &Tokenizer::SetMaxSentenceSize, true);
+	props->Add("maxSentenceLength", &Tokenizer::GetMaxSentenceLength, &Tokenizer::SetMaxSentenceLength, true);
+	props->Add("maxWordLength", &Tokenizer::GetMaxWordLength, &Tokenizer::SetMaxWordLength);
 	props->Add("tokenizerLibrary", &Tokenizer::GetTokenizerLibrary, &Tokenizer::SetTokenizerLibrary, true);
 	props->Add("markParagraphs", &Tokenizer::GetMarkParagraphs, &Tokenizer::SetMarkParagraphs);
 
@@ -50,12 +52,20 @@ char *Tokenizer::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *Tokenizer::GetMaxSentenceSize(const char *name) {
-	return int2str(maxSentenceSize);
+char *Tokenizer::GetMaxSentenceLength(const char *name) {
+	return int2str(maxSentenceLength);
 }
 
-void Tokenizer::SetMaxSentenceSize(const char *name, const char *value) {
-	maxSentenceSize = str2int(value);
+void Tokenizer::SetMaxSentenceLength(const char *name, const char *value) {
+	maxSentenceLength = str2int(value);
+}
+
+char *Tokenizer::GetMaxWordLength(const char *name) {
+	return int2str(maxWordLength);
+}
+
+void Tokenizer::SetMaxWordLength(const char *name, const char *value) {
+	maxWordLength = str2int(value);
 }
 
 char *Tokenizer::GetTokenizerLibrary(const char *name) {
@@ -124,7 +134,18 @@ void Tokenizer::ReleaseToken(Token *token) {
 void Tokenizer::FlushSentence(int n) {
 	int base = tr->GetFormCount();
 	for (int i = 0; i < n; i++) {
-		tr->SetForm(base+i, tokens[i]->GetText());
+		string form = tokens[i]->GetText();
+		// we have to reduce token length again, because new tokens
+		// were created concatenating the successing ones
+		const char *s = form.c_str();
+		if ((int)u8_strlen((uint8_t*)s) > maxWordLength) {
+			const uint8_t *end = (uint8_t*)s;
+			ucs4_t c;
+			for (int i = 0; i < maxWordLength; i++)
+				end = u8_next(&c, end);
+			form.resize(end-(uint8_t*)s);
+		}
+		tr->SetForm(base+i, form);
 		tr->SetFlags(base+i, tokens[i]->GetFlags());
 		freeTokens.push_back(tokens[i]);
 	}
@@ -149,7 +170,7 @@ void Tokenizer::AppendToken(Token *token) {
 		if (prev == "." || prev == "?" || prev == "!")
 			tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 	}
-	if (current >= maxSentenceSize)
+	if (current >= maxSentenceLength)
 		tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 
 	// call fixup
@@ -195,7 +216,9 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 	const uint8_t *u8 = (uint8_t*)text.c_str();
 	const uint8_t *next = u8;
 	ucs4_t c;
-	const uint8_t *start = NULL;
+	const uint8_t *begin = NULL;
+	const uint8_t *end = NULL;
+	int chars = 0;
 	bool titlecase = false;
 	bool uppercase = false;
 	bool numeric = false;
@@ -213,10 +236,13 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				} else if (ISNUMERIC(c)) {
 					numeric = true;
 				}
+				// only accept maxWordLength per token
+				if (++chars <= maxWordLength)
+					end = next;
 			} else if (ISPUNCT(c)) {
 				// text token, no_space = 1
 				Token *t = AcquireToken();
-				t->SetText(start, u8-start);
+				t->SetText(begin, end-begin);
 				t->SetFlag(TextResource::TOKEN_NO_SPACE);
 				if (titlecase)
 					t->SetFlag(TextResource::TOKEN_TITLECASE);
@@ -229,12 +255,14 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				AppendToken(t);
 
 				state = PUNCT;
-				start = u8;
+				begin = u8;
+				end = next;
+				chars = 1;
 				newline = 0;
 			} else if (ISSPACE(c)) {
 				// text token, no_space = 0
 				Token *t = AcquireToken();
-				t->SetText(start, u8-start);
+				t->SetText(begin, end-begin);
 				if (titlecase)
 					t->SetFlag(TextResource::TOKEN_TITLECASE);
 				if (uppercase)
@@ -246,7 +274,9 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				AppendToken(t);
 
 				state = SPACE;
-				start = NULL;
+				begin = NULL;
+				end = NULL;
+				chars = 0;
 				newline = ISNEWLINE(c) ? 1 : 0;
 			}
 			break;
@@ -254,14 +284,16 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 			if (ISALNUM(c)) {
 				// punct token, no_space = 1
 				Token *t = AcquireToken();
-				t->SetText(start, u8-start);
+				t->SetText(begin, end-begin);
 				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT|TextResource::TOKEN_NO_SPACE));
 				if (markParagraphs && newline >= 2)
 					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = ALNUM;
-				start = u8;
+				begin = u8;
+				end = next;
+				chars = 1;
 				titlecase = false;
 				uppercase = false;
 				numeric = false;
@@ -275,32 +307,38 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 			} else if (ISPUNCT(c)) {
 				// punct token, no_space = 1
 				Token *t = AcquireToken();
-				t->SetText(start, u8-start);
+				t->SetText(begin, end-begin);
 				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT|TextResource::TOKEN_NO_SPACE));
 				if (markParagraphs && newline >= 2)
 					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
-				start = u8;
+				begin = u8;
+				end = next;
+				chars = 1;
 				newline = 0;
 			} else if (ISSPACE(c)) {
 				// punct token, no_space = 0
 				Token *t = AcquireToken();
-				t->SetText(start, u8-start);
+				t->SetText(begin, end-begin);
 				t->SetFlag(TextResource::TOKEN_PUNCT);
 				if (markParagraphs && newline >= 2)
 					t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
 				AppendToken(t);
 
 				state = SPACE;
-				start = NULL;
+				begin = NULL;
+				end = NULL;
+				chars = 0;
 				newline = ISNEWLINE(c) ? 1 : 0;
 			}
 			break;
 		case SPACE:
 			if (ISALNUM(c)) {
 				state = ALNUM;
-				start = u8;
+				begin = u8;
+				end = next;
+				chars = 1;
 				numeric = false;
 				titlecase = false;
 				uppercase = false;
@@ -312,7 +350,9 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 				}
 			} else if (ISPUNCT(c)) {
 				state = PUNCT;
-				start = u8;
+				begin = u8;
+				end = next;
+				chars = 1;
 			} else if (ISNEWLINE(c)) {
 				newline++;
 			}
@@ -326,7 +366,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 		case ALNUM: {
 			// text token, no_space = 0
 			Token *t = AcquireToken();
-			t->SetText(start, u8-start);
+			t->SetText(begin, end-begin);
 			if (titlecase)
 				t->SetFlag(TextResource::TOKEN_TITLECASE);
 			if (uppercase)
@@ -341,7 +381,7 @@ Resource *Tokenizer::ProcessSimpleSync(Resource *resource) {
 		case PUNCT: {
 			// punct token, no_space = 1
 			Token *t = AcquireToken();
-			t->SetText(start, u8-start);
+			t->SetText(begin, end-begin);
 			t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PUNCT));
 			if (markParagraphs && newline >= 2)
 				t->SetFlag((TextResource::Flags)(TextResource::TOKEN_PARAGRAPH_START|TextResource::TOKEN_SENTENCE_START));
