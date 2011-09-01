@@ -59,7 +59,7 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="tokenized/$1.hr"/>
+						<param name="filename" value="$2"/>
 						<param name="resourceType" value="TextResource"/>
 					</Module>
 					<Module id="M_wordcount" lib="WordCount.la"/>
@@ -86,17 +86,17 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="tokenized/$1.hr"/>
+						<param name="filename" value="$2"/>
 						<param name="resourceType" value="TextResource"/>
 					</Module>
 					<Module id="M_deduplicate" lib="Deduplicator.la">
 						<param name="deduplicateParagraphs" value="true"/>
-						<param name="totalSize" value="$2"/>
+						<param name="totalSize" value="$4"/>
 						<param name="threshold" value="0.3"/>
 						<param name="ngram" value="8"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="deduplicated/$1.hr"/>
+						<param name="filename" value="$3"/>
 						<param name="saveResourceType" value="false"/>
 					</Module>
 				</modules>
@@ -119,7 +119,7 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="deduplicated/$1.hr"/>
+						<param name="filename" value="$2"/>
 						<param name="resourceType" value="TextResource"/>
 					</Module>
 					<Module id="M_tag" lib="FeaturamaTagger.la">
@@ -128,7 +128,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="tagged/$1.hr"/>
+						<param name="filename" value="$3"/>
 						<param name="saveResourceType" value="false"/>
 					</Module>
 				</modules>
