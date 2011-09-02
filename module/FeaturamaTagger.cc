@@ -257,7 +257,6 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 				line.append(verbs[i]);
 				line.append("\tNULL\t");
 				line.append(offers[i]);
-//fprintf(stderr, "line: %s\n", line.c_str());
 				perc_append_word(perc, line.c_str());
 			}
 			perc_end_sentence(perc);
@@ -282,13 +281,15 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 		}
 		string form = tr->GetForm(idx);
 		char *morph = lemmatize_token(form.c_str(), flags & TextResource::TOKEN_PUNCT, flags & TextResource::TOKEN_ABBR, flags & TextResource::TOKEN_NUMERIC, dot_follows, hyphen_follows);
-		if (!morph) {
-			LOG_ERROR(this, "Cannot lemmatize word: " << form << "(" << idx << ")");
-			return resource;
-		}
 		form = CstsEncode(form.c_str());
-		string offer = MorphologyToOffer(morph);
-		free(morph);
+		string offer;
+		if (morph) {
+			offer = MorphologyToOffer(morph);
+			free(morph);
+		} else {
+			LOG_ERROR(this, "Cannot lemmatize word: " << form << "(" << idx << ")");
+			offer = "X@------------- "+form;
+		}
 
 		// construct features for the tagger
 		string line;
@@ -367,7 +368,6 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 			line.append(verbs[i]);
 			line.append("\tNULL\t");
 			line.append(offers[i]);
-//fprintf(stderr, "line: %s\n", line.c_str());
 			perc_append_word(perc, line.c_str());
 		}
 		perc_end_sentence(perc);
