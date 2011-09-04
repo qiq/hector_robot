@@ -194,12 +194,44 @@ WebCorpus: several task that process web corpus files:
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="dump">
+	<Server id="parse">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=parsed/parse_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$2"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_parse" lib="MstParser.la">
+						<param name="command" value="java -classpath mstparser:mstparser/lib/trove.jar -Xmx8000m mstparser.DependencyParser model-name:mstparser/cs_model.small decode-type:non-proj order:2 test test-file:/dev/stdin output-file:/dev/stdout format:MST"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$3"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="split">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
 			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.Target=system.err
+			log4j.appender.LOGFILE.Target=System.err
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
 			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
 		</logConfig>
@@ -210,6 +242,36 @@ WebCorpus: several task that process web corpus files:
 					<Module id="M_input" lib="Load.la">
 						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
+						<!--param name="compress" value="true"/-->
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+						<param name="maxItemsPerFile" value="$3"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="dump">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compressed" value="true"/>
 					</Module>
 					<Module id="M_output" lib="TextResourcePrint.la">
 						<param name="filename" value="/dev/stdout"/>
