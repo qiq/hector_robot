@@ -133,7 +133,7 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 				}
 			} else {
 				chomp(s);
-				split(v, s, '\t');
+				split(v, '\t', s);
 				if (v.size() > 0)
 					flags |= atoi(v[0].c_str());
 				if (v.size() > 1)
@@ -156,10 +156,10 @@ Resource *TextResourceRead::ProcessInputSync(bool sleep) {
 			if (s.length() == 0)
 				continue;
 			chomp(s);
-			split(v, s, '\t');
+			split(v, '\t', s);
 			flags = TextResource::TOKEN_SENTENCE_START;
 			for (vector<string>::iterator iter = v.begin(); iter != v.end(); ++iter) {
-				split(v2, *iter, ' ');
+				split(v2, ' ', *iter);
 				if (v2.size() > 0)
 					tr->SetForm(index, v2[0]);
 				if (v2.size() > 1)
