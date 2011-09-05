@@ -17,7 +17,7 @@ WebCorpus: several task that process web corpus files:
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=tokenized/tokenizer_$1.log
+			log4j.appender.LOGFILE.File=tokenized/tokenize_$1.log
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -32,13 +32,14 @@ WebCorpus: several task that process web corpus files:
 					</Module>
 					<Module id="M_tokenizer" lib="Tokenizer.la">
 						<param name="maxSentenceLength" value="200"/>
-						<param name="maxWordLength" value="200000000"/>
+						<param name="maxWordLength" value="100"/>
 						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$3"/>
 						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
 					</Module>
 				</modules>
 			</Processor>
