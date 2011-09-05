@@ -18,10 +18,15 @@ using namespace std;
 
 MstParser::MstParser(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
+	model = NULL;
+	decodeType = strdup("non-proj");
+	order = 2;
 
 	props = new ObjectProperties<MstParser>(this);
 	props->Add("items", &MstParser::GetItems);
-	props->Add("command", &MstParser::GetCommand, &MstParser::SetCommand, true);
+	props->Add("model", &MstParser::GetModel, &MstParser::SetModel, true);
+	props->Add("decodeType", &MstParser::GetDecodeType, &MstParser::SetDecodeType, true);
+	props->Add("order", &MstParser::GetOrder, &MstParser::SetOrder, true);
 
 	pid = 0;
 	fdin = -1;
@@ -48,13 +53,30 @@ char *MstParser::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *MstParser::GetCommand(const char *name) {
-	return strdup(command);
+char *MstParser::GetModel(const char *name) {
+	return strdup(model);
 }
 
-void MstParser::SetCommand(const char *name, const char *value) {
-	free(command);
-	command = strdup(command);
+void MstParser::SetModel(const char *name, const char *value) {
+	free(model);
+	model = strdup(value);
+}
+
+char *MstParser::GetDecodeType(const char *name) {
+	return strdup(decodeType);
+}
+
+void MstParser::SetDecodeType(const char *name, const char *value) {
+	free(decodeType);
+	decodeType = strdup(value);
+}
+
+char *MstParser::GetOrder(const char *name) {
+	return int2str(order);
+}
+
+void MstParser::SetOrder(const char *name, const char *value) {
+	order = str2int(value);
 }
 
 bool MstParser::Init(vector<pair<string, string> > *params) {
@@ -65,9 +87,8 @@ bool MstParser::Init(vector<pair<string, string> > *params) {
 	if (!props->InitProperties(params))
 		return false;
 
-	// run command
-	if (command) {
-		LOG_ERROR(this, "command argument not specified, cannot run parser.");
+	if (!model) {
+		LOG_ERROR(this, "model argument not specified, cannot run parser.");
 		return false;
 	}
 
@@ -105,10 +126,12 @@ bool MstParser::Init(vector<pair<string, string> > *params) {
 		close(pipeerr[0]);
 		close(pipeerr[1]);
 
-		setsid();
-		const char *args[] = { "-c", command, NULL };
+		char command[1024*3];
+		snprintf(command, sizeof(command), "java -classpath mstparser:mstparser/lib/trove.jar -Xmx8000m mstparser.DependencyParser 'model-name:%s' 'decode-type:%s' order:%d test test-file:/dev/stdin output-file:/dev/stdout format:MST", model, decodeType, order);
+		//setsid();
+		const char *args[] = { "/bin/sh", "-c", command, NULL };
 		if (execvp("/bin/sh", (char *const *)args) == -1) {
-			LOG_ERROR(this, "Cannot exec: " << strerror(errno));
+			LOG_ERROR(this, "Cannot exec '" << command << "': " << strerror(errno));
 		}
 		exit(255);
 	}
@@ -125,13 +148,22 @@ bool MstParser::Init(vector<pair<string, string> > *params) {
 
 bool MstParser::ReadWrite(string &writeBuffer, string &readBuffer, bool waitForRead) {
 	bool writeDone = writeBuffer.length() == 0;
-	bool readDone = false;
+	bool readDone = !waitForRead;
+	bool readStderrDone = false;
 	int readBytes = 0;
 	int writtenBytes = 0;
 	bool timeout = false;
 	bool failure = false;
 
-	while (!writeDone || (waitForRead && !readDone) || !timeout) {
+	// ignore SIGPIPE
+	struct sigaction old;
+	struct sigaction nosigpipe;
+	nosigpipe.sa_handler = SIG_IGN;
+	sigemptyset(&nosigpipe.sa_mask);
+	nosigpipe.sa_flags = 0;
+	sigaction(SIGPIPE, &nosigpipe, &old);
+
+	while (!failure && (!writeDone || !readDone || !timeout)) {
 		fd_set read_fd;
 		fd_set write_fd;
 		FD_ZERO(&read_fd);
@@ -147,13 +179,16 @@ bool MstParser::ReadWrite(string &writeBuffer, string &readBuffer, bool waitForR
 			if (fdout > fdmax)
 				fdmax = fdout;
 		}
-		FD_SET(fderr, &read_fd);
-		if (fderr > fdmax)
-			fdmax = fderr;
+		if (!readStderrDone) {
+			FD_SET(fderr, &read_fd);
+			if (fderr > fdmax)
+				fdmax = fderr;
+		}
 		struct timeval selectTimeout = { 0, 0 };
-		int ready = select(fdmax+1, &read_fd, writeDone ? NULL : &write_fd, NULL, readDone && writeDone ? &selectTimeout : NULL);
+		int ready = select(fdmax+1, readDone && readStderrDone ? NULL : &read_fd, writeDone ? NULL : &write_fd, NULL, readDone && writeDone ? &selectTimeout : NULL);
 		if (ready < 0) {
 			LOG_ERROR(this, "Error select: " << strerror(errno));
+			sigaction(SIGPIPE, &old, NULL);
 			return false;
 		}
 		// timeout
@@ -187,14 +222,19 @@ bool MstParser::ReadWrite(string &writeBuffer, string &readBuffer, bool waitForR
 				// find out whether we have read enough (5) lines
 				int nl = 0;
 				size_t off = 0;
-				while ((off = readBuffer.find_first_of('\n', off)) != string::npos)
+				while ((off = readBuffer.find_first_of('\n', off)) != string::npos) {
 					nl++;
+					off++;
+				}
 				if (nl >= 5)
 					readDone = true;
+			} else {
+				failure = true;
+				readDone = true;
 			}
 		}
 		// ready to read stderr
-		if (FD_ISSET(fderr, &read_fd)) {
+		if (!readStderrDone && FD_ISSET(fderr, &read_fd)) {
 			char buffer[1024];
 			int r = read(fderr, buffer, sizeof(buffer));
 			if (r < 0) {
@@ -212,10 +252,13 @@ bool MstParser::ReadWrite(string &writeBuffer, string &readBuffer, bool waitForR
 					LOG_ERROR(this, stderrBuffer);
 					stderrBuffer.clear();
 				}
+			} else {
+				readStderrDone = true;
 			}
 		}
 	}
-	return failure;
+	sigaction(SIGPIPE, &old, NULL);
+	return !failure;
 }
 
 // first two positions or first and fifth
@@ -231,19 +274,29 @@ string &MstParser::GetShortTag(string &tag) {
 bool MstParser::ParseSentence(vector<string> &form, vector<string> &tag, vector<int> &head, vector<string> &depRel) {
 	head.clear();
 	depRel.clear();
-	string data = join('\t', form) + "\n" + join('\t', tag) + "\n";
+	string a;
+	string b;
+	for (int i = 0; i < (int)form.size(); i++) {
+		if (i > 0) {
+			a.append("\t");
+			b.append("\t");
+		}
+		a.append("ExD");
+		b.append("0");
+	}
+	string data = join('\t', form) + "\n" + join('\t', tag) + "\n" + a + "\n" + b + "\n\n";
 	string result;
 	bool error = false;
 	if (ReadWrite(data, result, true)) {
 		// parse result: forms, tags, afuns, parents, blank line
 		vector<string> lines;
-		split(lines, result, '\n');
+		split(lines, '\n', result);
 		if (lines.size() == 5) {
 			vector<string> headStr;
-			split(headStr, lines[3], '\t');
+			split(headStr, '\t', lines[3]);
 			for (int i = 0; i < (int)headStr.size(); i++)
 				head.push_back(atoi(headStr[i].c_str()));
-			split(depRel, lines[2], '\t');
+			split(depRel, '\t', lines[2]);
 		} else {
 			error = true;
 		}
@@ -272,12 +325,15 @@ Resource *MstParser::ProcessSimpleSync(Resource *resource) {
 	vector<string> tag;
 	vector<int> head;
 	vector<string> depRel;
+	int offset = 0;
 	for (int i = 0; i < nWords; i++) {
 		if (tr->GetFlags(i) & TextResource::TOKEN_SENTENCE_START && form.size() > 0) {
-			ParseSentence(form, tag, head, depRel);
-			for (int i = 0; i < (int)head.size(); i++) {
-				tr->SetHead(i, head[i]);
-				tr->SetDepRel(i, depRel[i]);
+			if (!ParseSentence(form, tag, head, depRel))
+				LOG_ERROR(this, "Cannot parse sentence" << join(' ', form));
+			for (int j = 0; j < (int)head.size(); j++) {
+				tr->SetHead(offset, head[j]);
+				tr->SetDepRel(offset, depRel[j]);
+				offset++;
 			}
 			form.clear();
 			tag.clear();
@@ -291,10 +347,12 @@ Resource *MstParser::ProcessSimpleSync(Resource *resource) {
 		}
 	}
 	if (form.size() > 0) {
-		ParseSentence(form, tag, head, depRel);
-		for (int i = 0; i < (int)head.size(); i++) {
-			tr->SetHead(i, head[i]);
-			tr->SetDepRel(i, depRel[i]);
+		if (!ParseSentence(form, tag, head, depRel))
+			LOG_ERROR(this, "Cannot parse sentence" << join(' ', form));
+		for (int j = 0; j < (int)head.size(); j++) {
+			tr->SetHead(offset, head[j]);
+			tr->SetDepRel(offset, depRel[j]);
+			offset++;
 		}
 	}
 

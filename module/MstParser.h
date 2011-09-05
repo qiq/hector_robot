@@ -6,8 +6,10 @@ TextResources.
 Dependencies: none
 
 Parameters:
-items			r/o	Total items processed
-command			init	Command to be run as a parser.
+items			r/o	Total items processed.
+model			init	Model file to load.
+decodeType		init	decode-type (non-proj).
+order			init	Model order (2).
 */
 
 #ifndef _MODULES_MSTPARSER_H_
@@ -31,11 +33,17 @@ public:
 
 private:
 	int items;
-	char *command;
+	char *model;
+	char *decodeType;
+	int order;
 
 	char *GetItems(const char *name);
-	char *GetCommand(const char *name);
-        void SetCommand(const char *name, const char *value);
+	char *GetModel(const char *name);
+        void SetModel(const char *name, const char *value);
+	char *GetDecodeType(const char *name);
+        void SetDecodeType(const char *name, const char *value);
+	char *GetOrder(const char *name);
+        void SetOrder(const char *name, const char *value);
 
 	ObjectProperties<MstParser> *props;
 	char *GetPropertySync(const char *name);
