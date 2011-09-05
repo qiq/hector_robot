@@ -214,7 +214,9 @@ WebCorpus: several task that process web corpus files:
 						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_parse" lib="MstParser.la">
-						<param name="command" value="java -classpath mstparser:mstparser/lib/trove.jar -Xmx8000m mstparser.DependencyParser model-name:mstparser/cs_model.small decode-type:non-proj order:2 test test-file:/dev/stdin output-file:/dev/stdout format:MST"/>
+						<param name="model" value="mstparser/cs_model"/>
+						<param name="decodeType" value="non-proj"/>
+						<param name="order" value="2"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$3"/>
