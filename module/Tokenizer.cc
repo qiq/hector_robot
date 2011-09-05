@@ -137,13 +137,14 @@ void Tokenizer::FlushSentence(int n) {
 		string form = tokens[i]->GetText();
 		// we have to reduce token length again, because new tokens
 		// were created concatenating the successing ones
-		const char *s = form.c_str();
-		if ((int)u8_strlen((uint8_t*)s) > maxWordLength) {
-			const uint8_t *end = (uint8_t*)s;
+		if ((int)form.length() > maxWordLength) {
+			const uint8_t *s = (uint8_t*)form.c_str();
+			const uint8_t *end = s;
 			ucs4_t c;
-			for (int i = 0; i < maxWordLength; i++)
+			for (int j = 0; end && j < maxWordLength; j++)
 				end = u8_next(&c, end);
-			form.resize(end-(uint8_t*)s);
+			if (end)
+				form.resize(end-(uint8_t*)s);
 		}
 		tr->SetForm(base+i, form);
 		tr->SetFlags(base+i, tokens[i]->GetFlags());
