@@ -164,9 +164,11 @@ string FeaturamaTagger::CstsEncodeLemma(const char *src, int len) {
 		} else if (!strncmp(src, "\xC3\xA0", 2)) {
 			result.append("&agrave;");
 			src++;
+			len--;
 		} else if (!strncmp(src, "\xCB\x87", 2)) {
 			result.append("&macron;");
 			src++;
+			len--;
 		} else {
 			result.append(1, *src);
 		}
