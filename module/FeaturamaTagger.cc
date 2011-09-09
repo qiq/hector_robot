@@ -274,7 +274,7 @@ Resource *FeaturamaTagger::ProcessSimpleSync(Resource *resource) {
 		// morphology of a word
 		int dot_follows = 0;
 		int hyphen_follows = 0;
-		if (idx < nwords-1 && tr->GetFlags(idx+1) & TextResource::TOKEN_PUNCT) {
+		if (idx < nwords-1 && (flags & TextResource::TOKEN_NO_SPACE) && tr->GetFlags(idx+1) & TextResource::TOKEN_PUNCT) {
 			string form = tr->GetForm(idx+1);
 			if (form.c_str()[0] == '.')
 				dot_follows = 1;
