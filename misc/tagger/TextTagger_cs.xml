@@ -23,7 +23,7 @@ Tag TextResources using Featurama Tagger for Czech.
 					</Module>
 					<Module id="M_tagger" lib="FeaturamaTagger.la">
 						<param name="useGuesser" value="true"/>
-						<param name="morphologyPrefix" value="share/czmorphology/CZ100404a"/>
+						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
 					</Module>
 					<Module id="M_output" lib="TextResourcePrint.la">
