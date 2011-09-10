@@ -80,7 +80,7 @@ bool Deduplicator::Init(vector<pair<string, string> > *params) {
 		return false;
 	}
 
-	bloom = new NgramBloomFilter(ngram, threshold, totalSize, 0.01);
+	bloom = new NgramBloomFilter(ngram, threshold, totalSize, 0.01, true);
 
 	return true;
 }

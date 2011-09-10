@@ -92,8 +92,8 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, uint32_t *out) 
 
 class NgramBloomFilter {
 public:
-	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k);
-	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability);
+	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k, bool earlyUpdate);
+	NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability, bool earlyUpdate);
 	~NgramBloomFilter();
 
 	bool TestDuplicate(std::vector<uint32_t> &values, double *ratio = NULL);
@@ -121,6 +121,8 @@ private:
 	uint64_t m;
 	// number of hash functions
 	int k;
+	// whether we update bit array during processing (may prevent intra-document duplicates and it is a bit faster)
+	bool earlyUpdate;
 
 	// bit array of size m
 	unsigned char *data;
@@ -134,7 +136,7 @@ private:
 	uint32_t *ng;
 };
 
-inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k) {
+inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t m, int k, bool earlyUpdate): ngram(ngram), duplicateThreshold(duplicateThreshold), m(m), k(k), earlyUpdate(earlyUpdate) {
 	data = new unsigned char[m/8+1];
 	memset(data, 0, m/8+1);
 	h1 = new uint32_t[(ngram-1)*k*2];
@@ -143,7 +145,7 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 	saveSize = 0;
 }
 
-inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability): ngram(ngram), duplicateThreshold(duplicateThreshold) {
+inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability, bool earlyUpdate): ngram(ngram), duplicateThreshold(duplicateThreshold), earlyUpdate(earlyUpdate) {
 	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
 	k = ((double)m/n)*log(2);
 #ifdef DEBUG
@@ -524,109 +526,214 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values, double *rati
 			FinishH1(current);
 			int total = 0;
 			uint64_t key;
-			switch (k) {
-			case 16:
-				key = *(uint64_t*)(h1+current*k*2+15*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 15:
-				key = *(uint64_t*)(h1+current*k*2+14*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 14:
-				key = *(uint64_t*)(h1+current*k*2+13*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 13:
-				key = *(uint64_t*)(h1+current*k*2+12*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 12:
-				key = *(uint64_t*)(h1+current*k*2+11*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 11:
-				key = *(uint64_t*)(h1+current*k*2+10*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 10:
-				key = *(uint64_t*)(h1+current*k*2+9*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 9:
-				key = *(uint64_t*)(h1+current*k*2+8*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 8:
-				key = *(uint64_t*)(h1+current*k*2+7*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 7:
-				key = *(uint64_t*)(h1+current*k*2+6*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 6:
-				key = *(uint64_t*)(h1+current*k*2+5*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 5:
-				key = *(uint64_t*)(h1+current*k*2+4*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 4:
-				key = *(uint64_t*)(h1+current*k*2+3*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 3:
-				key = *(uint64_t*)(h1+current*k*2+2*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 2:
-				key = *(uint64_t*)(h1+current*k*2+1*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 1:
-				key = *(uint64_t*)(h1+current*k*2+0*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
+			if (earlyUpdate) {
+				switch (k) {
+				case 16:
+					key = *(uint64_t*)(h1+current*k*2+15*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 15:
+					key = *(uint64_t*)(h1+current*k*2+14*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 14:
+					key = *(uint64_t*)(h1+current*k*2+13*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 13:
+					key = *(uint64_t*)(h1+current*k*2+12*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 12:
+					key = *(uint64_t*)(h1+current*k*2+11*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 11:
+					key = *(uint64_t*)(h1+current*k*2+10*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 10:
+					key = *(uint64_t*)(h1+current*k*2+9*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 9:
+					key = *(uint64_t*)(h1+current*k*2+8*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 8:
+					key = *(uint64_t*)(h1+current*k*2+7*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 7:
+					key = *(uint64_t*)(h1+current*k*2+6*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 6:
+					key = *(uint64_t*)(h1+current*k*2+5*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 5:
+					key = *(uint64_t*)(h1+current*k*2+4*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 4:
+					key = *(uint64_t*)(h1+current*k*2+3*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 3:
+					key = *(uint64_t*)(h1+current*k*2+2*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 2:
+					key = *(uint64_t*)(h1+current*k*2+1*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 1:
+					key = *(uint64_t*)(h1+current*k*2+0*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				}
+			} else {
+				switch (k) {
+				case 16:
+					key = *(uint64_t*)(h1+current*k*2+15*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 15:
+					key = *(uint64_t*)(h1+current*k*2+14*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 14:
+					key = *(uint64_t*)(h1+current*k*2+13*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 13:
+					key = *(uint64_t*)(h1+current*k*2+12*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 12:
+					key = *(uint64_t*)(h1+current*k*2+11*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 11:
+					key = *(uint64_t*)(h1+current*k*2+10*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 10:
+					key = *(uint64_t*)(h1+current*k*2+9*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 9:
+					key = *(uint64_t*)(h1+current*k*2+8*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 8:
+					key = *(uint64_t*)(h1+current*k*2+7*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 7:
+					key = *(uint64_t*)(h1+current*k*2+6*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 6:
+					key = *(uint64_t*)(h1+current*k*2+5*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 5:
+					key = *(uint64_t*)(h1+current*k*2+4*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 4:
+					key = *(uint64_t*)(h1+current*k*2+3*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 3:
+					key = *(uint64_t*)(h1+current*k*2+2*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 2:
+					key = *(uint64_t*)(h1+current*k*2+1*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 1:
+					key = *(uint64_t*)(h1+current*k*2+0*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				}
 			}
 			// all bits are 1 => duplicate
 			if (k == total) {
 				duplicates++;
 
 				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
+					if (earlyUpdate) {
+						for (int j = 0; j < saveTop; j++)
+							Reset(save[j]);
+					}
 					if (ratio)
 						*ratio = (double)duplicates/(valuesSize-ngram+1);
 					return true;
@@ -641,8 +748,10 @@ bool NgramBloomFilter::TestDuplicate(std::vector<uint32_t> &values, double *rati
 		}
 	}
 
-	for (int i = 0; i < saveTop; i++)
-		Set(save[i]);
+	if (!earlyUpdate) {
+		for (int j = 0; j < saveTop; j++)
+			Set(save[j]);
+	}
 
 	if (ratio)
 		*ratio = (double)duplicates/(valuesSize-ngram+1);
@@ -684,109 +793,214 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values, double *r
 			FinishH1(current);
 			int total = 0;
 			uint64_t key;
-			switch (k) {
-			case 16:
-				key = *(uint64_t*)(h1+current*k*2+15*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 15:
-				key = *(uint64_t*)(h1+current*k*2+14*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 14:
-				key = *(uint64_t*)(h1+current*k*2+13*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 13:
-				key = *(uint64_t*)(h1+current*k*2+12*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 12:
-				key = *(uint64_t*)(h1+current*k*2+11*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 11:
-				key = *(uint64_t*)(h1+current*k*2+10*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 10:
-				key = *(uint64_t*)(h1+current*k*2+9*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 9:
-				key = *(uint64_t*)(h1+current*k*2+8*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 8:
-				key = *(uint64_t*)(h1+current*k*2+7*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 7:
-				key = *(uint64_t*)(h1+current*k*2+6*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 6:
-				key = *(uint64_t*)(h1+current*k*2+5*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 5:
-				key = *(uint64_t*)(h1+current*k*2+4*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 4:
-				key = *(uint64_t*)(h1+current*k*2+3*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 3:
-				key = *(uint64_t*)(h1+current*k*2+2*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 2:
-				key = *(uint64_t*)(h1+current*k*2+1*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
-			case 1:
-				key = *(uint64_t*)(h1+current*k*2+0*2) % m;
-				if (Test(key))
-					total++;
-				else
-					save[saveTop++] = key;
+			if (earlyUpdate) {
+				switch (k) {
+				case 16:
+					key = *(uint64_t*)(h1+current*k*2+15*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 15:
+					key = *(uint64_t*)(h1+current*k*2+14*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 14:
+					key = *(uint64_t*)(h1+current*k*2+13*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 13:
+					key = *(uint64_t*)(h1+current*k*2+12*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 12:
+					key = *(uint64_t*)(h1+current*k*2+11*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 11:
+					key = *(uint64_t*)(h1+current*k*2+10*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 10:
+					key = *(uint64_t*)(h1+current*k*2+9*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 9:
+					key = *(uint64_t*)(h1+current*k*2+8*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 8:
+					key = *(uint64_t*)(h1+current*k*2+7*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 7:
+					key = *(uint64_t*)(h1+current*k*2+6*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 6:
+					key = *(uint64_t*)(h1+current*k*2+5*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 5:
+					key = *(uint64_t*)(h1+current*k*2+4*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 4:
+					key = *(uint64_t*)(h1+current*k*2+3*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 3:
+					key = *(uint64_t*)(h1+current*k*2+2*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 2:
+					key = *(uint64_t*)(h1+current*k*2+1*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 1:
+					key = *(uint64_t*)(h1+current*k*2+0*2) % m;
+					if (TestAndSet(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				}
+			} else {
+				switch (k) {
+				case 16:
+					key = *(uint64_t*)(h1+current*k*2+15*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 15:
+					key = *(uint64_t*)(h1+current*k*2+14*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 14:
+					key = *(uint64_t*)(h1+current*k*2+13*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 13:
+					key = *(uint64_t*)(h1+current*k*2+12*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 12:
+					key = *(uint64_t*)(h1+current*k*2+11*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 11:
+					key = *(uint64_t*)(h1+current*k*2+10*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 10:
+					key = *(uint64_t*)(h1+current*k*2+9*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 9:
+					key = *(uint64_t*)(h1+current*k*2+8*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 8:
+					key = *(uint64_t*)(h1+current*k*2+7*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 7:
+					key = *(uint64_t*)(h1+current*k*2+6*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 6:
+					key = *(uint64_t*)(h1+current*k*2+5*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 5:
+					key = *(uint64_t*)(h1+current*k*2+4*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 4:
+					key = *(uint64_t*)(h1+current*k*2+3*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 3:
+					key = *(uint64_t*)(h1+current*k*2+2*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 2:
+					key = *(uint64_t*)(h1+current*k*2+1*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				case 1:
+					key = *(uint64_t*)(h1+current*k*2+0*2) % m;
+					if (Test(key))
+						total++;
+					else
+						save[saveTop++] = key;
+				}
 			}
 			// all bits are 1 => duplicate
 			if (k == total) {
 				duplicates++;
 
 				if ((double)duplicates/(valuesSize-ngram+1) > duplicateThreshold) {
+					if (earlyUpdate) {
+						for (int j = 0; j < saveTop; j++)
+							Reset(save[j]);
+					}
 					if (ratio)
 						*ratio = (double)duplicates/(valuesSize-ngram+1);
 					return true;
@@ -801,8 +1015,10 @@ bool NgramBloomFilter::TestDuplicate(std::vector<std::string> &values, double *r
 		}
 	}
 
-	for (int i = 0; i < saveTop; i++)
-		Set(save[i]);
+	if (!earlyUpdate) {
+		for (int j = 0; j < saveTop; j++)
+			Set(save[j]);
+	}
 
 	if (ratio)
 		*ratio = (double)duplicates/(valuesSize-ngram+1);
