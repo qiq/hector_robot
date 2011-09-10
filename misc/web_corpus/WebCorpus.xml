@@ -215,6 +215,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_parse" lib="MstParser.la">
+						<param name="parserDir" value="./mstparser"/>
 						<param name="model" value="mstparser/cs_model"/>
 						<param name="decodeType" value="non-proj"/>
 						<param name="order" value="2"/>

@@ -18,12 +18,14 @@ using namespace std;
 
 MstParser::MstParser(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
+	parserDir = NULL;
 	model = NULL;
 	decodeType = strdup("non-proj");
 	order = 2;
 
 	props = new ObjectProperties<MstParser>(this);
 	props->Add("items", &MstParser::GetItems);
+	props->Add("parserDir", &MstParser::GetParserDir, &MstParser::SetParserDir, true);
 	props->Add("model", &MstParser::GetModel, &MstParser::SetModel, true);
 	props->Add("decodeType", &MstParser::GetDecodeType, &MstParser::SetDecodeType, true);
 	props->Add("order", &MstParser::GetOrder, &MstParser::SetOrder, true);
@@ -51,6 +53,15 @@ MstParser::~MstParser() {
 
 char *MstParser::GetItems(const char *name) {
 	return int2str(items);
+}
+
+char *MstParser::GetParserDir(const char *name) {
+	return strdup(parserDir);
+}
+
+void MstParser::SetParserDir(const char *name, const char *value) {
+	free(parserDir);
+	parserDir = strdup(value);
 }
 
 char *MstParser::GetModel(const char *name) {
@@ -86,6 +97,11 @@ bool MstParser::Init(vector<pair<string, string> > *params) {
 
 	if (!props->InitProperties(params))
 		return false;
+
+	if (!parserDir) {
+		LOG_ERROR(this, "parserDir argument not specified, cannot run parser.");
+		return false;
+	}
 
 	if (!model) {
 		LOG_ERROR(this, "model argument not specified, cannot run parser.");
@@ -127,7 +143,7 @@ bool MstParser::Init(vector<pair<string, string> > *params) {
 		close(pipeerr[1]);
 
 		char command[1024*3];
-		snprintf(command, sizeof(command), "java -classpath mstparser:mstparser/lib/trove.jar -Xmx8000m mstparser.DependencyParser 'model-name:%s' 'decode-type:%s' order:%d test test-file:/dev/stdin output-file:/dev/stdout format:MST", model, decodeType, order);
+		snprintf(command, sizeof(command), "java -classpath %s:%s/lib/trove.jar -Xmx8000m mstparser.DependencyParser 'model-name:%s' 'decode-type:%s' order:%d test test-file:/dev/stdin output-file:/dev/stdout format:MST", parserDir, parserDir, model, decodeType, order);
 		//setsid();
 		const char *args[] = { "/bin/sh", "-c", command, NULL };
 		if (execvp("/bin/sh", (char *const *)args) == -1) {

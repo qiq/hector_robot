@@ -33,11 +33,14 @@ public:
 
 private:
 	int items;
+	char *parserDir;
 	char *model;
 	char *decodeType;
 	int order;
 
 	char *GetItems(const char *name);
+	char *GetParserDir(const char *name);
+        void SetParserDir(const char *name, const char *value);
 	char *GetModel(const char *name);
         void SetModel(const char *name, const char *value);
 	char *GetDecodeType(const char *name);
