@@ -345,7 +345,7 @@ Resource *MstParser::ProcessSimpleSync(Resource *resource) {
 	for (int i = 0; i < nWords; i++) {
 		if (tr->GetFlags(i) & TextResource::TOKEN_SENTENCE_START && form.size() > 0) {
 			if (!ParseSentence(form, tag, head, depRel))
-				LOG_ERROR(this, "Cannot parse sentence" << join(' ', form));
+				LOG_ERROR(this, "Cannot parse sentence: " << join(' ', form));
 			for (int j = 0; j < (int)head.size(); j++) {
 				tr->SetHead(offset, head[j]);
 				tr->SetDepRel(offset, depRel[j]);
