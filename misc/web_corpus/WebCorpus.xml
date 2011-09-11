@@ -63,6 +63,7 @@ WebCorpus: several task that process web corpus files:
 					<Module id="M_input" lib="Load.la">
 						<param name="filename" value="$2"/>
 						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_wordcount" lib="WordCount.la"/>
 					<Module id="M_output" lib="Null.la">
