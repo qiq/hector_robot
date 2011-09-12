@@ -278,7 +278,7 @@ WebCorpus: several task that process web corpus files:
 					<Module id="M_input" lib="Load.la">
 						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
-						<param name="compressed" value="true"/>
+						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_output" lib="TextResourcePrint.la">
 						<param name="filename" value="/dev/stdout"/>
