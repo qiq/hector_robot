@@ -37,17 +37,17 @@ MstParser::MstParser(ObjectRegistry *objects, const char *id, int threadIndex): 
 }
 
 MstParser::~MstParser() {
+	if (pid) {
+		string r, w;
+		ReadWrite(r, w, false);
+		kill(-pid, 9);
+	}
 	if (fdin != -1)
 		close(fdin);
 	if (fdout != -1)
 		close(fdout);
 	if (fderr != -1)
 		close(fderr);
-	if (pid) {
-		string r, w;
-		ReadWrite(r, w, false);
-		kill(-pid, 9);
-	}
 	delete props;
 }
 
