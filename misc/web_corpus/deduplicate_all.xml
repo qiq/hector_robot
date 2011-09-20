@@ -32,7 +32,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_deduplicate" lib="Deduplicator.la">
+					<Module id="M_deduplicate" lib="Deduplicate.la">
 						<param name="deduplicateParagraphs" value="true"/>
 						<param name="totalSize" value="5000000000"/>
 						<param name="threshold" value="0.3"/>

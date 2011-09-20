@@ -10,9 +10,9 @@ EXTRA_DIST =
 moduledir = $(libdir)/hector/module
 module_LTLIBRARIES = 
 
-module_LTLIBRARIES += PageResourceGenerator.la
-PageResourceGenerator_la_SOURCES = PageResourceGenerator.h PageResourceGenerator.cc
-PageResourceGenerator_la_LIBADD = ../resource/libPageResource.la
+module_LTLIBRARIES += GeneratePageResource.la
+GeneratePageResource_la_SOURCES = GeneratePageResource.h GeneratePageResource.cc
+GeneratePageResource_la_LIBADD = ../resource/libPageResource.la
 
 #Filter_la_SOURCES = Filter.h Filter.cc FilterLexer.h FilterLexer.cc
 #Filter_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBPCRECPP_CFLAGS@
@@ -22,31 +22,31 @@ PageResourceGenerator_la_LIBADD = ../resource/libPageResource.la
 #	flex -8 -f -Cf -Ca -Cr -t FilterLexer.l >FilterLexer.cc
 
 if FETCH_MODULE
-module_LTLIBRARIES += Fetcher.la
-Fetcher_la_SOURCES = Fetcher.h Fetcher.cc
-Fetcher_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
-Fetcher_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
-Fetcher_la_LIBADD = ../resource/libPageResource.la $(top_builddir)/lib/librobot.la
+module_LTLIBRARIES += Fetch.la
+Fetch_la_SOURCES = Fetch.h Fetch.cc
+Fetch_la_CXXFLAGS = $(AM_CXXFLAGS) @LIBCURL_CPPFLAGS@
+Fetch_la_LDFLAGS = $(AM_LDFLAGS) -lev @LIBCURL@
+Fetch_la_LIBADD = ../resource/libPageResource.la $(top_builddir)/lib/librobot.la
 endif
 
-module_LTLIBRARIES += DnsResolver.la
-DnsResolver_la_SOURCES = DnsResolver.h DnsResolver.cc
-DnsResolver_la_CXXFLAGS = $(AM_CXXFLAGS)
-DnsResolver_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
-DnsResolver_la_LIBADD = ../resource/libPageResource.la ../resource/libSiteResource.la $(top_builddir)/lib/librobot.la
+module_LTLIBRARIES += ResolveDns.la
+ResolveDns_la_SOURCES = ResolveDns.h ResolveDns.cc
+ResolveDns_la_CXXFLAGS = $(AM_CXXFLAGS)
+ResolveDns_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
+ResolveDns_la_LIBADD = ../resource/libPageResource.la ../resource/libSiteResource.la $(top_builddir)/lib/librobot.la
 
 #SiteManager_la_SOURCES = SiteManager.h SiteManager.cc
 #SiteManager_la_LDFLAGS = $(AM_LDFLAGS) -lunbound
 #SiteManager_la_LIBADD = ../resource/libPageResource.la ../resource/libSiteResource.la $(top_builddir)/lib/librobot.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
-module_LTLIBRARIES += UrlExtractor.la
-UrlExtractor_la_SOURCES = UrlExtractor.h UrlExtractor.cc UrlExtractorLexer.h UrlExtractorLexer.cc
-UrlExtractor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
-UrlExtractor_la_LIBADD = ../resource/libPageResource.la ../resource/libUrlResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
-UrlExtractorLexer.cc: UrlExtractorLexer.l
-	$(LEX) -8 -f -Cf -Ca -Cr -i -t UrlExtractorLexer.l >UrlExtractorLexer.cc
-BUILT_SOURCES += UrlExtractorLexer.cc
-EXTRA_DIST += UrlExtractorLexer.l
+module_LTLIBRARIES += ExtractUrl.la
+ExtractUrl_la_SOURCES = ExtractUrl.h ExtractUrl.cc ExtractUrlLexer.h ExtractUrlLexer.cc
+ExtractUrl_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
+ExtractUrl_la_LIBADD = ../resource/libPageResource.la ../resource/libUrlResource.la $(top_builddir)/lib/librobot.la $(top_builddir)/lib/libgoogleurl.la
+ExtractUrlLexer.cc: ExtractUrlLexer.l
+	$(LEX) -8 -f -Cf -Ca -Cr -i -t ExtractUrlLexer.l >ExtractUrlLexer.cc
+BUILT_SOURCES += ExtractUrlLexer.cc
+EXTRA_DIST += ExtractUrlLexer.l
 
 module_LTLIBRARIES += ResourceTypeToStatus.la
 ResourceTypeToStatus_la_SOURCES = ResourceTypeToStatus.h ResourceTypeToStatus.cc
@@ -65,43 +65,43 @@ UpdateIndex_la_SOURCES = UpdateIndex.h UpdateIndex.cc
 UpdateIndex_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libUrlResource.la ../resource/libPageResource.la ../resource/libIndexResource.la @HECTOR_CORE_PREFIX@/lib/hector/resource/libMarkerResource.la
 
 if FEATURAMA_TAGGER_MODULE
-module_LTLIBRARIES += FeaturamaTagger.la
-FeaturamaTagger_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
-FeaturamaTagger_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@
-FeaturamaTagger_la_SOURCES = FeaturamaTagger.h FeaturamaTagger.cc
-FeaturamaTagger_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la -lunistring
+module_LTLIBRARIES += TagFeaturama.la
+TagFeaturama_la_CXXFLAGS = $(AM_CXXFLAGS) @FEATURAMA_CFLAGS@ @CZMORPHOLOGY_CFLAGS@
+TagFeaturama_la_LDFLAGS = $(AM_LDFLAGS) @FEATURAMA_LIBS@ @CZMORPHOLOGY_LIBS@
+TagFeaturama_la_SOURCES = TagFeaturama.h TagFeaturama.cc
+TagFeaturama_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la -lunistring
 endif
 
 if TOKENIZER_MODULE
-module_LTLIBRARIES += Tokenizer.la
-Tokenizer_la_SOURCES = Tokenizer.h Tokenizer.cc
-Tokenizer_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la -lunistring
+module_LTLIBRARIES += Tokenize.la
+Tokenize_la_SOURCES = Tokenize.h Tokenize.cc
+Tokenize_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la -lunistring
 
-module_LTLIBRARIES += Tokenizer_cs_CZ.la
-Tokenizer_cs_CZ_la_SOURCES = Tokenizer_cs_CZ.cc
-Tokenizer_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += Tokenize_cs_CZ.la
+Tokenize_cs_CZ_la_SOURCES = Tokenize_cs_CZ.cc
+Tokenize_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 endif
 
-module_LTLIBRARIES += RawTextRead.la
-RawTextRead_la_SOURCES = RawTextRead.h RawTextRead.cc
-RawTextRead_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += ReadRawText.la
+ReadRawText_la_SOURCES = ReadRawText.h ReadRawText.cc
+ReadRawText_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
-module_LTLIBRARIES += TextResourcePrint.la
-TextResourcePrint_la_SOURCES = TextResourcePrint.h TextResourcePrint.cc
-TextResourcePrint_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += PrintTextResource.la
+PrintTextResource_la_SOURCES = PrintTextResource.h PrintTextResource.cc
+PrintTextResource_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
-module_LTLIBRARIES += TextResourceRead.la
-TextResourceRead_la_SOURCES = TextResourceRead.h TextResourceRead.cc
-TextResourceRead_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += ReadTextResource.la
+ReadTextResource_la_SOURCES = ReadTextResource.h ReadTextResource.cc
+ReadTextResource_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
-module_LTLIBRARIES += Deduplicator.la
-Deduplicator_la_SOURCES = Deduplicator.h Deduplicator.cc
-Deduplicator_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += Deduplicate.la
+Deduplicate_la_SOURCES = Deduplicate.h Deduplicate.cc
+Deduplicate_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
 module_LTLIBRARIES += WordCount.la
 WordCount_la_SOURCES = WordCount.h WordCount.cc
 WordCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
-module_LTLIBRARIES += MstParser.la
-MstParser_la_SOURCES = MstParser.h MstParser.cc
-MstParser_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += ParseMst.la
+ParseMst_la_SOURCES = ParseMst.h ParseMst.cc
+ParseMst_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la

@@ -18,15 +18,15 @@ Tag TextResources using Featurama Tagger for Czech.
 			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" lib="TextResourceRead.la">
+					<Module id="M_input" lib="ReadTextResource.la">
 						<param name="filename" value="/dev/stdin"/>
 					</Module>
-					<Module id="M_tagger" lib="FeaturamaTagger.la">
+					<Module id="M_tagger" lib="TagFeaturama.la">
 						<param name="useGuesser" value="true"/>
 						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
 					</Module>
-					<Module id="M_output" lib="TextResourcePrint.la">
+					<Module id="M_output" lib="PrintTextResource.la">
 						<param name="filename" value="/dev/stdout"/>
 					</Module>
 				</modules>

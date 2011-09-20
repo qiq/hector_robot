@@ -27,10 +27,10 @@ WebCorpus: several task that process web corpus files:
 			<Processor id="P_main">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_input" lib="RawTextRead.la">
+					<Module id="M_input" lib="ReadRawText.la">
 						<param name="inputListFile" value="$2"/>
 					</Module>
-					<Module id="M_tokenizer" lib="Tokenizer.la">
+					<Module id="M_tokenizer" lib="Tokenize.la">
 						<param name="maxSentenceLength" value="200"/>
 						<param name="maxWordLength" value="100"/>
 						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
@@ -92,7 +92,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="filename" value="$2"/>
 						<param name="resourceType" value="TextResource"/>
 					</Module>
-					<Module id="M_deduplicate" lib="Deduplicator.la">
+					<Module id="M_deduplicate" lib="Deduplicate.la">
 						<param name="deduplicateParagraphs" value="true"/>
 						<param name="totalSize" value="$4"/>
 						<param name="threshold" value="0.3"/>
@@ -129,7 +129,7 @@ WebCorpus: several task that process web corpus files:
 					<!--Module id="M_input" lib="TextResourceRead.la">
 						<param name="filename" value="/dev/stdin"/>
 					</Module-->
-					<Module id="M_tag" lib="FeaturamaTagger.la">
+					<Module id="M_tag" lib="TagFeaturama.la">
 						<param name="useGuesser" value="true"/>
 						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
@@ -173,7 +173,7 @@ WebCorpus: several task that process web corpus files:
 				</input>
 				<threads>4</threads>
 				<modules>
-					<Module id="M_tag" lib="FeaturamaTagger.la">
+					<Module id="M_tag" lib="TagFeaturama.la">
 						<param name="useGuesser" value="true"/>
 						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
@@ -217,7 +217,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_parse" lib="MstParser.la">
+					<Module id="M_parse" lib="ParseMst.la">
 						<param name="parserDir" value="./mstparser"/>
 						<param name="model" value="mstparser/cs_model"/>
 						<param name="decodeType" value="non-proj"/>
@@ -280,7 +280,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_output" lib="TextResourcePrint.la">
+					<Module id="M_output" lib="PrintTextResource.la">
 						<param name="filename" value="/dev/stdout"/>
 					</Module>
 				</modules>
