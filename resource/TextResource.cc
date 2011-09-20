@@ -74,6 +74,11 @@ string TextResource::ToString(Object::LogLevel logLevel) {
 		s += r.text_id();
 		s += "\n";
 	}
+	if (r.has_language()) {
+		s += "Lang: ";
+		s += r.language().size() > 0 ? r.language() : "unknown";
+		s += "\n";
+	}
 	if (r.has_text() && r.text().size() > 0) {
 		s += "Text: ";
 		s += r.text();

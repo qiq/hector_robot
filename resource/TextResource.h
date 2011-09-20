@@ -63,6 +63,9 @@ public:
 	void SetTextId(const std::string &text);
 	const std::string GetTextId();
 	void ClearTextId();
+	void SetLanguage(const std::string &text);
+	const std::string GetLanguage();
+	void ClearLanguage();
 	void SetFlags(int index, int flags);
 	int GetFlags(int index);
 	void ClearFlags();
@@ -161,6 +164,18 @@ inline const std::string TextResource::GetTextId() {
 
 inline void TextResource::ClearTextId() {
 	r.clear_text_id();
+}
+
+inline void TextResource::SetLanguage(const std::string &language) {
+	r.set_language(language);
+}
+
+inline const std::string TextResource::GetLanguage() {
+	return r.language();
+}
+
+inline void TextResource::ClearLanguage() {
+	r.clear_language();
 }
 
 inline void TextResource::SetFlags(int index, int flags) {
