@@ -26,6 +26,7 @@ public:
                 TOKEN_TITLECASE = 32,
                 TOKEN_UPPERCASE = 64,
                 TOKEN_NUMERIC = 128,
+                TOKEN_GUESSED = 256,
         };
 
         TextResource();
