@@ -5,12 +5,13 @@ lib_LTLIBRARIES = librobot.la
 noinst_LTLIBRARIES = libgoogleurl.la libgooglecld.la
 
 hectorincludedir = $(includedir)/hector
-hectorinclude_HEADERS = robot_common.h SuperFastHash.h SitePathMD5.h NgramBloomFilter.h \
+hectorinclude_HEADERS = robot_common.h SuperFastHash.h SitePathMD5.h NgramBloomFilter.h LanguageTools.h \
 	robot_common.i
 
 librobot_la_SOURCES = \
-	robot_common.h robot_common.cc SuperFastHash.h SuperFastHash.cc ParsedUrl.h ParsedUrl.cc
-librobot_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl
+	robot_common.h robot_common.cc SuperFastHash.h SuperFastHash.cc ParsedUrl.h ParsedUrl.cc \
+	LanguageTools.h LanguageTools.cc
+librobot_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/lib/googleurl -I$(top_srcdir)/lib/googlecld
 librobot_la_LIBADD = libgoogleurl.la libgooglecld.la
 librobot_la_LDFLAGS = -version-info 0:0:0 $(AM_LDFLAGS) -lltdl
 
@@ -34,6 +35,6 @@ libgooglecld_la_LIBTOOLFLAGS = --tag=disable-shared
 #bin_PROGRAMS = test2
 #test2_SOURCES = \
 #	test2.cc
-#test2_CXXFLAGS = @ICU_CXXFLAGS@ -I$(top_srcdir)/lib/googlecld
-#test2_LDFLAGS = @ICU_LIBS@
-#test2_LDADD = libgooglecld.la
+#test2_CXXFLAGS =
+#test2_LDFLAGS =
+#test2_LDADD = librobot.la
