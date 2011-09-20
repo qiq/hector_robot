@@ -2,8 +2,8 @@
   ParsedUrl.h
 */
 
-#ifndef _MODULES_PARSEDURL_H_
-#define _MODULES_PARSEDURL_H_
+#ifndef _LIB_PARSEDURL_H_
+#define _LIB_PARSEDURL_H_
 
 #include <config.h>
 
