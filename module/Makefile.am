@@ -105,3 +105,11 @@ WordCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResourc
 module_LTLIBRARIES += ParseMst.la
 ParseMst_la_SOURCES = ParseMst.h ParseMst.cc
 ParseMst_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += Normalize.la
+Normalize_la_SOURCES = Normalize.h Normalize.cc
+Normalize_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += DetectLanguage.la
+DetectLanguage_la_SOURCES = DetectLanguage.h DetectLanguage.cc
+DetectLanguage_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
