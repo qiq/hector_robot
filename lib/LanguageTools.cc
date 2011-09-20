@@ -56,5 +56,5 @@ std::string LanguageTools::Detect(std::string &s) {
 			break;
 		}
 	}
-	return LanguageCodeISO639_1(lang);
+	return (lang != UNKNOWN_LANGUAGE) ? LanguageCodeISO639_1(lang) : "";
 }
