@@ -282,7 +282,10 @@ Resource *TagFeaturama::ProcessSimpleSync(Resource *resource) {
 				hyphen_follows = 1;
 		}
 		string form = tr->GetForm(idx);
-		char *morph = lemmatize_token(form.c_str(), flags & TextResource::TOKEN_PUNCT, flags & TextResource::TOKEN_ABBR, flags & TextResource::TOKEN_NUMERIC, dot_follows, hyphen_follows);
+		int guessed = 0;
+		char *morph = lemmatize_token(form.c_str(), flags & TextResource::TOKEN_PUNCT, flags & TextResource::TOKEN_ABBR, flags & TextResource::TOKEN_NUMERIC, dot_follows, hyphen_follows, &guessed);
+		if (guessed)
+			tr->SetFlags(idx, flags | TextResource::TOKEN_UNRECOGNIZED);
 		form = CstsEncode(form.c_str());
 		string offer;
 		if (morph) {
