@@ -7,6 +7,8 @@ Dependencies: icu
 
 Parameters:
 items			r/o	Total items processed
+paragraphs		r/w	Do a language recognition on paragraphs
+				(instead of whole documents)
 */
 
 #ifndef _MODULES_DETECT_LANGUAGE_H_
@@ -30,8 +32,11 @@ public:
 
 private:
 	int items;		// ObjectLock, items processed
+	bool paragraphLevel;
 
 	char *GetItems(const char *name);
+	char *GetParagraphLevel(const char *name);
+	void SetParagraphLevel(const char *name, const char *value);
 
 	ObjectProperties<DetectLanguage> *props;
 	char *GetPropertySync(const char *name);
