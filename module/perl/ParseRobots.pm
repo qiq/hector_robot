@@ -28,20 +28,20 @@ package ParseRobots;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'items' => 0,
-		'robotName' => 'hector',
-		'wildcards' => 1,
-		'TTL' => 86400,			# default: one day
-		'negativeTTL' => 86400,		# default: one day
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self->{'items'} = 0;
+	$self->{'robotName'} = 'hector';
+	$self->{'wildcards'} = 1;
+	$self->{'TTL'} = 86400;			# default: one day
+	$self->{'negativeTTL'} = 86400;		# default: one day
+
 	bless($self, $class);
 	return $self;
 }
@@ -49,59 +49,9 @@ sub new {
 sub DESTROY {
 }
 
-sub Init {
-	my ($self, $params) = @_;
-
-	# second stage?
-	return 1 if (not defined $params);
-
-	foreach my $p (@{$params}) {
-		if (exists $self->{$p->[0]}) {
-			$self->{$p->[0]} = $p->[1];
-		}
-	}
-	return 1;
-}
-
 sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
-}
-
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
-sub SetProperty {
-	my ($self, $name, $value) = @_;
-	if (exists $self->{$name}) {
-		$self->{$name} = $value;
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return 0;
-	}
-	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
 sub ConvertPath() {
@@ -155,13 +105,13 @@ sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
 	if ($resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$self->LOG_ERROR($resource, "Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	my $sr = &HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." No attaxhed WSR: ".$sr->GetTypeString());
+		$self->LOG_ERROR($resource, "No attaxhed WSR: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -175,7 +125,7 @@ sub ProcessSimple() {
 
 	my $status = $resource->GetHeaderValue("X-Status");
 	if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid status: ".$resource->GetHeaderValue("X-Status"));
+		$self->LOG_ERROR($resource, "Invalid status: ".$resource->GetHeaderValue("X-Status"));
 		$resource->SetStatus(1);
 		return $resource;
 	}
@@ -183,20 +133,20 @@ sub ProcessSimple() {
 		# 1xx, 2xx: OK
 		my $mime = $resource->GetHeaderValue("Content-Type");
 		if ($mime eq '') {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Missing robots.txt mime type (".$resource->GetUrlHost().")");
+			$self->LOG_DEBUG($resource, "Missing robots.txt mime type (".$resource->GetUrlHost().")");
 			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
 		}
 		if ($mime !~ /^text\/plain/) {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Invalid robots.txt mime type: ".$mime." (".$resource->GetUrlHost().")");
+			$self->LOG_DEBUG($resource, "Invalid robots.txt mime type: ".$mime." (".$resource->GetUrlHost().")");
 			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
 		}
 		my $content = $resource->GetContent();
 		if (length($content) > 100000) {
-			$self->{'_object'}->log_debug("Robots.txt too long: ".length($content)." (".$resource->GetUrlHost().")");
+			$self->LOG_DEBUG("Robots.txt too long: ".length($content)." (".$resource->GetUrlHost().")");
 			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			# status is 0
 			return $resource;
@@ -209,7 +159,7 @@ sub ProcessSimple() {
 		# 3xx: redirect
 		my $location = $resource->GetHeaderValue("Location");
 		if (not defined $location) {
-			$self->{'_object'}->log_error($resource->ToStringShort()." Redirect with no location: ".$resource->GetUrl());
+			$self->LOG_ERROR($resource, "Redirect with no location: ".$resource->GetUrl());
 			$sr->SetRobots([], [], time()+$self->{'negativeTTL'});
 			$resource->SetStatus(1);
 			return $resource;
@@ -225,22 +175,6 @@ sub ProcessSimple() {
 		$resource->SetStatus(1);
 	}
 	return $resource;
-}
-
-sub Start() {
-	my ($self) = @_;
-}
-
-sub Stop() {
-	my ($self) = @_;
-}
-
-sub Pause() {
-	my ($self) = @_;
-}
-
-sub Resume() {
-	my ($self) = @_;
 }
 
 1;

@@ -13,17 +13,17 @@ package FixRedirect;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'items' => 0,
-		'redirectStatus' => 1,
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self->{'items'} = 0;
+	$self->{'redirectStatus'} = 1;
+
 	bless($self, $class);
 	return $self;
 }
@@ -31,66 +31,16 @@ sub new {
 sub DESTROY {
 }
 
-sub Init {
-	my ($self, $params) = @_;
-
-	# second stage?
-	return 1 if (not defined $params);
-
-	foreach my $p (@{$params}) {
-		if (exists $self->{$p->[0]}) {
-			$self->{$p->[0]} = $p->[1];
-		}
-	}
-	return 1;
-}
-
 sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
-}
-
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
-sub SetProperty {
-	my ($self, $name, $value) = @_;
-	if (exists $self->{$name}) {
-		$self->{$name} = $value;
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return 0;
-	}
-	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
 	if ($resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$self->LOG_ERROR($resource, "Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -98,26 +48,10 @@ sub ProcessSimple() {
 	if ($resource->GetStatus() == $self->{'redirectStatus'}) {
 		my $location = HectorRobot::AbsolutizeUrl($resource->GetUrl(), $resource->GetHeaderValue("Location"));
 		$resource->SetUrl($location);
-		$self->{'_object'}->log_debug($resource->ToStringShort()." New location: ".$location);
+		$self->LOG_DEBUG($resource, "New location: ".$location);
 		$self->{'items'}++;
 	}
 	return $resource;
-}
-
-sub Start() {
-	my ($self) = @_;
-}
-
-sub Stop() {
-	my ($self) = @_;
-}
-
-sub Pause() {
-	my ($self) = @_;
-}
-
-sub Resume() {
-	my ($self) = @_;
 }
 
 1;

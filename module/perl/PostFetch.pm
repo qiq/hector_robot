@@ -18,18 +18,18 @@ package PostFetch;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'items' => 0,
-		'maxErrors' => 5,	# number of consecutive errors to cause resource to be disabled
-		'maxRedirects' => 5,	# number of consecutive redirects to accept
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self->{'items'} = 0;
+	$self->{'maxErrors'} = 5;	# number of consecutive errors to cause resource to be disabled
+	$self->{'maxRedirects'} = 5;	# number of consecutive redirects to accept
+
 	bless($self, $class);
 	return $self;
 }
@@ -37,59 +37,9 @@ sub new {
 sub DESTROY {
 }
 
-sub Init {
-	my ($self, $params) = @_;
-
-	# second stage?
-	return 1 if (not defined $params);
-
-	foreach my $p (@{$params}) {
-		if (exists $self->{$p->[0]}) {
-			$self->{$p->[0]} = $p->[1];
-		}
-	}
-	return 1;
-}
-
 sub GetType {
 	my ($self) = @_;
 	return $Hector::Module::SIMPLE;
-}
-
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
-sub SetProperty {
-	my ($self, $name, $value) = @_;
-	if (exists $self->{$name}) {
-		$self->{$name} = $value;
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return 0;
-	}
-	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
 sub ProcessSimple() {
@@ -98,7 +48,7 @@ sub ProcessSimple() {
 	return $resource if ($resource->GetTypeString() ne 'PageResource');
 	my $sr = HectorRobot::ResourceToSiteResource($resource->GetAttachedResource());
 	if ($sr->GetTypeString() ne 'SiteResource') {
-		$self->{'_object'}->log_error($sr->ToStringShort()." Invalid attached type: ".$sr->GetTypeString());
+		$self->LOG_ERROR($sr, "Invalid attached type: ".$sr->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -113,22 +63,22 @@ sub ProcessSimple() {
 		# get "real" status code
 		my $status = $resource->GetHeaderValue("X-Status");
 		if (not defined $status or not $status =~ s/^HTTP([^ ]*) ([0-9]+).*/$2/) {
-			$self->{'_object'}->log_error($resource->ToStringShort()." Invalid status: ".$resource->GetHeaderValue("X-Status"));
+			$self->LOG_ERROR($resource, "Invalid status: ".$resource->GetHeaderValue("X-Status"));
 			$error = 1;
 		} else {
-			$self->{'_object'}->log_debug($resource->ToStringShort().' Status: '.$status.' '.$resource->GetUrl());
+			$self->LOG_DEBUG($resource, 'Status: '.$status.' '.$resource->GetUrl());
 			if ($status >= 100 and $status < 300) {
 				# 1xx, 2xx: OK
 				$resource->SetStatus(0);
 			} elsif ($status >= 300 and $status < 400) {
 				# 3xx: redirect
 				if (not defined $resource->GetHeaderValue("Location")) {
-					$self->{'_object'}->log_error($resource->ToStringShort()." Redirect with no location: ".$resource->GetUrl());
+					$self->LOG_ERROR($resource, "Redirect with no location: ".$resource->GetUrl());
 					$error = 1;
 				} else {
 					my $redirects = $resource->GetRedirectCount();
 					if ($redirects > $self->{'maxRedirects'}) {
-						$self->{'_object'}->log_error($resource->ToStringShort()." Too many redirects: ".$resource->GetUrl());
+						$self->LOG_ERROR($resource, "Too many redirects: ".$resource->GetUrl());
 						$error = 1;
 					} else {
 						# correct redirects
@@ -144,12 +94,12 @@ sub ProcessSimple() {
 		}
 	} elsif ($rs == 1) {
 		# error fetching object (temoporary error)
-		$self->{'_object'}->log_error($resource->ToStringShort()." Cannot fetch object: ".$resource->GetUrl());
+		$self->LOG_ERROR($resource, "Cannot fetch object: ".$resource->GetUrl());
 		$resource->SetStatus(0);
 		$error = 1;
 	} elsif ($rs == 2) {
 		# error fetching object (permanent error)
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid object: ".$resource->GetUrl());
+		$self->LOG_ERROR($resource, "Invalid object: ".$resource->GetUrl());
 		my $ok = $sr->PathUpdateError($resource->GetUrlPath(), $currentTime, 1);
 		$resource->SetFlag($Hector::Resource::DELETED) if (not $ok);
 		$resource->SetStatus(0);
@@ -161,22 +111,6 @@ sub ProcessSimple() {
 	}
 
 	return $resource;
-}
-
-sub Start() {
-	my ($self) = @_;
-}
-
-sub Stop() {
-	my ($self) = @_;
-}
-
-sub Pause() {
-	my ($self) = @_;
-}
-
-sub Resume() {
-	my ($self) = @_;
 }
 
 1;

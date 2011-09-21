@@ -16,21 +16,22 @@ package CreatePageResource;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'items' => 0,
-		'urlList' => undef,
-		'urlFile' => undef,
-		'mark' => 0,
-		'_url' => [],
-		'_finished' => 0,
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self->{'items'} = 0;
+	$self->{'urlList'} = undef;
+	$self->{'urlFile'} = undef;
+	$self->{'mark'} = 0;
+
+	$self->{'_url'} = [];
+	$self->{'_finished'} = 0;
+
 	bless($self, $class);
 	return $self;
 }
@@ -61,7 +62,7 @@ sub LoadFile {
 		$self->{'_finished'} = 0;
 		return 1;
 	} else {
-		$self->{'_object'}->log_error("Cannot open file: ".$file);
+		$self->LOG_ERROR("Cannot open file: ".$file);
 		return 0;
 	}
 }
@@ -94,16 +95,6 @@ sub GetType {
 	return $Hector::Module::INPUT;
 }
 
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
 sub SetProperty {
 	my ($self, $name, $value) = @_;
 	if (exists $self->{$name}) {
@@ -115,37 +106,22 @@ sub SetProperty {
 			return 0 if (not $self->LoadFile($value));
 		}
 	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
+		$self->LOG_ERROR("Invalid value name: $name");
 		return 0;
 	}
 	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
 }
 
 sub ProcessInput() {
 	my ($self, $resource) = @_;
 
 	if (defined $resource) {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Resource is already defined.");
+		$self->LOG_ERROR($resource, "Resource is already defined.");
 		return undef;
 	}
 	if (@{$self->{'_url'}} == 0) {
 		if (not $self->{'_finished'}) {
-			$self->{'_object'}->log_info("Finished, total PageResources created: ".$self->{'items'});
+			$self->LOG_INFO("Finished, total PageResources created: ".$self->{'items'});
 			$self->{'_finished'} = 1;
 			if ($self->{'mark'}) {
 				return &Hector::Resource::GetRegistry()->AcquireResource("MarkerResource");
@@ -155,7 +131,7 @@ sub ProcessInput() {
 	}
 	$resource = &Hector::Resource::GetRegistry()->AcquireResource("PageResource");
 	if (not defined $resource) {
-		$self->{'_object'}->log_error("Cannot create resource type: PageResource");
+		$self->LOG_ERROR("Cannot create resource type: PageResource");
 		return undef;
 	}
 	$resource = HectorRobot::ResourceToPageResource($resource);
@@ -165,22 +141,6 @@ sub ProcessInput() {
 	$resource->SetUrl($url);
 	$self->{'items'}++;
 	return $resource;
-}
-
-sub Start() {
-	my ($self) = @_;
-}
-
-sub Stop() {
-	my ($self) = @_;
-}
-
-sub Pause() {
-	my ($self) = @_;
-}
-
-sub Resume() {
-	my ($self) = @_;
 }
 
 1;

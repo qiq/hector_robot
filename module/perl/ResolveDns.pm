@@ -14,21 +14,22 @@ package ResolveDns;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 use Net::DNS;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'_resolver' => undef,
-		'items' => 0,
-		'forwardServer' => undef,
-		'forwardPort' => undef,
-		'negativeTTL' => 86400,
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self->{'items'} = 0;
+	$self->{'forwardServer'} = undef;
+	$self->{'forwardPort'} = undef;
+	$self->{'negativeTTL'} = 86400;
+
+	$self->{'_resolver'} = undef;
+
 	bless($self, $class);
 	return $self;
 }
@@ -62,53 +63,17 @@ sub GetType {
 	return $Hector::Module::SIMPLE;
 }
 
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
-sub SetProperty {
-	my ($self, $name, $value) = @_;
-	if (exists $self->{$name}) {
-		$self->{$name} = $value;
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return 0;
-	}
-	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
-}
-
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
 	if ($resource->GetTypeString() ne 'SiteResource' and $resource->GetTypeString() ne 'PageResource') {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Invalid type: ".$resource->GetTypeString());
+		$self->LOG_ERROR($resource, "Invalid type: ".$resource->GetTypeString());
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
 	my $host = $resource->GetUrlHost();
 	if (not defined $host) {
-		$self->{'_object'}->log_error($resource->ToStringShort()." Resource does not contain URL host");
+		$self->LOG_ERROR($resource, "Resource does not contain URL host");
 		$resource->SetFlag($Hector::Resource::DELETED);
 		return $resource;
 	}
@@ -125,7 +90,7 @@ sub ProcessSimple() {
 		if (defined $answer) {
 			foreach my $rr ($answer->answer) {
 				next unless $rr->type eq "A";
-				$self->{'_object'}->log_debug($resource->ToStringShort()." $host: ".$rr->address.' ('.$rr->ttl.')');
+				$self->LOG_DEBUG($resource, "$host: ".$rr->address.' ('.$rr->ttl.')');
 				my $ip = Hector::IpAddr->new();
 				$ip->ParseIp4Addr($rr->address);
 				$resource->SetIpAddr($ip);
@@ -134,7 +99,7 @@ sub ProcessSimple() {
 				last;
 			}
 		} else {
-			$self->{'_object'}->log_debug($resource->ToStringShort()." Query failed ($host): ".$self->{'_resolver'}->errorstring);
+			$self->LOG_DEBUG($resource, "Query failed ($host): ".$self->{'_resolver'}->errorstring);
 			my $ip = Hector::IpAddr->new();
 			$resource->SetIpAddr($ip);
 			$resource->SetIpAddrExpire(time() + $self->{'negativeTTL'}) if ($resource->GetTypeString() eq 'SiteResource');

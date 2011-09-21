@@ -19,21 +19,22 @@ package Fetch;
 use warnings;
 use strict;
 use HectorRobot;
+use Module;
+our @ISA = qw(Module);
 use LWP::UserAgent;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = {
-		'_object' => $object,
-		'_id' => $id,
-		'_threadIndex' => $threadIndex,
-		'_ua' => undef,
-		'userAgent' => 'Mozilla/5.0 (compatible; hector_robot/Fetch.pm 1.0; +http://host/)',
-		'from' => undef,
-		'timeout' => 10,
-		'items' => 0,
-	};
+	my $self = $class->SUPER::new($object, $id, $threadIndex);
+
+	$self = {'userAgent'} = 'Mozilla/5.0 (compatible; hector_robot/Fetch.pm 1.0; +http://host/)';
+	$self = {'from'} = undef;
+	$self = {'timeout'} = 10;
+	$self = {'items'} = 0;
+
+	$self = {'_ua'} = undef;
+
 	bless($self, $class);
 	return $self;
 }
@@ -79,48 +80,12 @@ sub GetType {
 	return $Hector::Module::SIMPLE;
 }
 
-sub GetProperty {
-	my ($self, $name) = @_;
-	if (exists $self->{$name}) {
-		return $self->{$name};
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return undef;
-	}
-}
-
-sub SetProperty {
-	my ($self, $name, $value) = @_;
-	if (exists $self->{$name}) {
-		$self->{$name} = $value;
-	} else {
-		$self->{'_object'}->log_error("Invalid value name: $name");
-		return 0;
-	}
-	return 1;
-}
-
-sub ListProperties {
-	my ($self) = @_;
-	return [ grep { $_ !~ /^_/ } keys %{$self} ];
-}
-
-sub SaveCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("SaveCheckpoint($path, $id)");
-}
-
-sub RestoreCheckpoint {
-	my ($self, $path, $id) = @_;
-	$self->{'_object'}->log_info("RestoreCheckpoint($path, $id)");
-}
-
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
 	my $url = $resource->GetUrl();
 	if (not defined $url) {
-		$self->{'_object'}->log_error($resource->ToStringShort()." No URL found");
+		$self->LOG_ERROR($resource, "No URL found");
 		return $resource;
 	}
 	my $response = $self->{'_ua'}->get($url);
@@ -140,22 +105,6 @@ sub ProcessSimple() {
 	}
 	$self->{'items'}++;
 	return $resource;
-}
-
-sub Start() {
-	my ($self) = @_;
-}
-
-sub Stop() {
-	my ($self) = @_;
-}
-
-sub Pause() {
-	my ($self) = @_;
-}
-
-sub Resume() {
-	my ($self) = @_;
 }
 
 1;
