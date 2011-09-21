@@ -24,7 +24,7 @@ our @ISA = qw(Module);
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = $class->SUPER::new($object, $id, $threadIndex);
+	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
 	$self->{'maxErrors'} = 5;	# number of consecutive errors to cause resource to be disabled
@@ -32,14 +32,6 @@ sub new {
 
 	bless($self, $class);
 	return $self;
-}
-
-sub DESTROY {
-}
-
-sub GetType {
-	my ($self) = @_;
-	return $Hector::Module::SIMPLE;
 }
 
 sub ProcessSimple() {

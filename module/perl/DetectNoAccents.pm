@@ -22,7 +22,7 @@ our @ISA = qw(Module);
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = $class->SUPER::new($object, $id, $threadIndex);
+	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
 	$self->{'unaccentedWordsFile'} = "";
@@ -31,9 +31,6 @@ sub new {
 
 	bless($self, $class);
 	return $self;
-}
-
-sub DESTROY {
 }
 
 sub Init {
@@ -49,12 +46,12 @@ sub Init {
 	}
 
 	if ($self->{'unaccentedWordsFile'} eq "") {
-		$self->{'_object'}->log_error("unaccentedWordsFile not defined");
+		$self->LOG_ERROR("unaccentedWordsFile not defined");
 		return 0;
 	}
 	my $fd;
 	if (!open($fd, "<".$self->{'unaccentedWordsFile'})) {
-		$self->{'_object'}->log_error("Cannot open file: ".$self->{'unaccentedWordsFile'}.": $!";
+		$self->LOG_ERROR("Cannot open file: ".$self->{'unaccentedWordsFile'}.": $!";
 		return 0;
 	}
 	while (<$fd>) {
@@ -66,25 +63,18 @@ sub Init {
 	return 1;
 }
 
-sub GetType {
-	my ($self) = @_;
-	return $Hector::Module::SIMPLE;
-}
-
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
 	return $resource if ($resource->GetTypeString() ne 'TextResource');
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
-	my $nWords = 0;
-
+	my $nWords = $tr->GetWordCount();
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $word = $tr->GetForm($i);
 		if (exists $self->{'_words'}->{$word})
 			$tr->SetFlags($i, $tr->GetFlags($i) | $HectorRobot::TOKEN_UNRECOGNIZED);
 	}
-
 	
 	$self->{'items'}++;
 	return $resource;

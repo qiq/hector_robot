@@ -26,7 +26,7 @@ use LWP::UserAgent;
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = $class->SUPER::new($object, $id, $threadIndex);
+	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self = {'userAgent'} = 'Mozilla/5.0 (compatible; hector_robot/Fetch.pm 1.0; +http://host/)';
 	$self = {'from'} = undef;
@@ -73,11 +73,6 @@ sub Init {
 	$self->{'_ua'} = LWP::UserAgent->new(%options);
 
 	return 1;
-}
-
-sub GetType {
-	my ($self) = @_;
-	return $Hector::Module::SIMPLE;
 }
 
 sub ProcessSimple() {

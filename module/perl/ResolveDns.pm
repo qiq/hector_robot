@@ -21,7 +21,7 @@ use Net::DNS;
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
 	my $class = ref($proto) || $proto;
-	my $self = $class->SUPER::new($object, $id, $threadIndex);
+	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
 	$self->{'forwardServer'} = undef;
@@ -32,9 +32,6 @@ sub new {
 
 	bless($self, $class);
 	return $self;
-}
-
-sub DESTROY {
 }
 
 sub Init {
@@ -56,11 +53,6 @@ sub Init {
 	$self->{'_resolver'} = Net::DNS::Resolver->new(%args),
 
 	return 1;
-}
-
-sub GetType {
-	my ($self) = @_;
-	return $Hector::Module::SIMPLE;
 }
 
 sub ProcessSimple() {
