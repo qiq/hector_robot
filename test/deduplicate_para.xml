@@ -9,7 +9,7 @@ Test deduplicator module.
 		<logConfig><![CDATA[
 			log4j.rootLogger=TRACE, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=deduplicator.log
+			log4j.appender.LOGFILE.File=deduplicate_para.log
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=TRACE
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -23,10 +23,10 @@ Test deduplicator module.
 						<param name="filename" value="$1"/>
 						<param name="text" value="true"/>
 					</Module>
-					<Module id="M_deduplicate" lib="Deduplicator.la">
-						<param name="deduplicateParagraphs" value="false"/>
+					<Module id="M_deduplicate" lib="Deduplicate.la">
+						<param name="deduplicateParagraphs" value="true"/>
 						<param name="totalSize" value="500"/>
-						<param name="threshold" value="0.8"/>
+						<param name="threshold" value="0.3"/>
 						<param name="ngram" value="8"/>
 					</Module>
 					<Module id="M_save" lib="Save.la">
