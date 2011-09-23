@@ -5,12 +5,12 @@ EXTRA_DIST = test_common.sh dns_server.pl http_server.pl
 CLEANFILES = test*.log.valgrind
 
 TESTS += deduplicate.sh
-EXTRA_DIST += deduplicate.xml deduplicate.hr
-CLEANFILES += deduplicate.hr.out deduplicate.log deduplicate.log.result
+EXTRA_DIST += deduplicate.xml deduplicate.in
+CLEANFILES += deduplicate.out deduplicate.log deduplicate.log.result
 
 TESTS += deduplicate_para.sh
-EXTRA_DIST += deduplicate_para.xml deduplicate_para.hr
-CLEANFILES += deduplicate_para.hr.out deduplicate_para.log deduplicate_para.log.result
+EXTRA_DIST += deduplicate_para.xml deduplicate_para.in
+CLEANFILES += deduplicate_para.out deduplicate_para.log deduplicate_para.log.result
 
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url

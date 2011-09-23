@@ -3,7 +3,7 @@
 . test_common.sh
 
 id=deduplicate
-test_server_batch $id test $id.hr $id.hr.out
-md5sum <$id.hr.out >$id.log.result
+test_server_batch $id test $id.in $id.out
+md5sum <$id.out >$id.log.result
 test_compare_result $id
 exit $?

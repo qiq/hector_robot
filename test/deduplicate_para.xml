@@ -19,9 +19,8 @@ Test deduplicator module.
 			<Processor id="P_input">
 				<threads>1</threads>
 				<modules>
-					<Module id="M_load" lib="Load.la">
+					<Module id="M_load" lib="ReadTextResource.la">
 						<param name="filename" value="$1"/>
-						<param name="text" value="true"/>
 					</Module>
 					<Module id="M_deduplicate" lib="Deduplicate.la">
 						<param name="deduplicateParagraphs" value="true"/>
@@ -29,10 +28,8 @@ Test deduplicator module.
 						<param name="threshold" value="0.3"/>
 						<param name="ngram" value="8"/>
 					</Module>
-					<Module id="M_save" lib="Save.la">
+					<Module id="M_save" lib="PrintTextResource.la">
 						<param name="filename" value="$2"/>
-						<param name="text" value="true"/>
-						<param name="overwrite" value="false"/>
 					</Module>
 				</modules>
 			</Processor>
