@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-Test deduplicator module.
+Test Deduplicate module.
 -->
 <Config>
 	<Server id="test" lib="TestServer.la">

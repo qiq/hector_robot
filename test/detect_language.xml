@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Config SYSTEM "hector_config.dtd">
 <!--
-Test Deduplicate module (paragraph mode).
+Test DetectLanguage module.
 -->
 <Config>
 	<Server id="test" lib="TestServer.la">
@@ -9,7 +9,7 @@ Test Deduplicate module (paragraph mode).
 		<logConfig><![CDATA[
 			log4j.rootLogger=TRACE, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=deduplicate_para.log
+			log4j.appender.LOGFILE.File=detect_language.log
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=TRACE
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -22,11 +22,8 @@ Test Deduplicate module (paragraph mode).
 					<Module id="M_load" lib="ReadTextResource.la">
 						<param name="filename" value="$1"/>
 					</Module>
-					<Module id="M_deduplicate" lib="Deduplicate.la">
-						<param name="deduplicateParagraphs" value="true"/>
-						<param name="totalSize" value="500"/>
-						<param name="threshold" value="0.3"/>
-						<param name="ngram" value="8"/>
+					<Module id="M_deduplicate" lib="DetectLanguage.la">
+						<param name="paragraphLevel" value="true"/>
 					</Module>
 					<Module id="M_save" lib="PrintTextResource.la">
 						<param name="filename" value="$2"/>

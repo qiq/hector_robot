@@ -12,6 +12,10 @@ TESTS += deduplicate_para.sh
 EXTRA_DIST += deduplicate_para.xml deduplicate_para.in
 CLEANFILES += deduplicate_para.out deduplicate_para.log deduplicate_para.log.result
 
+TESTS += detect_language.sh
+EXTRA_DIST += detect_language.xml detect_language.in
+CLEANFILES += detect_language.out detect_language.log detect_language.log.result
+
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
 #CLEANFILES += test1.log test1.log.result
