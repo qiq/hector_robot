@@ -77,9 +77,9 @@ module_LTLIBRARIES += Tokenize.la
 Tokenize_la_SOURCES = Tokenize.h Tokenize.cc
 Tokenize_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la -lunistring
 
-module_LTLIBRARIES += Tokenize_cs_CZ.la
-Tokenize_cs_CZ_la_SOURCES = Tokenize_cs_CZ.cc
-Tokenize_cs_CZ_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+module_LTLIBRARIES += Tokenize_cs.la
+Tokenize_cs_la_SOURCES = Tokenize_cs.cc
+Tokenize_cs_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 endif
 
 module_LTLIBRARIES += ReadRawText.la

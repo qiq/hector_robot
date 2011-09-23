@@ -38,6 +38,7 @@ private:
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
 
+	uint64_t nWord;
 	uint64_t nForm;
 	uint64_t nLemma;
 	uint64_t nPosTag;

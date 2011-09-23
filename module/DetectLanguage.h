@@ -7,7 +7,7 @@ Dependencies: icu
 
 Parameters:
 items			r/o	Total items processed
-paragraphs		r/w	Do a language recognition on paragraphs
+paragraphLevel		r/w	Do a language recognition on paragraphs
 				(instead of whole documents)
 */
 

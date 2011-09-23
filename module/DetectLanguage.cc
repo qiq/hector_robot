@@ -18,7 +18,7 @@ DetectLanguage::DetectLanguage(ObjectRegistry *objects, const char *id, int thre
 
 	props = new ObjectProperties<DetectLanguage>(this);
 	props->Add("items", &DetectLanguage::GetItems);
-	props->Add("paragraphlevel", &DetectLanguage::GetParagraphLevel, &DetectLanguage::SetParagraphLevel);
+	props->Add("paragraphLevel", &DetectLanguage::GetParagraphLevel, &DetectLanguage::SetParagraphLevel);
 
 	lt = NULL;
 }

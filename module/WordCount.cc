@@ -21,6 +21,7 @@ WordCount::WordCount(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("items", &WordCount::GetItems);
 	props->Add("wordCount", &WordCount::GetWordCount);
 
+	nWord = 0;
 	nForm = 0;
 	nLemma = 0;
 	nPosTag = 0;
@@ -39,7 +40,7 @@ char *WordCount::GetItems(const char *name) {
 
 char *WordCount::GetWordCount(const char *name) {
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "%" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64, nForm, nLemma, nPosTag, nHead, nDepRel);
+	snprintf(buf, sizeof(buf), "%" PRIu64 " (%" PRIu64 "), %" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64, nForm, nWord, nLemma, nPosTag, nHead, nDepRel);
 	return strdup(buf);
 }
 
@@ -59,7 +60,12 @@ Resource *WordCount::ProcessSimpleSync(Resource *resource) {
 		return resource;
 	TextResource *tr = static_cast<TextResource*>(resource);
 
-	nForm += tr->GetFormCount();
+	int words = tr->GetFormCount();
+	for (int i = 0; i < words; i++) {
+		if (!(tr->GetFlags(i) & TextResource::TOKEN_PUNCT))
+			nWord++;
+	}
+	nForm += words;
 	nLemma += tr->GetLemmaCount();
 	nPosTag += tr->GetPosTagCount();
 	nHead += tr->GetHeadCount();
