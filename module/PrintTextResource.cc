@@ -89,7 +89,7 @@ Resource *PrintTextResource::ProcessOutputSync(Resource *resource) {
 	int nPosTags = tr->GetPosTagCount();
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
-	*ofs << "<doc id=\"" << tr->GetTextId() << "\">\n";
+	*ofs << "<doc id=\"" << tr->GetTextId() << "\" lang=\"" << tr->GetLanguage() << "\">\n";
 	if (!horizontal) {
 		for (int i = 0; i < nForms; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : TextResource::TOKEN_NONE;

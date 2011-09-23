@@ -99,15 +99,31 @@ string GetDocId(string &s) {
 	return "unknown";
 }
 
+string GetDocLang(string &s) {
+	if (!s.compare(0, 5, "<doc ")) {
+		size_t idb = s.find("lang=\"", 5);
+		if (idb != string::npos) {
+			idb += 6;
+			size_t ide = s.find("\"", idb);
+			if (ide != string::npos)
+				return s.substr(idb, ide-idb);
+		}
+	}
+	return "";
+}
+
 Resource *ReadTextResource::ProcessInputSync(bool sleep) {
 	if (docId.length() == 0) {
 		if (getline(*ifs, docId).eof())
 			return NULL;
 		docId = GetDocId(docId);
+		language = GetDocLang(docId);
 	}
 	TextResource *tr = static_cast<TextResource*>(Resource::GetRegistry()->AcquireResource(textResourceTypeId));
 	tr->SetTextId(docId);
+	tr->SetLanguage(language);
 	docId.clear();
+	language.clear();
 	string s;
 	int flags = TextResource::TOKEN_NONE;
 	int index = 0;
@@ -116,6 +132,7 @@ Resource *ReadTextResource::ProcessInputSync(bool sleep) {
 	while (!getline(*ifs, s).eof()) {
 		if (!s.compare(0, 5, "<doc ")) {
 			docId = GetDocId(s);
+			language = GetDocLang(s);
 			break;
 		}
 		if (!horizontal) {

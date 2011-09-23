@@ -51,6 +51,7 @@ private:
 	int textResourceTypeId;
 	std::ifstream *ifs;
 	std::string docId;
+	std::string language;
 };
 
 inline Module::Type ReadTextResource::GetType() {
