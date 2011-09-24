@@ -1,0 +1,8 @@
+{
+   icu1
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN7icu_4_26Locale10getDefaultEv
+   fun:_ZN7icu_4_213UnicodeString7toLowerEv
+}

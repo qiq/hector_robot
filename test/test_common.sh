@@ -11,6 +11,7 @@ export "PATH=$test_base/test:$PATH"
 export "LD_LIBRARY_PATH=$test_base/module/.libs:$test_base/resource/.libs:$test_base/server/.libs:$test_base/perl/.libs:$test_base/python/.libs:$LD_LIBRARY_PATH"
 export "PERL5LIB=$test_base/perl:$test_base/module/perl:$test_base/resource/perl:$PERL5LIB"
 export "PYTHONPATH=$test_base/python:$test_base/module/python:$test_base/resource/python:$PYTHONPATH"
+VALGRIND_SUPP=$(dirname $(which hector_server))/../share/hector/hector_core.supp
 HECTOR_HOST=localhost:1101
 
 # hector helper functions
@@ -25,7 +26,11 @@ function test_server_start {
 	fi
 	shift
 	hector_server_shutdown 2>/dev/null
-	hector_server_start "$test_base/test/${id}.xml" $server $@
+	if [ -z "$VALGRIND" ]; then
+		hector_server_start "$test_base/test/${id}.xml" -B "$test_base" $server $@
+	else
+		libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --show-reachable=yes --num-callers=40 --trace-children=yes --gen-suppressions=all --suppressions=$VALGRIND_SUPP --suppressions=../hector_robot.supp --log-file=$id.log.valgrind `which hector_server` -c "$test_base/test/${id}.xml" -B "$test_base" -f $server $@ &
+	fi
 	hector_client_wait_dontfail PE_test.run 0
 }
 
@@ -41,7 +46,12 @@ function test_server_batch {
 		return
 	fi
 	shift; shift
-	hector_server_start "$test_base/test/${id}.xml" -f -b $server $@
+	if [ -z "$VALGRIND" ]; then
+
+		hector_server_start "$test_base/test/${id}.xml" -B "$test_base" -f -b $server $@
+	else
+		libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --show-reachable=yes --num-callers=40 --trace-children=yes --gen-suppressions=all --suppressions=$VALGRIND_SUPP --suppressions=../hector_robot.supp --log-file=$id.log.valgrind `which hector_server` -c "$test_base/test/${id}.xml" -B "$test_base" -f -b $server $@
+	fi
 }
 
 function test_compare_result {
@@ -51,4 +61,16 @@ function test_compare_result {
 		return
 	fi
 	diff -u "$test_base/test/${id}.log.correct" "${id}.log.result"
+	result=$?
+	if [ -n "$VALGRIND" ]; then
+		definitely=`grep "definitely lost:" ${id}.log.valgrind | sed -e 's/.*definitely lost: \([0-9,]\+\).*/\1/'|sed -e 's/,//g'`
+		indirectly=`grep "indirectly lost:" ${id}.log.valgrind | sed -e 's/.*indirectly lost: \([0-9,]\+\).*/\1/'|sed -e 's/,//g'`
+		possibly=`grep "possibly lost:" ${id}.log.valgrind | sed -e 's/.*possibly lost: \([0-9,]\+\).*/\1/'|sed -e 's/,//g'`
+		reachable=`grep "still reachable:" ${id}.log.valgrind | sed -e 's/.*still reachable: \([0-9,]\+\).*/\1/'|sed -e 's/,//g'`
+		if [ "$definitely" != "0" -o "$indirectly" != "0" -o "$possibly" != "0" -o "$reachable" != "0" ]; then
+			echo "memleaks: $definitely $indirectly $possibly $reachable"
+			result=1;
+		fi
+	fi
+	exit $result
 }
