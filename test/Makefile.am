@@ -20,6 +20,10 @@ TESTS += normalize.sh
 EXTRA_DIST += normalize.xml normalize.in
 CLEANFILES += normalize.out normalize.log normalize.log.result
 
+TESTS += wordcount.sh
+EXTRA_DIST += wordcount.xml wordcount.in
+CLEANFILES += wordcount.out wordcount.log wordcount.log.result
+
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
 #CLEANFILES += test1.log test1.log.result

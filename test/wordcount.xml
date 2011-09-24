@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+Test Deduplicate module.
+-->
+<Config>
+	<Server id="test" lib="TestServer.la">
+		<threads>1</threads>
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=wordcount.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=TRACE
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_test">
+			<Processor id="P_input">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_load" lib="ReadTextResource.la">
+						<param name="filename" value="$1"/>
+					</Module>
+					<Module id="M_wordcount" lib="WordCount.la"/>
+                                        <Module id="M_output" lib="Null.la">
+                                                <param name="moduleType" value="OUTPUT"/>
+                                        </Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+</Config>
