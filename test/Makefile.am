@@ -2,7 +2,7 @@ TESTS_ENVIRONMENT = PATH='$(HECTOR_CORE_PREFIX)/bin:$(top_srcdir)/test:$(PATH)' 
 
 TESTS =
 EXTRA_DIST = test_common.sh dns_server.pl http_server.pl
-CLEANFILES = test*.log.valgrind
+CLEANFILES = *.log.valgrind
 
 TESTS += deduplicate.sh
 EXTRA_DIST += deduplicate.xml deduplicate.in
@@ -15,6 +15,10 @@ CLEANFILES += deduplicate_para.out deduplicate_para.log deduplicate_para.log.res
 TESTS += detect_language.sh
 EXTRA_DIST += detect_language.xml detect_language.in
 CLEANFILES += detect_language.out detect_language.log detect_language.log.result
+
+TESTS += normalize.sh
+EXTRA_DIST += normalize.xml normalize.in
+CLEANFILES += normalize.out normalize.log normalize.log.result
 
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
