@@ -21,6 +21,8 @@ WordCount::WordCount(ObjectRegistry *objects, const char *id, int threadIndex): 
 	props->Add("items", &WordCount::GetItems);
 	props->Add("wordCount", &WordCount::GetWordCount);
 
+	nParagraph = 0;
+	nSentence = 0;
 	nWord = 0;
 	nForm = 0;
 	nLemma = 0;
@@ -30,7 +32,10 @@ WordCount::WordCount(ObjectRegistry *objects, const char *id, int threadIndex): 
 }
 
 WordCount::~WordCount() {
-	LOG_DEBUG(this, nForm << ", " << nLemma << ", " << nPosTag << ", " << nHead << ", " << nDepRel);
+	LOG_DEBUG(this, "para\tsent\tform\tword\tlemma\tpos\thead\trel");
+	char *wc = GetWordCount("wordCount");
+	LOG_DEBUG(this, wc);
+	free(wc);
 	delete props;
 }
 
@@ -40,7 +45,7 @@ char *WordCount::GetItems(const char *name) {
 
 char *WordCount::GetWordCount(const char *name) {
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "%" PRIu64 " (%" PRIu64 "), %" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64, nForm, nWord, nLemma, nPosTag, nHead, nDepRel);
+	snprintf(buf, sizeof(buf), "%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64, nParagraph, nSentence, nWord, nForm, nLemma, nPosTag, nHead, nDepRel);
 	return strdup(buf);
 }
 
@@ -62,8 +67,13 @@ Resource *WordCount::ProcessSimpleSync(Resource *resource) {
 
 	int words = tr->GetFormCount();
 	for (int i = 0; i < words; i++) {
-		if (!(tr->GetFlags(i) & TextResource::TOKEN_PUNCT))
+		int flags = tr->GetFlags(i);
+		if (!(flags & TextResource::TOKEN_PUNCT))
 			nWord++;
+		if (flags & TextResource::TOKEN_PARAGRAPH_START)
+			nParagraph++;
+		if (flags & TextResource::TOKEN_SENTENCE_START)
+			nSentence++;
 	}
 	nForm += words;
 	nLemma += tr->GetLemmaCount();

@@ -9,13 +9,15 @@
 # Status:
 # not changed
 
-package DetectNoAccents;
+package Unaccent;
 
 use warnings;
 use strict;
 use HectorRobot;
 use Module;
 our @ISA = qw(Module);
+use HectorRobotCommon;
+use utf8;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
@@ -34,13 +36,17 @@ sub ProcessSimple() {
 	return $resource if ($resource->GetTypeString() ne 'TextResource');
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
-	my $nWords = $tr->GetWordCount();
+	my $nWords = $tr->GetFormCount();
 	if ($nWords > 0) {
 		for (my $i = 0; $i < $nWords; $i++) {
-			$tr->SetForm($i, &unaccent($tr->GetForm($i)));
+			my $form = $tr->GetForm($i);
+			utf8::decode($form);
+			$tr->SetForm($i, &HectorRobotCommon::unaccent($form));
 		}
 	} else {
-		$tr->SetText(&unaccent($tr->GetText()));
+		my $text = $tr->GetText();
+		utf8::decode($text);
+		$tr->SetText(&HectorRobotCommon::unaccent($text));
 	}
 	
 	$self->{'items'}++;

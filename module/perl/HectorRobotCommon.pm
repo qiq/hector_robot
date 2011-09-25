@@ -1,12 +1,15 @@
-Package RobotCommon;
+package HectorRobotCommon;
 
 use warnings;
 use strict;
+use utf8;
 
+binmode STDOUT, ":utf8";
 # remove accents from the string
-sub deaccent {
+sub unaccent {
 	my ($s) = @_;
-	return $s unless ($s =~ m/[\xC0-\xFF]/);
+	return $s unless ($s =~ m/[^[:ascii:]]/);
+	$s =~ tr/č/c/;
 	$s =~ tr/ÀÁÂÃÄÅàáâãäåÇçČčĎďÈÉÊËèéêëĚěÌÍÎÏìíîïĽľŇňÑñÒÓÔÕÖØòóôõöøŘřŠšŤťÙÚÛÜùúûüŮůÝÿýŽž/AAAAAAaaaaaaCcCcDdEEEEeeeeEeIIIIiiiiLlNnNnOOOOOOooooooRrSsTtUUUUuuuuUuYyyZz/;
 	my %trans = (
 		'Æ' => 'AE',

@@ -53,6 +53,7 @@ Resource *Normalize::ProcessSimpleSync(Resource *resource) {
 			UErrorCode status = U_ZERO_ERROR;
 			icu::Normalizer::normalize(s16, UNORM_NFC, 0, normalized, status);
 			if (!U_FAILURE(status)) {
+				word.clear();
 				tr->SetForm(i, normalized.toUTF8String(word));
 			} else {
 				LOG_DEBUG(this, "Invalid UTF-8 sequence: " << word);
@@ -68,6 +69,7 @@ Resource *Normalize::ProcessSimpleSync(Resource *resource) {
 		UErrorCode status = U_ZERO_ERROR;
 		icu::Normalizer::normalize(s16, UNORM_NFC, 0, normalized, status);
 		if (!U_FAILURE(status)) {
+			text.clear();
 			tr->SetText(normalized.toUTF8String(text));
 		} else {
 			LOG_DEBUG(this, "Invalid UTF-8 sequence: " << text);
