@@ -24,6 +24,10 @@ TESTS += wordcount.sh
 EXTRA_DIST += wordcount.xml wordcount.in
 CLEANFILES += wordcount.out wordcount.log wordcount.log.result
 
+TESTS += unaccent.sh
+EXTRA_DIST += unaccent.xml unaccent.in
+CLEANFILES += unaccent.out unaccent.log unaccent.log.result
+
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
 #CLEANFILES += test1.log test1.log.result

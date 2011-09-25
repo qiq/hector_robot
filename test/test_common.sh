@@ -29,7 +29,7 @@ function test_server_start {
 	if [ -z "$VALGRIND" ]; then
 		hector_server_start "$test_base/test/${id}.xml" $server $@
 	else
-		libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --show-reachable=yes --num-callers=40 --trace-children=yes --gen-suppressions=all --suppressions=$VALGRIND_SUPP --suppressions=../hector_robot.supp --log-file=$id.log.valgrind `which hector_server` -c "$test_base/test/${id}.xml" -B "$test_base" -f $server $@ &
+		libtool --mode=execute valgrind --tool=memcheck --track-origins=yes --leak-check=full --leak-resolution=high --show-reachable=yes --num-callers=40 --trace-children=yes --gen-suppressions=all --suppressions=$VALGRIND_SUPP --suppressions=../hector_robot.supp --log-file=$id.log.valgrind `which hector_server` -c "$test_base/test/${id}.xml" -f $server $@ &
 	fi
 	hector_client_wait_dontfail PE_test.run 0
 }
