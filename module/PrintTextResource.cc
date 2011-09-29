@@ -83,22 +83,23 @@ Resource *PrintTextResource::ProcessOutputSync(Resource *resource) {
 		return resource;
 	TextResource *tr = static_cast<TextResource*>(resource);
 
-	int nForms = tr->GetFormCount();
 	int nFlags = tr->GetFlagsCount();
+	int nForms = tr->GetFormCount();
 	int nLemmas = tr->GetLemmaCount();
 	int nPosTags = tr->GetPosTagCount();
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
 	*ofs << "<doc id=\"" << tr->GetTextId() << "\" lang=\"" << tr->GetLanguage() << "\">\n";
 	if (!horizontal) {
-		for (int i = 0; i < nForms; i++) {
+		for (int i = 0; i < nFlags; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : TextResource::TOKEN_NONE;
 			if (flags & TextResource::TOKEN_PARAGRAPH_START)
 				*ofs << "<p>\n";
 			if (flags & TextResource::TOKEN_SENTENCE_START)
 				*ofs << "<s>\n";
 			*ofs << (flags & (TextResource::TOKEN_ABBR | TextResource::TOKEN_PUNCT | TextResource::TOKEN_TITLECASE | TextResource::TOKEN_UPPERCASE| TextResource::TOKEN_NUMERIC));
-			*ofs << "\t" << tr->GetForm(i);
+			if (i < nForms)
+				*ofs << "\t" << tr->GetForm(i);
 			if (i < nLemmas)
 				*ofs << "\t" << tr->GetLemma(i);
 			if (i < nPosTags)
