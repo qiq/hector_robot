@@ -9,8 +9,9 @@
 
 #include <config.h>
 
-#include <vector>
 #include <string>
+#include <utility>
+#include <vector>
 #include <log4cxx/logger.h>
 #include "common.h"
 #include "Resource.h"
@@ -56,6 +57,9 @@ public:
 	ResourceInfo *GetResourceInfo();
 	// return string representation of the resource (e.g. for debugging purposes)
 	std::string ToString(Object::LogLevel = Object::INFO);
+	// delete words (index + length pairs or just indices to be deleted)
+	void DeleteWords(std::vector<std::pair<int, int> > &indexLength);
+	void DeleteWords(std::vector<bool> &del);
 
 	// TextResource-specific
 	void SetText(const std::string &text);

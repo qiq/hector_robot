@@ -40,6 +40,8 @@ public:
         int GetSize();
         ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
+        void DeleteWords(std::vector<std::pair<int, int> > &indexLength);
+        void DeleteWords(std::vector<bool> &del);
 
         void SetText(const std::string &text);
         const std::string GetText();
