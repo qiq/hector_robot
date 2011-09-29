@@ -64,16 +64,16 @@ TextResourceInfo::TextResourceInfo() {
 	SetAttrInfoList(l);
 }
 
-void TextResource::DeleteWords(vector<pair<int, int> > &indexLength) {
+void TextResource::DeleteWords(const vector<pair<int, int> > &indexLength) {
 	vector<bool> delIndex(r.flags_size(), false);
-	for (vector<pair<int, int> >::iterator iter = indexLength.begin(); iter != indexLength.end(); ++iter) {
+	for (vector<pair<int, int> >::const_iterator iter = indexLength.begin(); iter != indexLength.end(); ++iter) {
 		for (int i = iter->first; i < iter->first+iter->second; i++)
 			delIndex[i] = true;
 	}
 	DeleteWords(delIndex);
 }
 
-void TextResource::DeleteWords(vector<bool> &del) {
+void TextResource::DeleteWords(const vector<bool> &del) {
 	google::protobuf::RepeatedField<google::protobuf::int32> *flags = r.mutable_flags();
 	google::protobuf::RepeatedPtrField<string> *forms = r.mutable_form();
 	google::protobuf::RepeatedPtrField<string> *lemmas = r.mutable_lemma();
@@ -86,19 +86,23 @@ void TextResource::DeleteWords(vector<bool> &del) {
 		if (del[j]) {
 			// just advance source pointer
 			j++;
-		} else if (i != j) {
-			// copy (swap elements)
-			flags->SwapElements(i, j);
-			if (j < forms->size())
-				forms->SwapElements(i, j);
-			if (j < lemmas->size())
-				lemmas->SwapElements(i, j);
-			if (j < posTags->size())
-				posTags->SwapElements(i, j);
-			if (j < heads->size())
-				heads->SwapElements(i, j);
-			if (j < posTags->size())
-				posTags->SwapElements(i, j);
+		} else {
+			if (i != j) {
+				// copy (swap elements)
+				flags->SwapElements(i, j);
+				if (j < forms->size())
+					forms->SwapElements(i, j);
+				if (j < lemmas->size())
+					lemmas->SwapElements(i, j);
+				if (j < posTags->size())
+					posTags->SwapElements(i, j);
+				if (j < heads->size())
+					heads->SwapElements(i, j);
+				if (j < posTags->size())
+					posTags->SwapElements(i, j);
+			}
+			j++;
+			i++;
 		}
 	}
 	while (i < flags->size())

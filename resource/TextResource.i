@@ -40,8 +40,18 @@ public:
         int GetSize();
         ResourceInfo *GetResourceInfo();
         std::string ToString(Object::LogLevel = Object::INFO);
-        void DeleteWords(std::vector<std::pair<int, int> > &indexLength);
-        void DeleteWords(std::vector<bool> &del);
+        //void DeleteWords(const std::vector<std::pair<int, int> > &indexLength);
+        //void DeleteWords(const std::vector<bool> &del);
+        %extend {
+                // changed for SWIG
+                void DeleteWords(const std::vector<int> &del) {
+                        std::vector<bool> b(del.size());
+                        int i = 0;
+                        for (std::vector<int>::const_iterator iter = del.begin(); iter != del.end(); ++iter)
+                                b[i++] = *iter;
+                        $self->DeleteWords(b);
+                }
+        }
 
         void SetText(const std::string &text);
         const std::string GetText();

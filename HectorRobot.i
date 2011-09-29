@@ -18,6 +18,7 @@ class TextResource;
 %include std_string.i
 %include std_vector.i
 %template(StringVector_hectorrobot) std::vector<std::string>;
+%template(IntVector_hectorrobot) std::vector<int>;
 
 %import Hector.i
 %include IndexResource.i
