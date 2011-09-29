@@ -26,6 +26,7 @@ sub new {
 
 	$self->{'items'} = 0;
 	$self->{'minAccentedRatio'} = 0.1;
+	$self->{'reversed'} = 0;	# we reverse filter
 
 	bless($self, $class);
 	return $self;
@@ -38,6 +39,7 @@ sub ProcessSimple() {
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
 	my $nWords = $tr->GetFormCount();
+	my $totalDeleted = 0;
 	my $accented = 0;
 	my $words = 0;
 	my @deleted;
@@ -46,22 +48,46 @@ sub ProcessSimple() {
 		my $word = $tr->GetForm($i);
 		utf8::decode($word);
 		if ($flags & $HectorRobot::TextResource::TOKEN_PARAGRAPH_START and $i > 0) {
-			if ($accented/$words <= $self->{'minAccentedRatio'}) {
+			my $to_delete = $accented/$words <= $self->{'minAccentedRatio'};
+			$to_delete ^= 1 if ($self->{'reversed'});
+			if ($to_delete) {
 				for (my $j = 0; $j < $words; $j++) {
 					push(@deleted, 1);
 				}
+				$totalDeleted += $words;
 			} else {
 				for (my $j = 0; $j < $words; $j++) {
 					push(@deleted, 0);
 				}
 			}
 			$words = 0;
+			$accented = 0;
 		}
 		$accented++ if (&HectorRobotCommon::is_accented($word));
 		$words++;
 	}
+	if ($words > 0) {
+		my $to_delete = $accented/$words <= $self->{'minAccentedRatio'};
+		$to_delete ^= 1 if ($self->{'reversed'});
+		if ($to_delete) {
+			for (my $j = 0; $j < $words; $j++) {
+				push(@deleted, 1);
+			}
+			$totalDeleted += $words;
+		} else {
+			for (my $j = 0; $j < $words; $j++) {
+				push(@deleted, 0);
+			}
+		}
+	}
 
-	$tr->DeleteWords(\@deleted);
+	if ($totalDeleted < $nWords) {
+		$tr->DeleteWords(\@deleted);
+	} else {
+		$self->LOG_ERROR($resource, "Document deleted: ".$resource->GetTextId());
+		$resource->SetFlag($Hector::Resource::DELETED);
+		return $resource;
+	}
 	
 	$self->{'items'}++;
 	return $resource;
