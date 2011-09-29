@@ -28,6 +28,10 @@ TESTS += unaccent.sh
 EXTRA_DIST += unaccent.xml unaccent.in
 CLEANFILES += unaccent.out unaccent.log unaccent.log.result
 
+TESTS += filter_unaccented.sh
+EXTRA_DIST += filter_unaccented.xml filter_unaccented.in
+CLEANFILES += filter_unaccented.out filter_unaccented.log filter_unaccented.log.result
+
 #TESTS += test1.sh
 #EXTRA_DIST += test1.sh test1_config.xml test1.log.correct test1.data.url
 #CLEANFILES += test1.log test1.log.result
