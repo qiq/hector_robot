@@ -22,4 +22,9 @@ sub unaccent {
 	return $s;
 }
 
+sub is_accented {
+	my ($s) = @_;
+	return $s =~ m/[^[:ascii:]]/;
+}
+
 1;
