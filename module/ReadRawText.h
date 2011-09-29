@@ -7,8 +7,8 @@ Dependencies: none
 
 Parameters:
 items		r/o	Total items processed
-inputFiles	init	List of files to load
-inputListFile	init	File with list of files to load
+filename	init	File(s) to lead.
+listInFile	init	File(s) contain list of files to load (false).
 mark		r/w	After all resources are read, emit MarkResource.
 */
 
@@ -35,15 +35,15 @@ public:
 
 private:
 	int items;		// ObjectLock, items processed
-	char *inputFiles;
-	char *inputListFile;
+	char *filename;
+	bool listInFile;
 	int mark;
 
 	char *GetItems(const char *name);
-	char *GetInputFiles(const char *name);
-        void SetInputFiles(const char *name, const char *value);
-	char *GetInputListFile(const char *name);
-        void SetInputListFile(const char *name, const char *value);
+	char *GetFilename(const char *name);
+        void SetFilename(const char *name, const char *value);
+	char *GetListInFile(const char *name);
+        void SetListInFile(const char *name, const char *value);
 	char *GetMark(const char *name);
 	void SetMark(const char *name, const char *value);
 

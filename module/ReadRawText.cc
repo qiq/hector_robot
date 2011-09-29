@@ -14,14 +14,14 @@ using namespace std;
 
 ReadRawText::ReadRawText(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
-	inputFiles = NULL;
-	inputListFile = NULL;
+	filename = NULL;
+	listInFile = false;
 	mark = -1;
 
 	props = new ObjectProperties<ReadRawText>(this);
 	props->Add("items", &ReadRawText::GetItems);
-	props->Add("inputFiles", &ReadRawText::GetInputFiles, &ReadRawText::SetInputFiles, true);
-	props->Add("inputListFile", &ReadRawText::GetInputListFile, &ReadRawText::SetInputListFile, true);
+	props->Add("filename", &ReadRawText::GetFilename, &ReadRawText::SetFilename, true);
+	props->Add("listInFile", &ReadRawText::GetListInFile, &ReadRawText::SetListInFile, true);
 	props->Add("mark", &ReadRawText::GetMark, &ReadRawText::SetMark);
 
 	textResourceTypeId = -1;
@@ -30,8 +30,7 @@ ReadRawText::ReadRawText(ObjectRegistry *objects, const char *id, int threadInde
 }
 
 ReadRawText::~ReadRawText() {
-	free(inputFiles);
-	free(inputListFile);
+	free(filename);
 
 	delete props;
 }
@@ -40,22 +39,21 @@ char *ReadRawText::GetItems(const char *name) {
 	return int2str(items);
 }
 
-char *ReadRawText::GetInputFiles(const char *name) {
-	return strdup(inputFiles);
+char *ReadRawText::GetFilename(const char *name) {
+	return strdup(filename);
 }
 
-void ReadRawText::SetInputFiles(const char *name, const char *value) {
-	free(inputFiles);
-	inputFiles = strdup(value);
+void ReadRawText::SetFilename(const char *name, const char *value) {
+	free(filename);
+	filename = strdup(value);
 }
 
-char *ReadRawText::GetInputListFile(const char *name) {
-	return strdup(inputListFile);
+char *ReadRawText::GetListInFile(const char *name) {
+	return bool2str(listInFile);
 }
 
-void ReadRawText::SetInputListFile(const char *name, const char *value) {
-	free(inputListFile);
-	inputListFile = strdup(value);
+void ReadRawText::SetListInFile(const char *name, const char *value) {
+	listInFile = str2bool(value);
 }
 
 char *ReadRawText::GetMark(const char *name) {
@@ -74,27 +72,33 @@ bool ReadRawText::Init(vector<pair<string, string> > *params) {
 	if (!props->InitProperties(params))
 		return false;
 
-	// append input files
-	if (inputFiles) {
-		vector<string> v;
-		string s(inputFiles);
-		splitOnWs(v, s);
-		files.insert(files.end(), v.begin(), v.end());
+	if (!filename) {
+		LOG_ERROR(this, "No filename specified.");
+		return false;
 	}
-	// read file and append all files
-	if (inputListFile) {
-		string s;
-		ifstream ifs(inputListFile);
-		if (!ifs.is_open()) {
-			LOG_ERROR(this, "Cannot open file: " << inputListFile);
-			return false;
+
+	// append input files
+	vector<string> v;
+	string s(filename);
+	splitOnWs(v, s);
+
+	if (!listInFile) {
+		files.insert(files.end(), v.begin(), v.end());
+	} else {
+		for (vector<string>::iterator iter = v.begin(); iter != v.end(); ++iter) {
+			ifstream ifs(iter->c_str());
+			if (!ifs.is_open()) {
+				LOG_ERROR(this, "Cannot open file: " << *iter);
+				return false;
+			}
+			string s;
+			while (!getline(ifs, s).eof()) {
+				skipWs(s);
+				if (s.length() > 0)
+					files.push_back(s);
+			}
+			ifs.close();
 		}
-		while (!getline(ifs, s).eof()) {
-			skipWs(s);
-			if (s.length() > 0)
-				files.push_back(s);
-		}
-		ifs.close();
 	}
 
 	if (mark >= 0) {
