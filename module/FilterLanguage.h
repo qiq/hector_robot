@@ -11,8 +11,8 @@ allowedLanguages	r/w	List (space separated) of language codes (ISO639-1) that ar
 disallowedLanguages	r/w	List (space separated) of language codes (ISO639-1) that are not allowed.
 */
 
-#ifndef _MODULES_DEDUPLICATE_H_
-#define _MODULES_DEDUPLICATE_H_
+#ifndef _MODULES_FILTER_LANGUAGE_H_
+#define _MODULES_FILTER_LANGUAGE_H_
 
 #include <config.h>
 
@@ -20,7 +20,6 @@ disallowedLanguages	r/w	List (space separated) of language codes (ISO639-1) that
 #include <tr1/unordered_set>
 #include "common.h"
 #include "Module.h"
-#include "NgramBloomFilter.h"
 #include "ObjectProperties.h"
 
 class FilterLanguage : public Module {

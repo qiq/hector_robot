@@ -101,103 +101,46 @@ Resource *FilterLanguage::ProcessSimpleSync(Resource *resource) {
 	} else {
 		// filter paragraphs (some paragraps may be deleted,
 		// others survive)
-
-		int start = 0;
 		int totalDeleted = 0;
-		vector<unsigned> deleted;	// offset + length of paragragraphs to be deleted
+		vector<bool> deleted(nWords);
+		int idx = 0;
 		int vi = 0;
 		int size = 0;
 		for (int i = 0; i < nWords; i++) {
 			if (tr->GetFlags(i) & TextResource::TOKEN_PARAGRAPH_START) {
 				if (size > 0) {
 					if (allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end() && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end()) {
-						deleted.push_back(start);
-						deleted.push_back(size);
+						for (int j = 0; j < size; j++)
+							deleted[idx++] = true;
 						totalDeleted += size;
+					} else {
+						for (int j = 0; j < size; j++)
+							deleted[idx++] = false;
 					}
 					size = 0;
 				}
-				start = i;
 				vi++;
 			}
 			size++;
 		}
 		if (size > 0) {
 			if (allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end() && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end()) {
-				deleted.push_back(start);
-				deleted.push_back(size);
+				for (int i = 0; i < size; i++)
+					deleted[idx++] = true;
 				totalDeleted += size;
+			} else {
+				for (int i = 0; i < size; i++)
+					deleted[idx++] = false;
 			}
 		}
 
 		// delete duplicated contents
-		if (totalDeleted == nWords) {
+		if (totalDeleted < nWords) {
+			tr->DeleteWords(deleted);
+		} else {
 			// all paragraphs were marked duplicate
 			LOG_DEBUG_R(this, tr, "Not allowed language (" << v[0] << "), document deleted: " << tr->GetTextId());
 			tr->SetFlag(Resource::DELETED);
-		} else if (totalDeleted > 0) {
-			// copy contents of TextResource with deleted paragraphs
-			vector<int> flags;
-			vector<string> forms;
-			vector<string> lemmas;
-			vector<string> posTags;
-			vector<int> heads;
-			vector<string> depRels;
-			int nLemmas = tr->GetLemmaCount();
-			int nPosTags = tr->GetPosTagCount();
-			int nHeads = tr->GetHeadCount();
-			int nDepRels = tr->GetDepRelCount();
-
-			int deletedStart = deleted[0];
-			int deletedEnd = deletedStart+deleted[1]-1;
-			int j = 2;
-			for (int i = 0; i < nWords; i++) {
-				if (i < deletedStart) {
-					// copy contents
-					flags.push_back(tr->GetFlags(i));
-					forms.push_back(tr->GetForm(i));
-					if (i < nLemmas)
-						lemmas.push_back(tr->GetLemma(i));
-					if (i < nPosTags)
-						posTags.push_back(tr->GetPosTag(i));
-					if (i < nHeads)
-						heads.push_back(tr->GetHead(i));
-					if (i < nDepRels)
-						depRels.push_back(tr->GetDepRel(i));
-				} else {
-					// ignore contents
-					if (i == deletedEnd) {
-						// next delted paragraph
-						if (j+1 < (int)deleted.size()) {
-							deletedStart = deleted[j];
-							deletedEnd = deletedStart+deleted[j+1]-1;
-							j += 2;
-						} else {
-							deletedStart = nWords+1;
-						}
-					}
-				}
-			}
-
-			// really change contents
-			tr->ClearFlags();
-			tr->ClearForm();
-			tr->ClearLemma();
-			tr->ClearPosTag();
-			tr->ClearHead();
-			tr->ClearDepRel();
-			for (int i = 0; i < (int)forms.size(); i++) {
-				tr->SetFlags(i, flags[i]);
-				tr->SetForm(i, forms[i]);
-				if (i < (int)lemmas.size())
-					tr->SetLemma(i, lemmas[i]);
-				if (i < (int)posTags.size())
-					tr->SetPosTag(i, posTags[i]);
-				if (i < (int)heads.size())
-					tr->SetHead(i, heads[i]);
-				if (i < (int)depRels.size())
-					tr->SetDepRel(i, depRels[i]);
-			}
 		}
 	}
 
