@@ -117,3 +117,7 @@ DetectLanguage_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextRe
 module_LTLIBRARIES += FilterLanguage.la
 FilterLanguage_la_SOURCES = FilterLanguage.h FilterLanguage.cc
 FilterLanguage_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += FilterUnrecognized.la
+FilterUnrecognized_la_SOURCES = FilterUnrecognized.h FilterUnrecognized.cc
+FilterUnrecognized_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
