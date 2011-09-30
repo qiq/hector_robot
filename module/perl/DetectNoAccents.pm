@@ -5,8 +5,8 @@
 # Dependencies:
 # 
 # Parameters:
-# items			r/o	n/a	Total items processed
-# unaccentedWordsFile	r/o	n/a	File containing unaccented words, one word per line.
+# items		r/o	n/a	Total items processed
+# filename	r/o	n/a	File containing unaccented words, one word per line.
 # 
 # Status:
 # not changed
@@ -25,7 +25,7 @@ sub new {
 	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
-	$self->{'unaccentedWordsFile'} = "";
+	$self->{'filename'} = "";
 
 	$self->{'_words'} = {};
 
@@ -45,13 +45,13 @@ sub Init {
 		}
 	}
 
-	if ($self->{'unaccentedWordsFile'} eq "") {
-		$self->LOG_ERROR("unaccentedWordsFile not defined");
+	if ($self->{'filename'} eq "") {
+		$self->LOG_ERROR("filename not defined");
 		return 0;
 	}
 	my $fd;
-	if (!open($fd, "<".$self->{'unaccentedWordsFile'})) {
-		$self->LOG_ERROR("Cannot open file: ".$self->{'unaccentedWordsFile'}.": $!";
+	if (!open($fd, "<".$self->{'filename'})) {
+		$self->LOG_ERROR("Cannot open file: ".$self->{'filename'}.": $!");
 		return 0;
 	}
 	while (<$fd>) {
@@ -69,11 +69,12 @@ sub ProcessSimple() {
 	return $resource if ($resource->GetTypeString() ne 'TextResource');
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
-	my $nWords = $tr->GetWordCount();
+	my $nWords = $tr->GetFormCount();
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $word = $tr->GetForm($i);
-		if (exists $self->{'_words'}->{$word})
-			$tr->SetFlags($i, $tr->GetFlags($i) | $HectorRobot::TOKEN_UNRECOGNIZED);
+		if (exists $self->{'_words'}->{$word}) {
+			$tr->SetFlags($i, $tr->GetFlags($i) | $HectorRobot::TextResource::TOKEN_UNRECOGNIZED);
+		}
 	}
 	
 	$self->{'items'}++;

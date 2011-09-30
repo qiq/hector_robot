@@ -4,14 +4,14 @@
 # Dependencies:
 # 
 # Parameters:
-# items			r/o	n/a	Total items processed
-# maxWords		r/o	n/a	Max number of words to save in a file.
-# unaccentedWordsFile	r/o	n/a	File containing unaccented words, one word per line.
+# items		r/o	n/a	Total items processed
+# maxWords	r/o	n/a	Max number of words to save in a file.
+# filename	r/o	n/a	File containing unaccented words, one word per line.
 # 
 # Status:
 # not changed
 
-package DetectNoAccents;
+package DetectNoAccentsTrain;
 
 use warnings;
 use strict;
@@ -19,6 +19,7 @@ use HectorRobot;
 use Module;
 our @ISA = qw(Module);
 use HectorRobotCommon;
+use utf8;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
@@ -27,9 +28,8 @@ sub new {
 
 	$self->{'items'} = 0;
 	$self->{'maxWords'} = 100000;
-	$self->{'unaccentedWordsFile'} = "";
+	$self->{'filename'} = "";
 
-	$self->{'_fd'} = undef;
 	$self->{'_freq'} = {};
 
 	bless($self, $class);
@@ -48,32 +48,35 @@ sub Init {
 		}
 	}
 
-	if ($self->{'unaccentedWordsFile'} eq "") {
-		$self->LOG_ERROR("unaccentedWordsFile not defined");
+	if ($self->{'filename'} eq "") {
+		$self->LOG_ERROR("filename not defined");
 		return 0;
 	}
-	if (!open($self->{'_fd'}, ">".$self->{'unaccentedWordsFile'})) {
-		$self->LOG_ERROR("Cannot open file: ".$self->{'unaccentedWordsFile'}.": $!";
-		return 0;
-	}
-
 	return 1;
 }
 
-sub DESTROY {
+sub Finish {
+	my ($self) = @_;
 	my @a = sort { $self->{'_freq'}->{$b} <=> $self->{'_freq'}->{$a} } (keys %{$self->{'_freq'}});
 	my @result;
 	foreach my $a (@a) {
-		my $da = &deaccent($a);
+		my $da = &HectorRobotCommon::unaccent($a);
 		next if ($da eq $a);
-		next if (defined $freq{$da} and $self->{'_freq'}->{$da} > $self->{'_freq'}->{$a}*0.1);
+		next if (defined $self->{'_freq'}->{$da} and $self->{'_freq'}->{$da} > $self->{'_freq'}->{$a}*0.1);
 		push(@result, $da);
 	}
-	foreach my $r (splice(@result, 0, $self->{'maxWords'})) {
-		print $self->{'_fd'} "$r\n";
+	my $fd;
+	if (not open($fd, ">:encoding(UTF-8)", $self->{'filename'})) {
+		$self->LOG_ERROR("Cannot open file: ".$self->{'filename'}.": $!");
+		return 0;
 	}
-	
-	close($self->{'_fd'});
+	foreach my $r (splice(@result, 0, $self->{'maxWords'})) {
+		print $fd "$r\n";
+	}
+	close($fd);
+}
+
+sub DESTROY {
 }
 
 sub ProcessSimple() {
@@ -82,9 +85,10 @@ sub ProcessSimple() {
 	return $resource if ($resource->GetTypeString() ne 'TextResource');
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
-	my $nWords = $tr->GetWordCount();
+	my $nWords = $tr->GetFormCount();
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $word = $tr->GetForm($i);
+		utf8::decode($word);
 		$self->{'_freq'}->{$word}++;
 	}
 	
