@@ -16,6 +16,7 @@ FilterUnrecognized::FilterUnrecognized(ObjectRegistry *objects, const char *id, 
 	props = new ObjectProperties<FilterUnrecognized>(this);
 	props->Add("items", &FilterUnrecognized::GetItems);
 	props->Add("maxUnrecognizedRatio", &FilterUnrecognized::GetMaxUnrecognizedRatio, &FilterUnrecognized::SetMaxUnrecognizedRatio);
+	props->Add("reversed", &FilterUnrecognized::GetReversed, &FilterUnrecognized::SetReversed);
 }
 
 FilterUnrecognized::~FilterUnrecognized() {
@@ -32,6 +33,14 @@ char *FilterUnrecognized::GetMaxUnrecognizedRatio(const char *name) {
 
 void FilterUnrecognized::SetMaxUnrecognizedRatio(const char *name, const char *value) {
 	maxUnrecognizedRatio = str2double(value);
+}
+
+char *FilterUnrecognized::GetReversed(const char *name) {
+	return bool2str(reversed);
+}
+
+void FilterUnrecognized::SetReversed(const char *name, const char *value) {
+	reversed = str2bool(value);
 }
 
 bool FilterUnrecognized::Init(vector<pair<string, string> > *params) {
@@ -54,12 +63,15 @@ Resource *FilterUnrecognized::ProcessSimpleSync(Resource *resource) {
 	int unrecognized = 0;
 	int words = 0;
 	int nWords = tr->GetFormCount();
-	vector<bool> deleted;
+	vector<bool> deleted(nWords);
 	int idx = 0;
 	for (int i = 0; i < nWords; i++) {
 		int flags = tr->GetFlags(i);
 		if (i > 0 && flags & TextResource::TOKEN_PARAGRAPH_START) {
-			if ((double)unrecognized/words > maxUnrecognizedRatio) {
+			bool del = (double)unrecognized/words > maxUnrecognizedRatio;
+			if (reversed)
+				del = del ? false : true;
+			if (del) {
 				for (int i = 0; i < words; i++)
 					deleted[idx++] = true;
 				totalDeleted += words;
@@ -76,7 +88,10 @@ Resource *FilterUnrecognized::ProcessSimpleSync(Resource *resource) {
 		words++;
 	}
 	if (words > 0) {
-		if ((double)unrecognized/words > maxUnrecognizedRatio) {
+		bool del = (double)unrecognized/words > maxUnrecognizedRatio;
+		if (reversed)
+			del = del ? false : true;
+		if (del) {
 			for (int i = 0; i < words; i++)
 				deleted[idx++] = true;
 			totalDeleted += words;

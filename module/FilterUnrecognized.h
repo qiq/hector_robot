@@ -8,6 +8,7 @@ Dependencies: none
 Parameters:
 items			r/o	Total items processed
 maxUnrecognizedRatio	r/w	More unrecognized words means to discard the paragraph.
+reversed		r/w	Inverse meaning of previous argument (for debugging).
 */
 
 #ifndef _MODULES_FILTER_UNRECOGNIZED_H_
@@ -31,10 +32,13 @@ public:
 private:
 	int items;		// ObjectLock, items processed
 	double maxUnrecognizedRatio;
+	bool reversed;
 
 	char *GetItems(const char *name);
 	char *GetMaxUnrecognizedRatio(const char *name);
         void SetMaxUnrecognizedRatio(const char *name, const char *value);
+	char *GetReversed(const char *name);
+        void SetReversed(const char *name, const char *value);
 
 	ObjectProperties<FilterUnrecognized> *props;
 	char *GetPropertySync(const char *name);
