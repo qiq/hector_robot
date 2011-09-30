@@ -1,0 +1,35 @@
+- train data: vezmu 1. diskusi, filtruj jen accented, vyberu top slova
+
+find cz_data/chytrazena-diskuse/ -type f >cz_data/chytrazena-diskuse.list
+hector_server -c Unaccented.xml -fb train_data cz_data/chytrazena-diskuse.list cz_top_words.txt
+
+M_wc1[0]: para	sent	form	word	lemma	pos	head	rel
+M_wc1[0]: 542118	846967	11299150	13455807	0	0	0	0
+M_wc2[0]: para	sent	form	word	lemma	pos	head	rel
+M_wc2[0]: 436372	724887	10158337	11963076	0	0	0	0
+
+- test data: vezmu 2. diskusi, odfiltruju jen accented (cz_accented.hr.gz), vezmu vse a odaccentuju (cz_unaccented.hr.gz)
+
+find cz_data/auto-diskuse/ -type f >cz_data/auto-diskuse.list
+hector_server -c Unaccented.xml -fb test_data_accented cz_data/auto-diskuse.list cz_accented.hr.gz+
+
+M_wc1[0]: para	sent	form	word	lemma	pos	head	rel
+M_wc1[0]: 393673	1391118	21087050	26307860	0	0	0	0
+M_wc2[0]: para	sent	form	word	lemma	pos	head	rel
+M_wc2[0]: 189463	779415	11700884	14445180	0	0	0	0
+
+hector_server -c Unaccented.xml -fb test_data_unaccented cz_data/auto-diskuse.list cz_unaccented.hr.gz
+
+M_wc1[0]: para	sent	form	word	lemma	pos	head	rel
+M_wc1[0]: 393673	1391118	21087050	26307860	0	0	0	0
+
+- vezmi nekolik hodnot thresholdu, otestuj, kolik se vyfiltruje z cz_accented.hr.gz a cz_unaccented.hr.gz
+
+threshold.sh
+
+- otaguj data (2. diskusi, cz_accented + cz_unaccented), opet s ruznymi hodnotami thresholdu otestuj
+
+hector_server -c Unaccented.xml -fb tag cz_accented.hr.gz cz_accented_tagged.hr.gz
+hector_server -c Unaccented.xml -fb tag cz_unaccented.hr.gz cz_unaccented_tagged.hr.gz
+
+threshold_tagged.sh

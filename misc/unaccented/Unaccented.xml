@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Config SYSTEM "hector_config.dtd">
+<!--
+Unaccented: train and test filtering of unaccented text (such as forum
+messages).
+
+-->
+<Config>
+	<!-- Prepare train data: filter just paragraphs, that contain at least 0.2
+	accented words, select top words.
+	args: input_file, top_words_output_file
+	-->
+	<Server id="train_data">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="ReadRawText.la">
+						<param name="filename" value="$1"/>
+						<param name="listInFile" value="true"/>
+					</Module>
+					<Module id="M_tokenizer" lib="Tokenize.la">
+						<param name="maxSentenceLength" value="200"/>
+						<param name="maxWordLength" value="100"/>
+						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
+						<param name="markParagraphs" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterUnaccented.pm" type="perl">
+						<param name="minAccentedRatio" value="0.2"/>
+						<param name="reversed" value="0"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<Module id="M_filter2" lib="DetectNoAccentsTrain.pm" type="perl">
+						<param name="filename" value="$2"/>
+						<param name="maxWords" value="100000"/>
+					</Module>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<!-- Prepare accented test data: filter just paragraphs, that contain at least 0.2
+	accented words.
+	args: input_file, output_file
+	-->
+	<Server id="test_data_accented">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="ReadRawText.la">
+						<param name="filename" value="$1"/>
+						<param name="listInFile" value="true"/>
+					</Module>
+					<Module id="M_tokenizer" lib="Tokenize.la">
+						<param name="maxSentenceLength" value="200"/>
+						<param name="maxWordLength" value="100"/>
+						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
+						<param name="markParagraphs" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterUnaccented.pm" type="perl">
+						<param name="minAccentedRatio" value="0.2"/>
+						<param name="reversed" value="0"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<!-- Prepare unaccented test data: unaccent all text.
+	args: input_file, output_file
+	-->
+	<Server id="test_data_unaccented">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="ReadRawText.la">
+						<param name="filename" value="$1"/>
+						<param name="listInFile" value="true"/>
+					</Module>
+					<Module id="M_tokenizer" lib="Tokenize.la">
+						<param name="maxSentenceLength" value="200"/>
+						<param name="maxWordLength" value="100"/>
+						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
+						<param name="markParagraphs" value="true"/>
+					</Module>
+					<Module id="M_filter" lib="Unaccent.pm" type="perl"/>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<!-- Run filtering on file, report result.
+	args: input_file, top_words.txt, threshold
+	-->
+	<Server id="filter_unaccented">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_mark" lib="DetectNoAccents.pm" type="perl">
+						<param name="filename" value="$2"/>
+					</Module>
+					<Module id="M_filter" lib="FilterUnrecognized.la">
+						<param name="maxUnrecognizedRatio" value="$3"/>
+						<param name="reversed" value="false"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<!--Module id="M_output" lib="Save.la">
+						<param name="filename" value="$4"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module-->
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<!-- tag: Tag data using Featurama tagger
+	-->
+	<Server id="tag">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_tag" lib="TagFeaturama.la">
+						<param name="useGuesser" value="true"/>
+						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
+						<param name="taggerPrefix" value="share/featurama/cs/default"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<!-- Run filtering on file, but rely on the morphology for marking unknown words.
+	args: input_file, threshold
+	-->
+	<Server id="filter_unaccented_tagged">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterUnrecognized.la">
+						<param name="maxUnrecognizedRatio" value="$3"/>
+						<param name="reversed" value="false"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<!--Module id="M_output" lib="Save.la">
+						<param name="filename" value="$4"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module-->
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="dump">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_output" lib="PrintTextResource.la">
+						<param name="filename" value="/dev/stdout"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+</Config>
