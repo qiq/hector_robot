@@ -33,13 +33,41 @@ WebCorpus: several task that process web corpus files:
 					<Module id="M_tokenizer" lib="Tokenize.la">
 						<param name="maxSentenceLength" value="200"/>
 						<param name="maxWordLength" value="100"/>
-						<param name="tokenizerLibrary" value="Tokenizer_cs_CZ.la"/>
+						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$3"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="filterLanguage">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=wordcount_$1.log
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$2"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wordcount" lib="WordCount.la"/>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
 					</Module>
 				</modules>
 			</Processor>
