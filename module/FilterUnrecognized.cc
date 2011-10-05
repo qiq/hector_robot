@@ -68,7 +68,7 @@ Resource *FilterUnrecognized::ProcessSimpleSync(Resource *resource) {
 	for (int i = 0; i < nWords; i++) {
 		int flags = tr->GetFlags(i);
 		if (i > 0 && flags & TextResource::TOKEN_PARAGRAPH_START) {
-			bool del = (double)unrecognized/words > maxUnrecognizedRatio;
+			bool del = unrecognized >= 2 && (double)unrecognized/words > maxUnrecognizedRatio;
 			if (reversed)
 				del = del ? false : true;
 			if (del) {
@@ -88,7 +88,7 @@ Resource *FilterUnrecognized::ProcessSimpleSync(Resource *resource) {
 		words++;
 	}
 	if (words > 0) {
-		bool del = (double)unrecognized/words > maxUnrecognizedRatio;
+		bool del = unrecognized >= 2 && (double)unrecognized/words > maxUnrecognizedRatio;
 		if (reversed)
 			del = del ? false : true;
 		if (del) {
