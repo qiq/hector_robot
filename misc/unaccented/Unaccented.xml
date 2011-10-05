@@ -39,7 +39,7 @@ messages).
 						<param name="reversed" value="0"/>
 					</Module>
 					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_filter2" lib="DetectNoAccentsTrain.pm" type="perl">
+					<Module id="M_filter2" lib="FilterMissingAccentsTrain.pm" type="perl">
 						<param name="filename" value="$2"/>
 						<param name="maxWords" value="100000"/>
 					</Module>
@@ -120,7 +120,10 @@ messages).
 						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
-					<Module id="M_filter" lib="Unaccent.pm" type="perl"/>
+					<Module id="M_filter" lib="FilterUnaccented.pm" type="perl">
+						<param name="minAccentedRatio" value="0"/>
+					</Module>
+					<Module id="M_filter2" lib="Unaccent.pm" type="perl"/>
 					<Module id="M_wc1" lib="WordCount.la"/>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
@@ -154,12 +157,11 @@ messages).
 						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_wc1" lib="WordCount.la"/>
-					<Module id="M_mark" lib="DetectNoAccents.pm" type="perl">
+					<Module id="M_mark" lib="FilterMissingAccents.pm" type="perl">
+						<param name="paragraphLevel" value="1"/>
 						<param name="filename" value="$2"/>
-					</Module>
-					<Module id="M_filter" lib="FilterUnrecognized.la">
-						<param name="maxUnrecognizedRatio" value="$3"/>
-						<param name="reversed" value="false"/>
+						<param name="minAccentedRatio" value="$3"/>
+						<param name="maxInvalidRatio" value="$4"/>
 					</Module>
 					<Module id="M_wc2" lib="WordCount.la"/>
 					<!--Module id="M_output" lib="Save.la">
@@ -233,7 +235,7 @@ messages).
 					</Module>
 					<Module id="M_wc1" lib="WordCount.la"/>
 					<Module id="M_filter" lib="FilterUnrecognized.la">
-						<param name="maxUnrecognizedRatio" value="$3"/>
+						<param name="maxUnrecognizedRatio" value="$2"/>
 						<param name="reversed" value="false"/>
 					</Module>
 					<Module id="M_wc2" lib="WordCount.la"/>

@@ -33,3 +33,6 @@ hector_server -c Unaccented.xml -fb tag cz_accented.hr.gz cz_accented_tagged.hr.
 hector_server -c Unaccented.xml -fb tag cz_unaccented.hr.gz cz_unaccented_tagged.hr.gz
 
 threshold_tagged.sh
+
+Delame to ted jinak, neni potreba optimalizovat parametr -- text je unaccented,
+pokud obsahuje vice slov ze seznamu (cz_top_words.txt), nez akcentovanych.
