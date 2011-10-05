@@ -20,7 +20,7 @@ Split: split input file according to the TextResource TextId prefix.
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=split.log
+			log4j.appender.LOGFILE.File=deduplicated/split.log
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -31,11 +31,12 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="deduplicated.hr.gz"/>
+						<param name="filename" value="deduplicated/all.hr.gz"/>
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_wordcount" lib="IdPrefixToStatus.pm" type="perl">
+					<Module id="M_id" lib="IdPrefixToStatus.pm" type="perl">
+						<param name="prefixRE" value="^data\/[^\/]+\/[^\/]+\/"/>
 					</Module>
 				</modules>
 				<output>

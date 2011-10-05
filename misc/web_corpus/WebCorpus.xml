@@ -17,7 +17,7 @@ WebCorpus: several task that process web corpus files:
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=tokenized/tokenize_$1.log
+			log4j.appender.LOGFILE.File=$3
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -28,7 +28,8 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="ReadRawText.la">
-						<param name="inputListFile" value="$2"/>
+						<param name="filename" value="$1"/>
+						<param name="listInFile" value="true"/>
 					</Module>
 					<Module id="M_tokenizer" lib="Tokenize.la">
 						<param name="maxSentenceLength" value="200"/>
@@ -36,6 +37,44 @@ WebCorpus: several task that process web corpus files:
 						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
+					<Module id="M_normalize" lib="Normalize.la"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="deduplicate_all">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=$4
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$2"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+                                        <Module id="M_deduplicate" lib="Deduplicate.la">
+                                                <param name="deduplicateParagraphs" value="true"/>
+                                                <param name="totalSize" value="$1"/>
+                                                <param name="threshold" value="0.3"/>
+                                                <param name="ngram" value="8"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$3"/>
 						<param name="saveResourceType" value="false"/>
@@ -46,11 +85,11 @@ WebCorpus: several task that process web corpus files:
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="filterLanguage">
+	<Server id="filter_unaccented">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=wordcount_$1.log
+			log4j.appender.LOGFILE.File=$4
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -61,24 +100,30 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
+						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_wordcount" lib="WordCount.la"/>
-					<Module id="M_output" lib="Null.la">
-						<param name="moduleType" value="OUTPUT"/>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterMissingAccents.pm" type="perl">
+						<param name="filename" value="$3"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
 					</Module>
 				</modules>
 			</Processor>
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="wordcount">
+	<Server id="detect_language">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=wordcount_$1.log
+			log4j.appender.LOGFILE.File=$4
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -89,46 +134,80 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
+						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_wordcount" lib="WordCount.la"/>
-					<Module id="M_output" lib="Null.la">
-						<param name="moduleType" value="OUTPUT"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="deduplicate">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=deduplicated/deduplicate_$1.log
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
-						<param name="resourceType" value="TextResource"/>
-					</Module>
-					<Module id="M_deduplicate" lib="Deduplicate.la">
-						<param name="deduplicateParagraphs" value="true"/>
-						<param name="totalSize" value="$4"/>
-						<param name="threshold" value="0.3"/>
-						<param name="ngram" value="8"/>
+					<Module id="M_detect" lib="DetectLanguage.la">
+						<param name="paragraphLevel" value="$3"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$3"/>
+						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="filter_language">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=$4
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterLanguage.la">
+						<param name="allowedLanguages" value="$3"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="split">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.Target=System.err
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+						<param name="maxSizePerFile" value="$3"/>
 					</Module>
 				</modules>
 			</Processor>
@@ -261,7 +340,7 @@ WebCorpus: several task that process web corpus files:
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="split">
+	<Server id="wordcount">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
@@ -279,11 +358,9 @@ WebCorpus: several task that process web corpus files:
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-						<param name="maxItemsPerFile" value="$3"/>
+					<Module id="M_wordcount" lib="WordCount.la"/>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
 					</Module>
 				</modules>
 			</Processor>
@@ -310,6 +387,7 @@ WebCorpus: several task that process web corpus files:
 					</Module>
 					<Module id="M_output" lib="PrintTextResource.la">
 						<param name="filename" value="/dev/stdout"/>
+						<param name="horizontal" value="true"/>
 					</Module>
 				</modules>
 			</Processor>
