@@ -26,7 +26,7 @@ sub new {
 	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
-	$self->{'prefixRE'} = "data\/[^\/]+/";
+	$self->{'prefixRE'} = "^data\/[^\/]+\/";
 
 	$self->{'_prefixes'} = {};
 
