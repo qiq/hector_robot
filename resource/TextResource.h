@@ -140,7 +140,11 @@ inline bool TextResource::Skip(ResourceInputStream &input) {
 }
 
 inline int TextResource::GetSize() {
-	return 32;
+	if (r.has_text() && r.text().size() > 0) {
+		return r.text().size();
+	} else {
+		return r.flags().size();
+	}
 }
 
 inline ResourceInfo *TextResource::GetResourceInfo() {
