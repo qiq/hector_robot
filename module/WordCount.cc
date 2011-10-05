@@ -32,7 +32,7 @@ WordCount::WordCount(ObjectRegistry *objects, const char *id, int threadIndex): 
 }
 
 WordCount::~WordCount() {
-	LOG_DEBUG(this, "para\tsent\tform\tword\tlemma\tpos\thead\trel");
+	LOG_DEBUG(this, "doc\tpara\tsent\tform\tword\tlemma\tpos\thead\trel");
 	char *wc = GetWordCount("wordCount");
 	LOG_DEBUG(this, wc);
 	free(wc);
@@ -45,7 +45,7 @@ char *WordCount::GetItems(const char *name) {
 
 char *WordCount::GetWordCount(const char *name) {
 	char buf[1024];
-	snprintf(buf, sizeof(buf), "%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64, nParagraph, nSentence, nWord, nForm, nLemma, nPosTag, nHead, nDepRel);
+	snprintf(buf, sizeof(buf), "%d\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64"\t%"PRIu64, items, nParagraph, nSentence, nWord, nForm, nLemma, nPosTag, nHead, nDepRel);
 	return strdup(buf);
 }
 
@@ -80,6 +80,8 @@ Resource *WordCount::ProcessSimpleSync(Resource *resource) {
 	nPosTag += tr->GetPosTagCount();
 	nHead += tr->GetHeadCount();
 	nDepRel += tr->GetDepRelCount();
+
+	items++;
 
 	return resource;
 }
