@@ -1,23 +1,25 @@
-# DetectNoAccents.pm, simple, perl
-# Mark words (using TOKEN_UNRECOGNIZED) that are unaccented and do not occur in
-# common text.
+# FilterMissingAccentsTrain.pm, simple, perl
+# Extract top N words that do not occur un-accented (save un-accented variant of words).
 # 
 # Dependencies:
 # 
 # Parameters:
 # items		r/o	n/a	Total items processed
+# maxWords	r/o	n/a	Max number of words to save in a file.
 # filename	r/o	n/a	File containing unaccented words, one word per line.
 # 
 # Status:
 # not changed
 
-package DetectNoAccents;
+package FilterMissingAccentsTrain;
 
 use warnings;
 use strict;
 use HectorRobot;
 use Module;
 our @ISA = qw(Module);
+use HectorRobotCommon;
+use utf8;
 
 sub new {
 	my ($proto, $object, $id, $threadIndex) = @_;
@@ -25,9 +27,10 @@ sub new {
 	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
+	$self->{'maxWords'} = 100000;
 	$self->{'filename'} = "";
 
-	$self->{'_words'} = {};
+	$self->{'_freq'} = {};
 
 	bless($self, $class);
 	return $self;
@@ -49,18 +52,31 @@ sub Init {
 		$self->LOG_ERROR("filename not defined");
 		return 0;
 	}
+	return 1;
+}
+
+sub Finish {
+	my ($self) = @_;
+	my @a = sort { $self->{'_freq'}->{$b} <=> $self->{'_freq'}->{$a} } (keys %{$self->{'_freq'}});
+	my @result;
+	foreach my $a (@a) {
+		my $da = &HectorRobotCommon::unaccent($a);
+		next if ($da eq $a);
+		next if (defined $self->{'_freq'}->{$da} and $self->{'_freq'}->{$da} > $self->{'_freq'}->{$a}*0.05);
+		push(@result, $da);
+	}
 	my $fd;
-	if (!open($fd, "<".$self->{'filename'})) {
+	if (not open($fd, ">:encoding(UTF-8)", $self->{'filename'})) {
 		$self->LOG_ERROR("Cannot open file: ".$self->{'filename'}.": $!");
 		return 0;
 	}
-	while (<$fd>) {
-		chomp;
-		$self->{'_words'}->{$_} = 1;
+	foreach my $r (splice(@result, 0, $self->{'maxWords'})) {
+		print $fd "$r\n";
 	}
 	close($fd);
+}
 
-	return 1;
+sub DESTROY {
 }
 
 sub ProcessSimple() {
@@ -72,9 +88,8 @@ sub ProcessSimple() {
 	my $nWords = $tr->GetFormCount();
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $word = $tr->GetForm($i);
-		if (exists $self->{'_words'}->{$word}) {
-			$tr->SetFlags($i, $tr->GetFlags($i) | $HectorRobot::TextResource::TOKEN_UNRECOGNIZED);
-		}
+		utf8::decode($word);
+		$self->{'_freq'}->{$word}++;
 	}
 	
 	$self->{'items'}++;
