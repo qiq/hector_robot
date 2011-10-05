@@ -94,13 +94,14 @@ Resource *FilterLanguage::ProcessSimpleSync(Resource *resource) {
 	splitOnWs(v, langs);
 	if (v.size() == 1) {
 		// whole document
-		if (allowedLanguagesSet.find(v[0]) == allowedLanguagesSet.end() && disallowedLanguagesSet.find(v[0]) != disallowedLanguagesSet.end()) {
+		if ((allowedLanguagesSet.size() > 0 && allowedLanguagesSet.find(v[0]) == allowedLanguagesSet.end()) || (disallowedLanguagesSet.size() > 0 && disallowedLanguagesSet.find(v[0]) != disallowedLanguagesSet.end())) {
 			LOG_DEBUG_R(this, tr, "Not allowed language (" << v[0] << "), document deleted: " << tr->GetTextId());
 			tr->SetFlag(Resource::DELETED);
 		}
 	} else {
 		// filter paragraphs (some paragraps may be deleted,
 		// others survive)
+		vector<string> languages;
 		int totalDeleted = 0;
 		vector<bool> deleted(nWords);
 		int idx = 0;
@@ -109,34 +110,37 @@ Resource *FilterLanguage::ProcessSimpleSync(Resource *resource) {
 		for (int i = 0; i < nWords; i++) {
 			if (tr->GetFlags(i) & TextResource::TOKEN_PARAGRAPH_START) {
 				if (size > 0) {
-					if (allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end() && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end()) {
+					if ((allowedLanguagesSet.size() > 0 && allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end()) || (disallowedLanguagesSet.size() > 0 && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end())) {
 						for (int j = 0; j < size; j++)
 							deleted[idx++] = true;
 						totalDeleted += size;
 					} else {
 						for (int j = 0; j < size; j++)
 							deleted[idx++] = false;
+						languages.push_back(v[vi]);
 					}
 					size = 0;
+					vi++;
 				}
-				vi++;
 			}
 			size++;
 		}
 		if (size > 0) {
-			if (allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end() && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end()) {
+			if ((allowedLanguagesSet.size() > 0 && allowedLanguagesSet.find(v[vi]) == allowedLanguagesSet.end()) || (disallowedLanguagesSet.size() > 0 && disallowedLanguagesSet.find(v[vi]) != disallowedLanguagesSet.end())) {
 				for (int i = 0; i < size; i++)
 					deleted[idx++] = true;
 				totalDeleted += size;
 			} else {
 				for (int i = 0; i < size; i++)
 					deleted[idx++] = false;
+				languages.push_back(v[vi]);
 			}
 		}
 
 		// delete duplicated contents
 		if (totalDeleted < nWords) {
 			tr->DeleteWords(deleted);
+			tr->SetLanguage(join(' ', languages));
 		} else {
 			// all paragraphs were marked duplicate
 			LOG_DEBUG_R(this, tr, "Not allowed language (" << v[0] << "), document deleted: " << tr->GetTextId());
