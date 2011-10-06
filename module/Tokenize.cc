@@ -32,6 +32,29 @@ Tokenize::Tokenize(ObjectRegistry *objects, const char *id, int threadIndex): Mo
 	finish = NULL;
 	current = 0;
 	lookahead = 2;
+
+	eosToken.insert(".");
+	eosToken.insert("?");
+	eosToken.insert("!");
+	eosToken.insert("。");	// #3002
+	eosToken.insert("⁇");	// #2047
+	eosToken.insert("⁈");	// #2048
+	eosToken.insert("⁉");	// #2049
+	eosToken.insert("‽");	// #203D
+	eosToken.insert("‼");	// #203C
+	eosToken.insert("․");	// #2024
+	eosToken.insert("‥");	// #2025
+	eosToken.insert("…");	// #2026
+	eosToken.insert("‧");	// #2027
+	eosToken.insert("·");	// #00B7
+	eosToken.insert("⸱");	// #2E31
+	eosToken.insert("⸰");	// #2E30
+	eosToken.insert("｡");	// #FF61
+	eosToken.insert("！");	// #FF01
+	eosToken.insert("？");	// #FF1F
+	eosToken.insert("﹖");	// #FE56
+	eosToken.insert("﹗");	// #FE57
+	eosToken.insert("﹒");	// #FE52
 }
 
 Tokenize::~Tokenize() {
@@ -168,7 +191,8 @@ void Tokenize::AppendToken(Token *token) {
 	// is current token first in a sentence? (segmentation)
 	if (current > 0 && tokens[current]->TestFlag(TextResource::TOKEN_TITLECASE) && tokens[current-1]->TestFlag(TextResource::TOKEN_PUNCT)) {
 		string prev = tokens[current-1]->GetText();
-		if (prev == "." || prev == "?" || prev == "!")
+		// '.', '?', '!', etc.
+		if (eosToken.find(prev) != eosToken.end())
 			tokens[current]->SetFlag(TextResource::TOKEN_SENTENCE_START);
 	}
 	if (current >= maxSentenceLength)

@@ -20,6 +20,7 @@ markParagraphs		r/w	Empty line means end-of-paragraph.
 
 #include <string>
 #include <vector>
+#include <tr1/unordered_set>
 #include "common.h"
 #include "Module.h"
 #include "ObjectProperties.h"
@@ -124,6 +125,7 @@ private:
 				// considering the current token
 	std::vector<Token*> tokens;
 	std::vector<Token*> freeTokens;
+	std::tr1::unordered_set<std::string> eosToken;
 };
 
 inline Module::Type Tokenize::GetType() {
