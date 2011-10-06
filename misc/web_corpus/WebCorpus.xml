@@ -218,7 +218,7 @@ WebCorpus: several task that process web corpus files:
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=tagged/tag_$1.log
+			log4j.appender.LOGFILE.File=$3
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -229,7 +229,7 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
+						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -242,7 +242,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$3"/>
+						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -309,7 +309,7 @@ WebCorpus: several task that process web corpus files:
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=parsed/parse_$1.log
+			log4j.appender.LOGFILE.File=$3
 			log4j.appender.LOGFILE.Append=false
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
@@ -320,7 +320,7 @@ WebCorpus: several task that process web corpus files:
 				<threads>1</threads>
 				<modules>
 					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
+						<param name="filename" value="$1"/>
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -331,7 +331,7 @@ WebCorpus: several task that process web corpus files:
 						<param name="order" value="2"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$3"/>
+						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
