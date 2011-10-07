@@ -97,7 +97,7 @@ Resource *PrintTextResource::ProcessOutputSync(Resource *resource) {
 				*ofs << "<p>\n";
 			if (flags & TextResource::TOKEN_SENTENCE_START)
 				*ofs << "<s>\n";
-			*ofs << (flags & (TextResource::TOKEN_ABBR | TextResource::TOKEN_PUNCT | TextResource::TOKEN_TITLECASE | TextResource::TOKEN_UPPERCASE| TextResource::TOKEN_NUMERIC));
+			*ofs << (flags & (TextResource::TOKEN_ABBR | TextResource::TOKEN_PUNCT | TextResource::TOKEN_TITLECASE | TextResource::TOKEN_UPPERCASE | TextResource::TOKEN_NUMERIC | TextResource::TOKEN_UNRECOGNIZED));
 			if (i < nForms)
 				*ofs << "\t" << tr->GetForm(i);
 			if (i < nLemmas)
