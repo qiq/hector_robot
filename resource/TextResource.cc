@@ -98,8 +98,8 @@ void TextResource::DeleteWords(const vector<bool> &del) {
 					posTags->SwapElements(i, j);
 				if (j < heads->size())
 					heads->SwapElements(i, j);
-				if (j < posTags->size())
-					posTags->SwapElements(i, j);
+				if (j < depRels->size())
+					depRels->SwapElements(i, j);
 			}
 			j++;
 			i++;
