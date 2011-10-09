@@ -121,3 +121,8 @@ FilterLanguage_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextRe
 module_LTLIBRARIES += FilterUnrecognized.la
 FilterUnrecognized_la_SOURCES = FilterUnrecognized.h FilterUnrecognized.cc
 FilterUnrecognized_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
+module_LTLIBRARIES += LanguageCount.la
+LanguageCount_la_SOURCES = LanguageCount.h LanguageCount.cc
+LanguageCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
