@@ -59,6 +59,9 @@ public:
         void SetTextId(const std::string &text);
         const std::string GetTextId();
         void ClearTextId();
+        void SetLanguage(const std::string &text);
+        const std::string GetLanguage();
+        void ClearLanguage();
         void SetFlags(int index, int flags);
         int GetFlags(int index);
         void ClearFlags();
