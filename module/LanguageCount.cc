@@ -37,7 +37,7 @@ char *LanguageCount::GetLanguageCount(const char *name) {
 	string result;
 	for (tr1::unordered_map<string, uint64_t>::iterator iter = count.begin(); iter != count.end(); ++iter) {
 		char s[100];
-		snprintf(s, sizeof(s), "%s %"PRIu64"\n", iter->first.c_str(), iter->second);
+		snprintf(s, sizeof(s), "%s%s:%"PRIu64, result.length() > 0 ? " " : "", iter->first.c_str(), iter->second);
 		result.append(s);
 	}
 	return strdup(result.c_str());

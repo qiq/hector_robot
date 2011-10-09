@@ -14,6 +14,7 @@ items			r/o	Total items processed
 #include <config.h>
 
 #include <string>
+#include <tr1/unordered_map>
 #include "common.h"
 #include "Module.h"
 #include "ObjectProperties.h"
