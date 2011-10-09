@@ -3,7 +3,7 @@ DetectLanguage.la, simple, native
 DetectLanguage text or tokens in a TextResource (convert UTF-8 to NFC) and possibly
 other transformations.
 
-Dependencies: icu
+Dependencies: Google CLD
 
 Parameters:
 items			r/o	Total items processed

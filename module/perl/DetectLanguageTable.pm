@@ -5,7 +5,7 @@
 # 
 # Parameters:
 # items			r/o	n/a	Total items processed
-# filenamePrefix	r/o	n/a	Files containing unaccented words, one
+# filenamePrefix	r/o	n/a	Files containing most common words, one
 #					word per line.
 # paragraphLevel	r/w	1	Work on paragraph level (otherwise whole document)
 # 
@@ -51,20 +51,21 @@ sub Init {
 	}
 
 	if ($self->{'filenamePrefix'} eq "") {
-		$self->LOG_ERROR("filename not defined");
+		$self->LOG_ERROR("filenamePrefix not defined");
 		return 0;
 	}
 	foreach my $f (glob($self->{'filenamePrefix'}.'.*')) {
 		$f =~ /.*\.([^\.]*)$/;
 		my $lang = $1;
 		my $fd;
-		if (not open($fd, "<", $f)) {
+		if (not open($fd, "<:encoding(UTF-8)", $f)) {
 			$self->LOG_ERROR("Cannot open file: $f: $!");
 			return 0;
 		}
 		while (<$fd>) {
 			chomp;
-			push(@{$self->{'_words'}->{$_}}, $lang);
+			die if (defined $self->{'_words'}->{$_});
+			$self->{'_words'}->{$_} = $lang;
 		}
 		close($fd);
 	}
@@ -72,6 +73,7 @@ sub Init {
 	return 1;
 }
 
+binmode STDERR, ":utf8";
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
@@ -92,18 +94,20 @@ sub ProcessSimple() {
 			my $max = -1;
 			my $lang = '?';
 			foreach my $k (keys %score) {
+print STDERR "$k, ".$score{$k}."\n";
 				if ($score{$k} > $max) {
 					$max = $score{$k};
 					$lang = $k;
 				}
 			}
+print STDERR "MAX: $lang, $max\n";
 			push(@lang, $lang);
+			%score = ();
 		}
-#print "$word\n";
+print STDERR "$word\n" if (not exists $self->{'_words'}->{lc($word)});
 		if (exists $self->{'_words'}->{lc($word)}) {
-			foreach my $lang (@{$self->{'_words'}->{lc($word)}}) {
-				$score{$lang}++;
-			}
+print STDERR "$word (".$self->{'_words'}->{lc($word)}."\n";
+			$score{$self->{'_words'}->{lc($word)}}++;
 		}
 		$words++;
 	}

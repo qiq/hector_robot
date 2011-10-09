@@ -126,3 +126,7 @@ module_LTLIBRARIES += LanguageCount.la
 LanguageCount_la_SOURCES = LanguageCount.h LanguageCount.cc
 LanguageCount_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
 
+module_LTLIBRARIES += DetectLanguageTable.la
+DetectLanguageTable_la_SOURCES = DetectLanguageTable.h DetectLanguageTable.cc
+DetectLanguageTable_la_LIBADD = $(top_builddir)/lib/librobot.la ../resource/libTextResource.la
+
