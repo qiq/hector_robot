@@ -76,16 +76,17 @@ sub Finish {
 		my @result;
 		for (my $i = 0; $i < @words and @result < $self->{'maxWords'}; $i++) {
 			my $word = $words[$i];
-			my $n = 0;
-			foreach my $l (@langs) {
-				next if ($l eq $lang);
-				if (not exists $self->{'_freq'}->{$l}->{$word} or ($lf->{$word}*0.05 > ($self->{'_freq'}->{$l}->{$word}))) {
-					$n++;
-				} else {
+#			my $n = 0;
+#			foreach my $l (@langs) {
+#				next if ($l eq $lang);
+#				if (not exists $self->{'_freq'}->{$l}->{$word} or ($lf->{$word}*0.05 > ($self->{'_freq'}->{$l}->{$word}))) {
+#					$n++;
+#				} else {
 #					print "out: $word (".$lf->{$word}."*0.05 <= ".$self->{'_freq'}->{$l}->{$word}.")\n";
-				}
-			}
-			push(@result, $word) if ($n == @langs-1);
+#				}
+#			}
+#			push(@result, $word) if ($n == @langs-1);
+push(@result, $word."\t".$lf->{$word});
 		}
 		my $fd;
 		if (not open($fd, ">:encoding(UTF-8)", $self->{'filenamePrefix'}.'.'.$lang)) {

@@ -7,6 +7,7 @@
 # items			r/o	n/a	Total items processed
 # filenamePrefix	r/o	n/a	Files containing most common words, one
 #					word per line.
+# defaultLanguage	r/w	n/a	Default language (if not sure or equal score).
 # paragraphLevel	r/w	1	Work on paragraph level (otherwise whole document)
 # 
 # Status:
@@ -29,7 +30,8 @@ sub new {
 	my $self = $class->SUPER::new('SIMPLE', $object, $id, $threadIndex);
 
 	$self->{'items'} = 0;
-	$self->{'filenamePrefix'} = "";
+	$self->{'filenamePrefix'} = '';
+	$self->{'defaultLanguage'} = '';
 	$self->{'paragraphLevel'} = 1;
 
 	$self->{'_words'} = {};
@@ -64,8 +66,9 @@ sub Init {
 		}
 		while (<$fd>) {
 			chomp;
-			die if (defined $self->{'_words'}->{$_});
-			$self->{'_words'}->{$_} = $lang;
+			#/(.*)\t(.*)/ or die;
+			#push(@{$self->{'_words'}->{$1}}, [ $lang, $2 ]);
+			push(@{$self->{'_words'}->{$1}}, $lang);
 		}
 		close($fd);
 	}
@@ -73,7 +76,7 @@ sub Init {
 	return 1;
 }
 
-binmode STDERR, ":utf8";
+#binmode STDERR, ":utf8";
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
@@ -91,29 +94,32 @@ sub ProcessSimple() {
 		if ($flags & $HectorRobot::TextResource::TOKEN_PARAGRAPH_START and $i > 0 and $self->{'paragraphLevel'}) {
 #use Data::Dumper;
 #print Dumper(\%score);
-			my $max = -1;
-			my $lang = '?';
+			my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
+			my $max = exists $score{$lang} ? $score{$lang} : -1;
 			foreach my $k (keys %score) {
-print STDERR "$k, ".$score{$k}."\n";
+#print STDERR "$k, ".$score{$k}."\n";
 				if ($score{$k} > $max) {
 					$max = $score{$k};
 					$lang = $k;
 				}
 			}
-print STDERR "MAX: $lang, $max\n";
+#print STDERR "MAX: $lang, $max\n";
 			push(@lang, $lang);
 			%score = ();
 		}
-print STDERR "$word\n" if (not exists $self->{'_words'}->{lc($word)});
+#print STDERR "$word\n" if (not exists $self->{'_words'}->{lc($word)});
 		if (exists $self->{'_words'}->{lc($word)}) {
-print STDERR "$word (".$self->{'_words'}->{lc($word)}."\n";
-			$score{$self->{'_words'}->{lc($word)}}++;
+			my @langs = @{$self->{'_words'}->{lc($word)}};
+			foreach my $lang (@langs) {
+#print STDERR "$word (".$lang->[0].", ".$lang->[1].")\n";
+				$score{$lang->[0]} += 1/@langs; # $lang->[1];
+			}
 		}
 		$words++;
 	}
 	if ($words > 0) {
-		my $max = -1;
-		my $lang = '?';
+		my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
+		my $max = exists $score{$lang} ? $score{$lang} : -1;
 		foreach my $k (keys %score) {
 			if ($score{$k} > $max) {
 				$max = $score{$k};
