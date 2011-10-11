@@ -34,6 +34,7 @@
 					</Module>
 					<Module id="M_train" lib="DetectLanguageTableTrain.pm" type="perl">
 						<param name="filename" value="$4"/>
+						<param name="maxWords" value="$5"/>
 					</Module>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
@@ -126,8 +127,10 @@
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_detect" lib="DetectLanguageTable.pm" type="perl">
+					<Module id="M_detect" lib="DetectLanguageTable.la">
+						<param name="defaultLanguage" value="$3"/>
 						<param name="paragraphLevel" value="true"/>
+						<param name="filenamePrefix" value="$2"/>
 					</Module>
 					<Module id="M_lc" lib="LanguageCount.la"/>
 					<Module id="M_output" lib="Null.la">
