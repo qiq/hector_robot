@@ -35,11 +35,14 @@ public:
 private:
 	int items;		// ObjectLock, items processed
 	char *filenamePrefix;
+	char *defaultLanguage;
 	bool paragraphLevel;
 
 	char *GetItems(const char *name);
 	char *GetFilenamePrefix(const char *name);
 	void SetFilenamePrefix(const char *name, const char *value);
+	char *GetDefaultLanguage(const char *name);
+	void SetDefaultLanguage(const char *name, const char *value);
 	char *GetParagraphLevel(const char *name);
 	void SetParagraphLevel(const char *name, const char *value);
 
@@ -48,7 +51,10 @@ private:
 	bool SetPropertySync(const char *name, const char *value);
 	std::vector<std::string> *ListPropertiesSync();
 
-	std::tr1::unordered_map<std::string, std::string> words;
+	std::tr1::unordered_map<std::string, std::vector<int>*> words;
+	std::tr1::unordered_map<std::string, int> lang2id;
+	std::tr1::unordered_map<int, std::string> id2lang;
+	int defaultLanguageId;
 };
 
 inline Module::Type DetectLanguageTable::GetType() {

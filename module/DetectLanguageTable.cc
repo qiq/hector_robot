@@ -16,16 +16,19 @@ using namespace std;
 DetectLanguageTable::DetectLanguageTable(ObjectRegistry *objects, const char *id, int threadIndex): Module(objects, id, threadIndex) {
 	items = 0;
 	filenamePrefix = NULL;
+	defaultLanguage = NULL;
 	paragraphLevel = true;
 
 	props = new ObjectProperties<DetectLanguageTable>(this);
 	props->Add("items", &DetectLanguageTable::GetItems);
 	props->Add("filenamePrefix", &DetectLanguageTable::GetFilenamePrefix, &DetectLanguageTable::SetFilenamePrefix);
+	props->Add("defaultLanguage", &DetectLanguageTable::GetDefaultLanguage, &DetectLanguageTable::SetDefaultLanguage);
 	props->Add("paragraphLevel", &DetectLanguageTable::GetParagraphLevel, &DetectLanguageTable::SetParagraphLevel);
 }
 
 DetectLanguageTable::~DetectLanguageTable() {
 	free(filenamePrefix);
+	free(defaultLanguage);
 	delete props;
 }
 
@@ -40,6 +43,15 @@ char *DetectLanguageTable::GetFilenamePrefix(const char *name) {
 void DetectLanguageTable::SetFilenamePrefix(const char *name, const char *value) {
 	free(filenamePrefix);
 	filenamePrefix = strdup(value);
+}
+
+char *DetectLanguageTable::GetDefaultLanguage(const char *name) {
+	return strdup(defaultLanguage);
+}
+
+void DetectLanguageTable::SetDefaultLanguage(const char *name, const char *value) {
+	free(defaultLanguage);
+	defaultLanguage = strdup(value);
 }
 
 char *DetectLanguageTable::GetParagraphLevel(const char *name) {
@@ -81,15 +93,31 @@ bool DetectLanguageTable::Init(vector<pair<string, string> > *params) {
 		}
 		string lang(gb.gl_pathv[i]);
 		lang.erase(0, lang.find_last_of('.')+1);
+		lang2id[lang] = i;
+		id2lang[i] = lang;
 		string s;
 		while (!getline(ifs, s).eof()) {
 			skipWs(s);
-			if (s.length() > 0)
-				words[s] = lang;
+			if (s.length() > 0) {
+				s.erase(s.find_first_of("\t "));
+				tr1::unordered_map<string, vector<int>*>::iterator iter = words.find(s);
+				if (iter != words.end()) {
+					iter->second->push_back(i);
+				} else {
+					vector<int> *v = new vector<int>();
+					v->push_back(i);
+					words[s] = v;
+				}
+			}
 		}
 		ifs.close();
 	}
 	globfree(&gb);
+
+	lang2id["?"] = -1;
+	id2lang[-1] = "?";
+	tr1::unordered_map<string, int>::iterator iter = lang2id.find(defaultLanguage);
+	defaultLanguageId = iter == lang2id.end() ? -1 : iter->second;
 
 	return true;
 }
@@ -100,26 +128,31 @@ Resource *DetectLanguageTable::ProcessSimpleSync(Resource *resource) {
 	TextResource *tr = static_cast<TextResource*>(resource);
 	string languages;
 
-	tr1::unordered_map<string, int> score;
+	tr1::unordered_map<int, double> score;
 	int count = 0;
 	int nWords = tr->GetFormCount();
 	for (int i = 0; i < nWords; i++) {
 		int flags = tr->GetFlags(i);
 		string word = tr->GetForm(i);
 		if (paragraphLevel && i > 0 && (flags & TextResource::TOKEN_PARAGRAPH_START)) {
-			int max = -1;
-			string lang = "?";
-			for (tr1::unordered_map<string, int>::iterator iter = score.begin(); iter != score.end(); ++iter) {
-fprintf(stderr, "%s, %d\n", iter->first.c_str(), iter->second);
+			int lang = -1;
+			double max = -1;
+			if (defaultLanguage) {
+				tr1::unordered_map<int, double>::iterator iter = score.find(defaultLanguageId);
+				if (iter != score.end()) {
+					lang = defaultLanguageId;
+					max = iter->second;
+				}
+			}
+			for (tr1::unordered_map<int, double>::iterator iter = score.begin(); iter != score.end(); ++iter) {
 				if (iter->second > max) {
 					max = iter->second;
 					lang = iter->first;
 				}
 			}
-fprintf(stderr, "MAX: %s, %d\n", lang.c_str(), max);
 			if (!languages.empty())
 				languages += " ";
-			languages += lang;
+			languages += id2lang[lang];
 			score.clear();
 			count = 0;
 		}
@@ -128,23 +161,32 @@ fprintf(stderr, "MAX: %s, %d\n", lang.c_str(), max);
 		s16.toLower();
 		word.clear();
 		word = s16.toUTF8String(word);
-fprintf(stderr, "%s\n", word.c_str());
-		tr1::unordered_map<string, string>::iterator iter = words.find(word);
+		tr1::unordered_map<string, vector<int>*>::iterator iter = words.find(word);
 		if (iter != words.end()) {
-			tr1::unordered_map<string, int>::iterator iter2 = score.find(iter->second);
-			if (iter2 == score.end())
-				score[iter->second] = 1;
-			else
-				score[iter->second]++;
-fprintf(stderr, "%s\n", iter->second.c_str());
+			vector<int> *v = iter->second;
+			double s = (double)1/v->size();
+			for (vector<int>::iterator iter2 = v->begin(); iter2 != v->end(); ++iter2) {
+				tr1::unordered_map<int, double>::iterator iter3 = score.find(*iter2);
+				if (iter3 == score.end())
+					score[*iter2] = s;
+				else
+					score[*iter2] += s;
+			}
 		}
 		count++;
 	}
 
 	if (count) {
-		int max = -1;
-		string lang = "?";
-		for (tr1::unordered_map<string, int>::iterator iter = score.begin(); iter != score.end(); ++iter) {
+		int lang = -1;
+		double max = -1;;
+		if (defaultLanguage) {
+			tr1::unordered_map<int, double>::iterator iter = score.find(defaultLanguageId);
+			if (iter != score.end()) {
+				lang = defaultLanguageId;
+				max = iter->second;
+			}
+		}
+		for (tr1::unordered_map<int, double>::iterator iter = score.begin(); iter != score.end(); ++iter) {
 			if (iter->second > max) {
 				max = iter->second;
 				lang = iter->first;
@@ -152,7 +194,7 @@ fprintf(stderr, "%s\n", iter->second.c_str());
 		}
 		if (!languages.empty())
 			languages += " ";
-		languages += lang;
+		languages += id2lang[lang];
 	}
 
 	if (languages.empty())
