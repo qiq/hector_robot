@@ -6,6 +6,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <algorithm>
 #include <inttypes.h>
 #include <string.h>
 #include "robot_common.h"
@@ -33,13 +34,28 @@ char *LanguageCount::GetItems(const char *name) {
 	return int2str(items);
 }
 
+struct less_pair: public std::binary_function<std::pair<std::string, uint64_t>, std::pair<std::string, uint64_t>, bool> {
+	bool operator()(const std::pair<const std::string, uint64_t> &x, const std::pair<std::string, uint64_t> &y) {
+		return x.second > y.second;
+	}
+};
+
 char *LanguageCount::GetLanguageCount(const char *name) {
-	string result;
+	vector<pair<string, uint64_t> > v(count.size());
+	v.clear();
+	uint64_t total = 0;
 	for (tr1::unordered_map<string, uint64_t>::iterator iter = count.begin(); iter != count.end(); ++iter) {
+		v.push_back(pair<string, uint64_t>(iter->first, iter->second));
+		total += iter->second;
+	}
+	sort(v.begin(), v.end(), less_pair());
+	string result;
+	for (vector<pair<string, uint64_t> >::iterator iter = v.begin(); iter != v.end(); ++iter) {
 		char s[100];
-		snprintf(s, sizeof(s), "%s%s:%"PRIu64, result.length() > 0 ? " " : "", iter->first.c_str(), iter->second);
+		snprintf(s, sizeof(s), "%s%s:%"PRIu64"(%.2f)", result.length() > 0 ? " " : "", iter->first.c_str(), iter->second, (double)iter->second*100/total);
 		result.append(s);
 	}
+	
 	return strdup(result.c_str());
 }
 
