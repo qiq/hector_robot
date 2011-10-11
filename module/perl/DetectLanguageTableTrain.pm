@@ -30,7 +30,7 @@ sub new {
 
 	$self->{'items'} = 0;
 	$self->{'maxWords'} = 100000;
-	$self->{'filenamePrefix'} = "";
+	$self->{'filename'} = "";
 
 	$self->{'_freq'} = {};
 
@@ -50,8 +50,8 @@ sub Init {
 		}
 	}
 
-	if ($self->{'filenamePrefix'} eq "") {
-		$self->LOG_ERROR("filenamePrefix not defined");
+	if ($self->{'filename'} eq "") {
+		$self->LOG_ERROR("filename not defined");
 		return 0;
 	}
 	return 1;
@@ -60,44 +60,17 @@ sub Init {
 sub Finish {
 	my ($self) = @_;
 
-	# count weights
-	my @langs = keys %{$self->{'_freq'}};
-	foreach my $lang (@langs) {
-		my $total = $self->{'_freq'}->{$lang}->{' total'};
-		delete $self->{'_freq'}->{$lang}->{' total'};
-		foreach my $word (keys %{$self->{'_freq'}->{$lang}}) {
-			$self->{'_freq'}->{$lang}->{$word} /= $total;
-		}
+	my $fd;
+	if (not open($fd, ">:encoding(UTF-8)", $self->{'filename'})) {
+		$self->LOG_ERROR("Cannot open file: ".$self->{'filename'}.": $!");
+		return;
 	}
-
-	foreach my $lang (@langs) {
-		my $lf = $self->{'_freq'}->{$lang};
-		my @words = sort { $lf->{$b} <=> $lf->{$a} } (keys %{$lf});
-		my @result;
-		for (my $i = 0; $i < @words and @result < $self->{'maxWords'}; $i++) {
-			my $word = $words[$i];
-#			my $n = 0;
-#			foreach my $l (@langs) {
-#				next if ($l eq $lang);
-#				if (not exists $self->{'_freq'}->{$l}->{$word} or ($lf->{$word}*0.05 > ($self->{'_freq'}->{$l}->{$word}))) {
-#					$n++;
-#				} else {
-#					print "out: $word (".$lf->{$word}."*0.05 <= ".$self->{'_freq'}->{$l}->{$word}.")\n";
-#				}
-#			}
-#			push(@result, $word) if ($n == @langs-1);
-push(@result, $word."\t".$lf->{$word});
-		}
-		my $fd;
-		if (not open($fd, ">:encoding(UTF-8)", $self->{'filenamePrefix'}.'.'.$lang)) {
-			$self->LOG_ERROR("Cannot open file: ".$self->{'filename'}.'.'.$lang.": $!");
-			return;
-		}
-		foreach my $r (@result) {
-			print $fd "$r\n";
-		}
-		close($fd);
+	my @words = sort { $self->{'_freq'}->{$b} <=> $self->{'_freq'}->{$a} } (keys %{$self->{'_freq'}});
+	for (my $i = 0; $i < @words and $i < $self->{'maxWords'}; $i++) {
+		my $word = $words[$i];
+		print $fd $word."\t".($self->{'_freq'}->{$word}/$self->{'_total'})."\n";
 	}
+	close($fd);
 }
 
 sub DESTROY {
@@ -110,21 +83,13 @@ sub ProcessSimple() {
 	my $tr = HectorRobot::ResourceToTextResource($resource);
 
 	my $nWords = $tr->GetFormCount();
-	my $langs = $tr->GetLanguage();
-	my @langs = split(/\s+/, $langs);
-	my $lf;
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $flags = $tr->GetFlags($i);
-		if ($flags & $HectorRobot::TextResource::TOKEN_PARAGRAPH_START) {
-			my $l = shift(@langs);
-			$self->{'_freq'}->{$l} = {} if (not exists $self->{'_freq'}->{$l});
-			$lf = $self->{'_freq'}->{$l};
-		}
 		my $word = $tr->GetForm($i);
 		next if (($flags & $HectorRobot::TextResource::TOKEN_PUNCT) or ($flags & $HectorRobot::TextResource::TOKEN_NUMERIC and $word =~ /^[0-9]+$/));
 		utf8::decode($word);
-		$lf->{lc($word)}++;
-		$lf->{' total'}++;
+		$self->{'_freq'}->{lc($word)}++;
+		$self->{'_total'}++;
 	}
 	
 	$self->{'items'}++;

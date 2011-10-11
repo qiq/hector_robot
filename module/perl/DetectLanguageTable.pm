@@ -66,9 +66,9 @@ sub Init {
 		}
 		while (<$fd>) {
 			chomp;
-			#/(.*)\t(.*)/ or die;
-			#push(@{$self->{'_words'}->{$1}}, [ $lang, $2 ]);
-			push(@{$self->{'_words'}->{$1}}, $lang);
+			/(.*)\t(.*)/ or die;
+			push(@{$self->{'_words'}->{$1}}, [ $lang, $2 ]);
+			#push(@{$self->{'_words'}->{$1}}, $lang);
 		}
 		close($fd);
 	}
@@ -76,7 +76,7 @@ sub Init {
 	return 1;
 }
 
-#binmode STDERR, ":utf8";
+binmode STDERR, ":utf8";
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
@@ -86,7 +86,7 @@ sub ProcessSimple() {
 	my $nWords = $tr->GetFormCount();
 	my @lang;
 	my %score;
-	my $words =  0;
+	my $words = 0;
 	for (my $i = 0; $i < $nWords; $i++) {
 		my $flags = $tr->GetFlags($i);
 		my $word = $tr->GetForm($i);
@@ -94,6 +94,7 @@ sub ProcessSimple() {
 		if ($flags & $HectorRobot::TextResource::TOKEN_PARAGRAPH_START and $i > 0 and $self->{'paragraphLevel'}) {
 #use Data::Dumper;
 #print Dumper(\%score);
+#print '.';
 			my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
 			my $max = exists $score{$lang} ? $score{$lang} : -1;
 			foreach my $k (keys %score) {
@@ -111,12 +112,13 @@ sub ProcessSimple() {
 		if (exists $self->{'_words'}->{lc($word)}) {
 			my @langs = @{$self->{'_words'}->{lc($word)}};
 			foreach my $lang (@langs) {
-#print STDERR "$word (".$lang->[0].", ".$lang->[1].")\n";
+#print STDERR "$word (".$lang->[0].", ".1/@langs.")\n";
 				$score{$lang->[0]} += 1/@langs; # $lang->[1];
 			}
 		}
 		$words++;
 	}
+#print ".\n";
 	if ($words > 0) {
 		my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
 		my $max = exists $score{$lang} ? $score{$lang} : -1;
