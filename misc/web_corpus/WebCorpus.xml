@@ -119,72 +119,6 @@ WebCorpus: several task that process web corpus files:
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="detect_language">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_detect" lib="DetectLanguage.la">
-						<param name="paragraphLevel" value="$3"/>
-					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="filter_language">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_wc1" lib="WordCount.la"/>
-					<Module id="M_filter" lib="FilterLanguage.la">
-						<param name="allowedLanguages" value="$3"/>
-					</Module>
-					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
 	<Server id="split">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
@@ -241,6 +175,40 @@ WebCorpus: several task that process web corpus files:
 						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
 						<param name="taggerPrefix" value="share/featurama/cs/default"/>
 					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="filter_unrecognized">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=$4
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterUnrecognized.la">
+						<param name="maxUnrecognizedRatio" value="0.5"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>
@@ -330,6 +298,72 @@ WebCorpus: several task that process web corpus files:
 						<param name="decodeType" value="non-proj"/>
 						<param name="order" value="2"/>
 					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="detect_language">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=$4
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_detect" lib="DetectLanguage.la">
+						<param name="paragraphLevel" value="$3"/>
+					</Module>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+		</ProcessingEngine>
+	</Server>
+
+	<Server id="filter_language">
+		<logConfig><![CDATA[
+			log4j.rootLogger=DEBUG, LOGFILE
+			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+			log4j.appender.LOGFILE.File=$4
+			log4j.appender.LOGFILE.Append=false
+			log4j.appender.LOGFILE.Threshold=DEBUG
+			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
+		</logConfig>
+		<ProcessingEngine id="PE_main">
+			<Processor id="P_main">
+				<threads>1</threads>
+				<modules>
+					<Module id="M_input" lib="Load.la">
+						<param name="filename" value="$1"/>
+						<param name="resourceType" value="TextResource"/>
+						<param name="compress" value="true"/>
+					</Module>
+					<Module id="M_wc1" lib="WordCount.la"/>
+					<Module id="M_filter" lib="FilterLanguage.la">
+						<param name="allowedLanguages" value="$3"/>
+					</Module>
+					<Module id="M_wc2" lib="WordCount.la"/>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>

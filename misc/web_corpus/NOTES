@@ -1,0 +1,85 @@
+1) prepare lists
+
+rm -f data/*/*.list; for i in data/{clanky,diskuse,tvorivost}/*; do find -L $i -type f >$i.list; done
+
+2) tokenize raw texts (+normalize)
+
+time ( for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list/\1/'`; hector_server -c WebCorpus.xml -fb tokenize $i tokenized/$j.hr.gz tokenized/$j.log; done )
+- takes: 4h0m
+- create data dump:
+for i in tokenized/*/*.hr.gz; do j=`echo $i|sed -e 's/\.hr\.gz$/.dump/'`; hector_server -c WebCorpus.xml -fb dump $i >$j; done
+
+4) deduplicate (all at once), split all.hr.gz back into separate files
+
+time ( cat tokenized/*/*.hr.gz |hector_server -c WebCorpus.xml -fb deduplicate_all 5000000000 /dev/stdin deduplicated/all.hr.gz deduplicated/deduplicate.log )
+- takes: 4h37m
+- word counts: 
+M_wc1[0]: doc	para       sent    form    word    lemma   pos     head    rel
+M_wc1[0]: 6831423       131400862       301440111       3765028372      4740345034      0       0       0       0
+M_wc2[0]: doc	para       sent    form    word    lemma   pos     head    rel
+M_wc2[0]: 6667544       114975561       255629721       3211964525      3978877057      0       0       0       0
+
+for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list$/\1/'`; echo $j; done|./generate_split.pl >Split.xml
+time ( hector_server -c Split.xml -fb split )
+- takes 1h17m
+
+5) detect paragraphs with more unaccented words (threshold = ?)
+
+time ( for i in deduplicated/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_unaccented $i accented/$j.hr.gz cssk_top_words.txt accented/$j.log; done )
+- takes: 6h50m
+
+6) language detect
+
+# paragraph-level
+time ( for i in deduplicated/diskuse/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb detect_language $i language/$j.hr.gz true language/$j.log; done )
+- takes:
+# document level
+time ( for i in deduplicated/{tvorivost,clanky}/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb detect_language $i language/$j.hr.gz false language/$j.log; done )
+- takes:
+
+7) counts for different languages and categories
+
+# count languages
+for i in language/{clanky,diskuse,tvorivost}; do cat $i/*.hr.gz | hector_server -c WebCorpus.xml -fb dump /dev/stdin |grep "^<doc"|sed -e 's/.*lang="\([^"]*\)".*/\1/'|perl -pe 'while (<>) { chomp; foreach $i (split / /) { print "$i\n"; } }' |sort|uniq -c|sort -n; done
+
+8) filter cs + ? languages
+
+time ( for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i language_filtered/$j.hr.gz "cs ?" language_filtered/$j.log; done )
+- takes: 1h31m
+- word counts:
+
+9) split documents into smaller files
+
+#for i in deduplicated/*.hr.gz; do j=`echo $i|sed -e 's/.*\/\(.*\)\.hr\.gz$/\1/'`; echo hector_server -c WebCorpus.xml -fb split $i $i 10000; done
+for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)/\1/'`; hector_server -c WebCorpus.xml -fb split $i split/$j 1048576; done
+
+10) tag all files (using SGE)
+for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag.sh $i $j; sleep 4; done
+
+11) filter paragraphs with more unknown words
+
+- word counts:
+
+12) parse all files
+
+13) concatenate all files back
+
+14) convert files to vertical format
+- word counts (sanity check)
+
+15) create Google n-gram compatible format
+
+-----------------------------------
+
+5) split
+Split tokenized.hr file back into files according to servers:
+hector_server -c Split.xml -fb split 
+
+Split files, so that we have (upto) 10000 docs in each:
+#for i in deduplicated/*.hr.gz; do j=`echo $i|sed -e 's/.*\/\(.*\)\.hr\.gz$/\1/'`; echo hector_server -c WebCorpus.xml -fb split $i $i 10000; done
+for i in deduplicated/*.hr.gz; do hector_server -c WebCorpus.xml -fb split $i $i 10000; done
+for i in deduplicated/*.hr.gz.*; do j=`echo $i|sed -e 's/\(.*\)\.hr\.gz\.\(.*\)$/\1.hr.\2.gz'`; mv $i $j; done
+
+Tag files (SGE):
+
+Parse files (SGE):
