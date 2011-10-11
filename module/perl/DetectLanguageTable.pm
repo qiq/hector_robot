@@ -76,7 +76,6 @@ sub Init {
 	return 1;
 }
 
-binmode STDERR, ":utf8";
 sub ProcessSimple() {
 	my ($self, $resource) = @_;
 
@@ -92,33 +91,25 @@ sub ProcessSimple() {
 		my $word = $tr->GetForm($i);
 		utf8::decode($word);
 		if ($flags & $HectorRobot::TextResource::TOKEN_PARAGRAPH_START and $i > 0 and $self->{'paragraphLevel'}) {
-#use Data::Dumper;
-#print Dumper(\%score);
-#print '.';
 			my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
 			my $max = exists $score{$lang} ? $score{$lang} : -1;
 			foreach my $k (keys %score) {
-#print STDERR "$k, ".$score{$k}."\n";
 				if ($score{$k} > $max) {
 					$max = $score{$k};
 					$lang = $k;
 				}
 			}
-#print STDERR "MAX: $lang, $max\n";
 			push(@lang, $lang);
 			%score = ();
 		}
-#print STDERR "$word\n" if (not exists $self->{'_words'}->{lc($word)});
 		if (exists $self->{'_words'}->{lc($word)}) {
 			my @langs = @{$self->{'_words'}->{lc($word)}};
 			foreach my $lang (@langs) {
-#print STDERR "$word (".$lang->[0].", ".1/@langs.")\n";
 				$score{$lang->[0]} += 1/@langs; # $lang->[1];
 			}
 		}
 		$words++;
 	}
-#print ".\n";
 	if ($words > 0) {
 		my $lang = $self->{'defaultLanguage'} ne '' ? $self->{'defaultLanguage'} : '?';
 		my $max = exists $score{$lang} ? $score{$lang} : -1;
