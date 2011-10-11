@@ -78,275 +78,12 @@
 		</ProcessingEngine>
 	</Server>
 
-<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
-
-	<Server id="deduplicate_all">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_wc1" lib="WordCount.la"/>
-                                        <Module id="M_deduplicate" lib="Deduplicate.la">
-                                                <param name="deduplicateParagraphs" value="true"/>
-                                                <param name="totalSize" value="$1"/>
-                                                <param name="threshold" value="0.3"/>
-                                                <param name="ngram" value="8"/>
-					</Module>
-					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$3"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="filter_unaccented">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_wc1" lib="WordCount.la"/>
-					<Module id="M_filter" lib="FilterMissingAccents.pm" type="perl">
-						<param name="filename" value="$3"/>
-					</Module>
-					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="split">
+	<Server id="test_gcld">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
 			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.Target=System.err
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-						<param name="maxSizePerFile" value="$3"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="tag">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$3
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<!--Module id="M_input" lib="TextResourceRead.la">
-						<param name="filename" value="/dev/stdin"/>
-					</Module-->
-					<Module id="M_tag" lib="TagFeaturama.la">
-						<param name="useGuesser" value="true"/>
-						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
-						<param name="taggerPrefix" value="share/featurama/cs/default"/>
-					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="filter_unrecognized">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_wc1" lib="WordCount.la"/>
-					<Module id="M_filter" lib="FilterUnrecognized.la">
-						<param name="maxUnrecognizedRatio" value="0.5"/>
-					</Module>
-					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="tag4">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=tagged/tag_$1.log
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_in">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$2"/>
-						<param name="resourceType" value="TextResource"/>
-					</Module>
-				</modules>
-				<output>
-					<nextProcessor ref="P_work"/>
-				</output>
-			</Processor>
-			<Processor id="P_work">
-				<input>
-					<queue maxItems="1000"/>
-				</input>
-				<threads>4</threads>
-				<modules>
-					<Module id="M_tag" lib="TagFeaturama.la">
-						<param name="useGuesser" value="true"/>
-						<param name="morphologyPrefix" value="share/czmorphology/CZ110622a"/>
-						<param name="taggerPrefix" value="share/featurama/cs/default"/>
-					</Module>
-				</modules>
-				<output>
-					<nextProcessor ref="P_out"/>
-				</output>
-			</Processor>
-			<Processor id="P_out">
-				<threads>1</threads>
-				<input>
-					<queue/>
-				</input>
-				<modules>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$3"/>
-						<param name="saveResourceType" value="false"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="parse">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$3
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_parse" lib="ParseMst.la">
-						<param name="parserDir" value="./mstparser"/>
-						<param name="model" value="mstparser/cs_model"/>
-						<param name="decodeType" value="non-proj"/>
-						<param name="order" value="2"/>
-					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="detect_language">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
 			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
 			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
 		</logConfig>
@@ -360,53 +97,18 @@
 						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_detect" lib="DetectLanguage.la">
-						<param name="paragraphLevel" value="$3"/>
+						<param name="paragraphLevel" value="true"/>
 					</Module>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
-					</Module>
-				</modules>
-			</Processor>
-		</ProcessingEngine>
-	</Server>
-
-	<Server id="filter_language">
-		<logConfig><![CDATA[
-			log4j.rootLogger=DEBUG, LOGFILE
-			log4j.appender.LOGFILE=org.apache.log4j.FileAppender
-			log4j.appender.LOGFILE.File=$4
-			log4j.appender.LOGFILE.Append=false
-			log4j.appender.LOGFILE.Threshold=DEBUG
-			log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
-			log4j.appender.LOGFILE.layout.ConversionPattern=%m%n ]]>
-		</logConfig>
-		<ProcessingEngine id="PE_main">
-			<Processor id="P_main">
-				<threads>1</threads>
-				<modules>
-					<Module id="M_input" lib="Load.la">
-						<param name="filename" value="$1"/>
-						<param name="resourceType" value="TextResource"/>
-						<param name="compress" value="true"/>
-					</Module>
-					<Module id="M_wc1" lib="WordCount.la"/>
-					<Module id="M_filter" lib="FilterLanguage.la">
-						<param name="allowedLanguages" value="$3"/>
-					</Module>
-					<Module id="M_wc2" lib="WordCount.la"/>
-					<Module id="M_output" lib="Save.la">
-						<param name="filename" value="$2"/>
-						<param name="saveResourceType" value="false"/>
-						<param name="compress" value="true"/>
+					<Module id="M_lc" lib="LanguageCount.la"/>
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
 					</Module>
 				</modules>
 			</Processor>
 		</ProcessingEngine>
 	</Server>
 
-	<Server id="wordcount">
+	<Server id="test_top_words">
 		<logConfig><![CDATA[
 			log4j.rootLogger=DEBUG, LOGFILE
 			log4j.appender.LOGFILE=org.apache.log4j.ConsoleAppender
@@ -424,7 +126,10 @@
 						<param name="resourceType" value="TextResource"/>
 						<param name="compress" value="true"/>
 					</Module>
-					<Module id="M_wordcount" lib="WordCount.la"/>
+					<Module id="M_detect" lib="DetectLanguageTable.pm" type="perl">
+						<param name="paragraphLevel" value="true"/>
+					</Module>
+					<Module id="M_lc" lib="LanguageCount.la"/>
 					<Module id="M_output" lib="Null.la">
 						<param name="moduleType" value="OUTPUT"/>
 					</Module>
