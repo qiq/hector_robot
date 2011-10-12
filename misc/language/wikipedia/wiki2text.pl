@@ -66,7 +66,7 @@ sub process_text() {
 	# tags: gallery, timeline, ...
 	my $in_tags = 0;
 	my $t2 = "";
-	while ($t =~ s/(.*?)(&lt;)(\/?)([[:alpha:]]+)(.*?&gt;)//) {
+        while ($t =~ s/(.*?)(&lt;)(\/?)(.+?)(&gt;)//) {
 		if (exists $tags{lc($4)}) {
 			if ($in_tags == 0) {
 				$t2 .= $1;
@@ -97,6 +97,10 @@ sub process_text() {
 	$t =~ s/&quot;/"/g;
 	$t =~ s/&amp;/&/g;
 	$t =~ s/&nbsp;/ /g;
+
+	# again
+	$t =~ s/&lt;/</g;
+	$t =~ s/&gt;/>/g;
 
 	# comment
 	my $in_comment = 0;
