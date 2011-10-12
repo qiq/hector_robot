@@ -36,10 +36,13 @@
 						<param name="filename" value="$4"/>
 						<param name="maxWords" value="$5"/>
 					</Module>
-					<Module id="M_output" lib="Save.la">
+					<!--Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
+					</Module-->
+					<Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
 					</Module>
 				</modules>
 			</Processor>
