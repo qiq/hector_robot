@@ -24,12 +24,9 @@ my %tags = (
 sub process_text() {
 	my ($text) = @_;
 
+	my $in_comment = 0;
 	my $in_cb = 0;
 	my $in_table = 0;
-	my %in_tag = ();
-	foreach my $k (keys %tags) {
-		$in_tag{$k} = 0;
-	}
 	my $in_tags = 0;
 	foreach my $t (@{$text}) {
 		$t =~ s/^\s+//;
@@ -54,7 +51,7 @@ sub process_text() {
 					$in_tags++ if ($5 !~ /\s*\/\s*&gt;/);
 				} else {
 					# end of a tag
-					$in_tags--;
+					$in_tags-- if ($in_tags > 0);
 				}
 			} else {
 				# unknown tag
@@ -66,30 +63,26 @@ sub process_text() {
 		$t2 .= $t if ($in_tags == 0);
 		$t = $t2;
 		# translate entities, ignore HTML
-		$t =~ s/&lt;.*&gt;//g;
+		$t =~ s/&lt;\s*br\*\/?\s*&gt;//g;
+		$t =~ s/&lt;!--.*?--&gt;//g;
+		$t =~ s/&lt;.*?&gt;//g;
 		$t =~ s/&lt;/</g;
 		$t =~ s/&gt;/>/g;
 		$t =~ s/&quot;/"/g;
 		$t =~ s/&amp;/&/g;
 		$t =~ s/&nbsp;/ /g;
-		# table
+		# comment
 		$t2 = "";
-		while ($t =~ s/(.*?)(\{\||\|\})//) {
-			$t2 .= $1 if ($in_table == 0);
-			if ($2 eq '{|') {
-				$in_table++;
+		while ($t =~ s/(.*?)(<!--|-->)//) {
+			$t2 .= $1 if ($in_comment == 0);
+			if ($2 eq '<!--') {
+				$in_comment++;
 			} else {
-				$in_table--;
+				$in_comment-- if ($in_comment > 0);
 			}
 		}
-		$t2 .= $t if ($in_table == 0);
+		$t2 .= $t if ($in_comment == 0);
 		$t = $t2;
-		# #REDIRECT
-		next if ($t =~ /^#REDIRECT/);
-		# definition
-		next if ($t =~ /^\;/);
-		# list
-		$t =~ s/^[\*#:]+\s*//;
 		# {{ }}
 		$t2 = "";
 		while ($t =~ s/(.*?)(\{\{|\}\})//) {
@@ -97,11 +90,31 @@ sub process_text() {
 			if ($2 eq '{{') {
 				$in_cb++;
 			} else {
-				$in_cb--;
+				$in_cb-- if ($in_cb > 0);
 			}
 		}
 		$t2 .= $t if ($in_cb == 0);
 		$t = $t2;
+		# table
+		$t2 = "";
+		while ($t =~ s/(.*?)(\{\||\|\})//) {
+			$t2 .= $1 if ($in_table == 0);
+			if ($2 eq '{|') {
+				$in_table++;
+			} else {
+				$in_table-- if ($in_table > 0);
+			}
+		}
+		$t2 .= $t if ($in_table == 0);
+		$t = $t2;
+		$t =~ s/^\s*\|.*//;
+		$t =~ s/^\s*!.*//;
+		# #REDIRECT
+		next if ($t =~ /^#REDIRECT/);
+		# definition
+		next if ($t =~ /^\;/);
+		# list
+		$t =~ s/^[\*#:]+\s*//;
 		# tag-only
 		next if ($t =~ /^\[\[[^[]+\]\][^[:alpha:]]*$/);
 		# wiki markup, retain bar and fie from [[foo|bar]] [[fie]]
