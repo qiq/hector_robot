@@ -48,8 +48,9 @@ sub process_text() {
 		next if ($t =~ /^\[\[[^[]+\]\][^[:alpha:]]*$/);
 		# headers
 		if ($t =~ /^={1,6}\s*([^=]+)\s*={1,6}$/) {
-			#print "$1\n\n";
+			# we do not want headers as they are usualy "Links, ..."
 			next;
+			#push(@text2, $1."__NLNL__");
 		}
 
 		push(@text2, $t);
@@ -139,13 +140,15 @@ sub process_text() {
 	$t2 .= $t if ($in_table == 0);
 	$t = $t2;
 
+	# delete all images (thumbnails)
+	$t =~ s/\[\[[^]]*\|thumb\|[^]]*\]\]//g;
 	# wiki markup, retain bar and fie from [[foo|bar]] [[fie]]
 	$t =~ s/\[\[[^]]*\|//g;
 	$t =~ s/\]\]//g;
 	$t =~ s/\[\[//g;
 
 	# URL
-	$t =~ s/\[http:[^\s]*\s+([^]]*)\]/$1/g;
+	$t =~ s/\[http:[^]\s]*\s+([^]]*)\]/$1/g;
 	# ignore paragraphs starting with ',', '.' etc.
 #	next if ($t =~ /^\s*[,.]/);
 	# delete __XXX__

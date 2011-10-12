@@ -1,0 +1,1 @@
+for i in wiki_xml/*; do j=`echo $i|sed -e 's/wiki_xml\/\(.*\)wiki-.*xml.bz2/\1/'`; qsub ./wiki2text.sh $i wiki_text/$j.bz2; sleep 5; done
