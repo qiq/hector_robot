@@ -135,14 +135,12 @@ Resource *DetectLanguageTable::ProcessSimpleSync(Resource *resource) {
 		int flags = tr->GetFlags(i);
 		string word = tr->GetForm(i);
 		if (paragraphLevel && i > 0 && (flags & TextResource::TOKEN_PARAGRAPH_START)) {
-			int lang = -1;
+			int lang = defaultLanguageId;
 			double max = -1;
-			if (defaultLanguage) {
+			if (defaultLanguageId != -1) {
 				tr1::unordered_map<int, double>::iterator iter = score.find(defaultLanguageId);
-				if (iter != score.end()) {
-					lang = defaultLanguageId;
+				if (iter != score.end())
 					max = iter->second;
-				}
 			}
 			for (tr1::unordered_map<int, double>::iterator iter = score.begin(); iter != score.end(); ++iter) {
 				if (iter->second > max) {
@@ -150,6 +148,7 @@ Resource *DetectLanguageTable::ProcessSimpleSync(Resource *resource) {
 					lang = iter->first;
 				}
 			}
+//fprintf(stderr, "MAX: %f (%s)\n", max, id2lang[lang].c_str());
 			if (!languages.empty())
 				languages += " ";
 			languages += id2lang[lang];
@@ -161,6 +160,7 @@ Resource *DetectLanguageTable::ProcessSimpleSync(Resource *resource) {
 		s16.toLower();
 		word.clear();
 		word = s16.toUTF8String(word);
+//fprintf(stderr, "%s\n", word.c_str());
 		tr1::unordered_map<string, vector<int>*>::iterator iter = words.find(word);
 		if (iter != words.end()) {
 			vector<int> *v = iter->second;
@@ -177,14 +177,12 @@ Resource *DetectLanguageTable::ProcessSimpleSync(Resource *resource) {
 	}
 
 	if (count) {
-		int lang = -1;
-		double max = -1;;
-		if (defaultLanguage) {
+		int lang = defaultLanguageId;
+		double max = -1;
+		if (defaultLanguageId != -1) {
 			tr1::unordered_map<int, double>::iterator iter = score.find(defaultLanguageId);
-			if (iter != score.end()) {
-				lang = defaultLanguageId;
+			if (iter != score.end())
 				max = iter->second;
-			}
 		}
 		for (tr1::unordered_map<int, double>::iterator iter = score.begin(); iter != score.end(); ++iter) {
 			if (iter->second > max) {
