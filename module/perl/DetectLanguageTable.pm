@@ -99,9 +99,11 @@ sub ProcessSimple() {
 					$lang = $k;
 				}
 			}
+#printf STDERR ("MAX: %f (%s)\n", $max, $lang);
 			push(@lang, $lang);
 			%score = ();
 		}
+#print STDERR lc($word)."\n";
 		if (exists $self->{'_words'}->{lc($word)}) {
 			my @langs = @{$self->{'_words'}->{lc($word)}};
 			foreach my $lang (@langs) {
