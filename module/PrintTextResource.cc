@@ -121,6 +121,8 @@ Resource *PrintTextResource::ProcessOutputSync(Resource *resource) {
 				else
 					*ofs << "\t";
 			}
+			if (flags & TextResource::TOKEN_PARAGRAPH_START)
+				*ofs << "<p>\n";
 			*ofs << tr->GetForm(i);
 			if (i < nLemmas)
 				*ofs << " " << tr->GetLemma(i);
