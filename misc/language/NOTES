@@ -1,0 +1,1 @@
+for f in `cat languages.txt`; do qsub ./prepare_data.sh $f; sleep 5; done
