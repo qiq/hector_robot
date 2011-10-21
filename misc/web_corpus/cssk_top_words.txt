@@ -1,0 +1,1 @@
+../unaccented/cssk_top_words.txt
