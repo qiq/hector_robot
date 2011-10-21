@@ -10,23 +10,24 @@ time ( for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list/\1/'
 for i in tokenized/*/*.hr.gz; do j=`echo $i|sed -e 's/\.hr\.gz$/.dump/'`; hector_server -c WebCorpus.xml -fb dump $i >$j; done
 
 3) word count for different groups:
-clanky: 
-diskuse:
-tvorivost:
+clanky:  M_wordcount[0]: 1421334	12822037	37674229	516703278	624640857	0	0	0	0
+diskuse: M_wordcount[0]: 2578840	54527889	114037264	1674143836	2083883744	0	0	0	0
+tvorivost: M_wordcount[0]: 2831249	64050936	149728618	1574181258	2031820433	0	0	0	0
+celkem:  M_wordcount[0]: 6831423	131400862	301440111	3765028372	4740345034	0	0	0	0
 
 4) deduplicate (all at once), split all.hr.gz back into separate files
 
 time ( cat tokenized/*/*.hr.gz |hector_server -c WebCorpus.xml -fb deduplicate_all 5000000000 /dev/stdin deduplicated/all.hr.gz deduplicated/deduplicate.log )
 - takes: 4h37m
-- word counts: 
+- word counts (before/after)
 M_wordcount[0]: 6831423       131400862       301440111       3765028372      4740345034      0       0       0       0
 M_wordcount[0]: 6667544       114975561       255629721       3211964525      3978877057      0       0       0       0
 
-- word counts:
-clanky: M_wordcount[0]: 1359561	11356787	33196548	456830973	546436748	0	0	0	0
+- word counts (split)
+clanky:  M_wordcount[0]: 1359561	11356787	33196548	456830973	546436748	0	0	0	0
 diskuse: M_wordcount[0]: 2566026	51551875	107224544	1579301675	1938846622	0	0	0	0
 tvorivost: M_wordcount[0]: 2741957	52066899	115208629	1175831877	1493593687	0	0	0	0
-celkem: M_wordcount[0]: 6667544	114975561	255629721	3211964525	3978877057	0	0	0	0
+celkem:  M_wordcount[0]: 6667544	114975561	255629721	3211964525	3978877057	0	0	0	0
 
 for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list$/\1/'`; echo $j; done|./generate_split.pl >Split.xml
 time ( hector_server -c Split.xml -fb split )
@@ -36,56 +37,60 @@ time ( hector_server -c Split.xml -fb split )
 
 time ( for i in deduplicated/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_unaccented $i accented/$j.hr.gz cssk_top_words.txt accented/$j.log; done )
 - takes: 6h50m
-
-6) language detect
-
-# paragraph-level
-time ( for i in deduplicated/diskuse/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb detect_language $i language/$j.hr.gz true language/$j.log; done )
-- takes: ??
-# document level
-time ( for i in deduplicated/{tvorivost,clanky}/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb detect_language $i language/$j.hr.gz false language/$j.log; done )
-- takes: ??
-
-7) counts for different languages and categories
-
-# count languages
-for i in language/{clanky,diskuse,tvorivost}; do cat $i/*.hr.gz | hector_server -c WebCorpus.xml -fb dump /dev/stdin |grep "^<doc"|sed -e 's/.*lang="\([^"]*\)".*/\1/'|perl -pe 'while (<>) { chomp; foreach $i (split / /) { print "$i\n"; } }' |sort|uniq -c|sort -n; done
-
-8) filter cs + ? languages
-
-- we do not filter currently, just mark, so we skipt this step
-
-time ( for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i language_filtered/$j.hr.gz "cs ?" language_filtered/$j.log; done )
-- takes: 1h31m
 - word counts:
+clanky:M_wordcount[0]: 1359393 11343459        33156376        456219163       545639836       0       0       0       0
+diskuse: M_wordcount[0]: 2538366 40967896        85894179        1200476627      1475842799      0       0       0       0
+tvorivost: M_wordcount[0]: 2714806 50697692        111534735       1114980826      1416992529      0       0       0       0
 
-9) split documents into smaller files
+6) language detect + filter
 
-for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)/\1/'`; hector_server -c WebCorpus.xml -fb split $i split/$j 1048576; done
+- paragraph-level
+time ( for i in accented/{diskuse,tvorivost}/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
+- takes: 124m (diskuse), 119m (tvorivost)
 
-10) tag all files (using SGE)
+- document level
+time ( for i in accented/clanky/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs false czech/$j.log; done )
+- takes: 43m
+
+clanky: M_wordcount[0]: 1352604	11268880	32921318	452585914	541308785	0	0	0	0
+diskuse: M_wordcount[0]: 2518864	38215678	81413650	1143073782	1404072625	0	0	0	0
+tvorivost: M_wordcount[0]: 2630384	44228416	97558990	983346836	1247586012	0	0	0	0
+
+languages (in words):
+clanky:
+cs	452585914
+sk	3067468
+en	501500
+other	64281
+diskuse:
+cs	1143073782
+sk	51297087
+other	4616883
+en	1488875
+tvorivost:
+cs	983346836
+sk	107604069
+other	13067099
+en	10962822
+
+
+7) split documents into smaller files
+
+for i in czech/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)/\1/'`; hector_server -c WebCorpus.xml -fb split $i split/$j 1048576; done
+
+8) tag all files (using SGE)
 
 for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag.sh $i $j; sleep 4; done
 
-11) word count for different groups:
-clanky: M_wordcount[0]: 1359561	11356787	33196548	456830973	546436748	0	0	0	0
-diskuse: M_wordcount[0]: 2566026	51551875	107224544	1579301675	1938846622	0	0	0	0
-tvorivost: M_wordcount[0]: 2741957	52066899	115208629	1175831877	1493593687	0	0	0	0
-celkem: M_wordcount[0]: 6667544	114975561	255629721	3211964525	3978877057	0	0	0	0
-
-11) Detect languages (again) using different method -- unigrams on words with default language
-
-12) Filter out paragraphs with non-cs language
-
-13) parse all files
+9) parse all files
 - takes: ???
 
-13) concatenate all files back (just plain cat should do in our case)
+10) concatenate all files back (just plain cat should do in our case)
 
-14) convert files to vertical format
+11) convert files to vertical format
 - word counts (sanity check)
 
-15) create Google n-gram compatible format
+12) create Google n-gram compatible format
 
 -----------------------------------
 
@@ -97,3 +102,20 @@ Split files, so that we have (upto) 10000 docs in each:
 #for i in deduplicated/*.hr.gz; do j=`echo $i|sed -e 's/.*\/\(.*\)\.hr\.gz$/\1/'`; echo hector_server -c WebCorpus.xml -fb split $i $i 10000; done
 for i in deduplicated/*.hr.gz; do hector_server -c WebCorpus.xml -fb split $i $i 10000; done
 for i in deduplicated/*.hr.gz.*; do j=`echo $i|sed -e 's/\(.*\)\.hr\.gz\.\(.*\)$/\1.hr.\2.gz'`; mv $i $j; done
+
+7) counts for different languages and categories
+
+# count languages
+#for i in language/{clanky,diskuse,tvorivost}; do cat $i/*.hr.gz | hector_server -c WebCorpus.xml -fb dump /dev/stdin |grep "^<doc"|sed -e 's/.*lang="\([^"]*\)".*/\1/'|perl -pe 'while (<>) { chomp; foreach $i (split / /) { print "$i\n"; } }' |sort|uniq -c|sort -n; done
+
+8) filter cs + ? languages
+
+- we do not filter currently, just mark, so we skipt this step
+
+time ( for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i language_filtered/$j.hr.gz "cs ?" language_filtered/$j.log; done )
+- takes: 1h31m
+- word counts:
+
+languge filter:
+ls tagged/diskuse/*|grep -v '\.log$'| while read i; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\.hr\.gz.*\)$/\1/'`; hector_server -c webcorpus.xml -fb filter_language $i czech/$j language_data/top_words cs true czech/$j.log; done
+ls tagged/{clanky,tvorivost}/*|grep -v '\.log$'| while read i; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\.hr\.gz.*\)$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j language_data/top_words cs false czech/$j.log; done

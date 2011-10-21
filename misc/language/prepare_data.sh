@@ -18,7 +18,7 @@ TMP=/mnt/h/tmp
 function prepare {
 	l=$1
 	mkdir $TMP/split.$$ 2>/dev/null
-	bzip2 -dc <text/$l.bz2|split -d -l 10000 -a 5 - $TMP/split.$$/$l.
+	bzip2 -dc <wiki_text/$l.bz2|split -d -l 10000 -a 5 - $TMP/split.$$/$l.
 	find $TMP/split.$$ -type f >language_data/$l.list
 	n=`wc -l language_data/$l.list|cut -f1 -d' '`
 	if [ $n -gt 100 ]; then

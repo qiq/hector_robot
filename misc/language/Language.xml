@@ -104,9 +104,14 @@
 						<param name="paragraphLevel" value="true"/>
 					</Module>
 					<Module id="M_lc" lib="LanguageCount.la"/>
-					<Module id="M_output" lib="Null.la">
-						<param name="moduleType" value="OUTPUT"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
 					</Module>
+					<!--Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module-->
 				</modules>
 			</Processor>
 		</ProcessingEngine>
@@ -131,14 +136,19 @@
 						<param name="compress" value="true"/>
 					</Module>
 					<Module id="M_detect" lib="DetectLanguageTable.la">
-						<param name="defaultLanguage" value="$3"/>
+						<param name="defaultLanguage" value="$4"/>
 						<param name="paragraphLevel" value="true"/>
-						<param name="filenamePrefix" value="$2"/>
+						<param name="filenamePrefix" value="$3"/>
 					</Module>
 					<Module id="M_lc" lib="LanguageCount.la"/>
-					<Module id="M_output" lib="Null.la">
-						<param name="moduleType" value="OUTPUT"/>
+					<Module id="M_output" lib="Save.la">
+						<param name="filename" value="$2"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
 					</Module>
+					<!--Module id="M_output" lib="Null.la">
+						<param name="moduleType" value="OUTPUT"/>
+					</Module-->
 				</modules>
 			</Processor>
 		</ProcessingEngine>
