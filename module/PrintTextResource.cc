@@ -89,7 +89,11 @@ Resource *PrintTextResource::ProcessOutputSync(Resource *resource) {
 	int nPosTags = tr->GetPosTagCount();
 	int nHeads = tr->GetHeadCount();
 	int nDepRels = tr->GetDepRelCount();
-	*ofs << "<doc id=\"" << tr->GetTextId() << "\" lang=\"" << tr->GetLanguage() << "\">\n";
+	*ofs << "<doc id=\"" << tr->GetTextId() << "\"";
+	string lang = tr->GetLanguage();
+	if (!lang.empty())
+		*ofs << " lang=\"" << tr->GetLanguage() << "\"";
+	*ofs << ">\n";
 	if (!horizontal) {
 		for (int i = 0; i < nFlags; i++) {
 			int flags = i < nFlags ? tr->GetFlags(i) : TextResource::TOKEN_NONE;
