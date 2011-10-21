@@ -78,12 +78,31 @@ Resource *LanguageCount::ProcessSimpleSync(Resource *resource) {
 	string langs = tr->GetLanguage();
 	vector<string> v;
 	splitOnWs(v, langs);
-	for (vector<string>::iterator iter = v.begin(); iter != v.end(); ++iter) {
-		tr1::unordered_map<string, uint64_t>::iterator iter2 = count.find(*iter);
-		if (iter2 != count.end()) {
-			iter2->second++;
+
+	uint64_t nWord = 0;
+	int para = 0;
+	int words = tr->GetFormCount();
+	for (int i = 0; i < words; i++) {
+		int flags = tr->GetFlags(i);
+		if (v.size() > 1 && flags & TextResource::TOKEN_PARAGRAPH_START && i > 0) {
+			tr1::unordered_map<string, uint64_t>::iterator iter = count.find(v[para]);
+			if (iter != count.end()) {
+				iter->second += nWord;
+			} else {
+				count[v[para]] = nWord;
+			}
+			nWord = 0;
+			para++;
+		}
+		if (!(flags & TextResource::TOKEN_PUNCT))
+			nWord++;
+	}
+	if (nWord > 0) {
+		tr1::unordered_map<string, uint64_t>::iterator iter = count.find(v[para]);
+		if (iter != count.end()) {
+			iter->second += nWord;
 		} else {
-			count[*iter] = 1;
+			count[v[para]] = nWord;
 		}
 	}
 
