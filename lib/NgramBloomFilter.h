@@ -147,7 +147,9 @@ inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, 
 
 inline NgramBloomFilter::NgramBloomFilter(int ngram, double duplicateThreshold, uint64_t n, double false_positive_probability, bool earlyUpdate): ngram(ngram), duplicateThreshold(duplicateThreshold), earlyUpdate(earlyUpdate) {
 	m = ceil((double)-1*n*log(false_positive_probability)/(log(2)*log(2)));
-	k = ((double)m/n)*log(2);
+	k = ceil(((double)m/n)*log(2));
+	// to stay below maximum false_positive_probability
+	m = ceil(k/log(2)*n);
 #ifdef DEBUG
 	std::cout << "n: " << n << ", m: " << m << ", k: " << k << "\n";
 #endif
