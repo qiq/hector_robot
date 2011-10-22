@@ -5,52 +5,77 @@ rm -f data/*/*.list; for i in data/{clanky,diskuse,tvorivost}/*; do find -L $i -
 2) tokenize raw texts (+normalize)
 
 time ( for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list/\1/'`; hector_server -c WebCorpus.xml -fb tokenize $i tokenized/$j.hr.gz tokenized/$j.log; done )
-- takes: 4h0m
+real    246m47.748s
+user    210m41.340s
+sys     5m20.950s
 - create data dump:
 for i in tokenized/*/*.hr.gz; do j=`echo $i|sed -e 's/\.hr\.gz$/.dump/'`; hector_server -c WebCorpus.xml -fb dump $i >$j; done
 
 3) word count for different groups:
-clanky:  M_wordcount[0]: 1421334	12822037	37674229	516703278	624640857	0	0	0	0
-diskuse: M_wordcount[0]: 2578840	54527889	114037264	1674143836	2083883744	0	0	0	0
-tvorivost: M_wordcount[0]: 2831249	64050936	149728618	1574181258	2031820433	0	0	0	0
-celkem:  M_wordcount[0]: 6831423	131400862	301440111	3765028372	4740345034	0	0	0	0
+cat tokenized/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 1580493 14261018        41530385        568732717       686604997       0       0       0       0
+cat tokenized/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2578840 54527889        114528831       1674143836      2083883744      0       0       0       0
+cat tokenized/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2831249 64050936        150339872       1574181258      2031820433      0       0       0       0
+cat tokenized/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 6990582 132839843       306399088       3817057811      4802309174      0       0       0       0
 
 4) deduplicate (all at once), split all.hr.gz back into separate files
 
-time ( cat tokenized/*/*.hr.gz |hector_server -c WebCorpus.xml -fb deduplicate_all 5000000000 /dev/stdin deduplicated/all.hr.gz deduplicated/deduplicate.log )
-- takes: 4h37m
+time ( cat tokenized/*/*.hr.gz |hector_server -c WebCorpus.xml -fb deduplicate_all 6000000000 /dev/stdin deduplicated/all.hr.gz deduplicated/deduplicate.log )
+real    290m39.668s
+user    289m5.890s
+sys     1m8.620s
 - word counts (before/after)
-M_wordcount[0]: 6831423       131400862       301440111       3765028372      4740345034      0       0       0       0
-M_wordcount[0]: 6667544       114975561       255629721       3211964525      3978877057      0       0       0       0
-
-- word counts (split)
-clanky:  M_wordcount[0]: 1359561	11356787	33196548	456830973	546436748	0	0	0	0
-diskuse: M_wordcount[0]: 2566026	51551875	107224544	1579301675	1938846622	0	0	0	0
-tvorivost: M_wordcount[0]: 2741957	52066899	115208629	1175831877	1493593687	0	0	0	0
-celkem:  M_wordcount[0]: 6667544	114975561	255629721	3211964525	3978877057	0	0	0	0
+M_wc1[0]: 6990582       132839843       306399088       3817057811      4802309174      0       0       0       0
+M_wc2[0]: 6819394       116223396       259753763       3255271542      4030066932      0       0       0       0
 
 for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list$/\1/'`; echo $j; done|./generate_split.pl >Split.xml
 time ( hector_server -c Split.xml -fb split )
-- takes 1h17m
+real    74m29.675s
+user    107m40.950s
+sys     0m42.720s
+
+cat deduplicated/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 1512260 12617177        36461450        501251489       598926543       0       0       0       0
+cat deduplicated/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2566027 51551081        107697632       1579254326      1938789786      0       0       0       0
+cat deduplicated/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2741107 52055138        115594681       1174765727      1492350603      0       0       0       0
+cat deduplicated/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 6819394 116223396       259753763       3255271542      4030066932      0       0       0       0
 
 5) detect paragraphs with more unaccented words
 
 time ( for i in deduplicated/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_unaccented $i accented/$j.hr.gz cssk_top_words.txt accented/$j.log; done )
-- takes: 6h50m
-- word counts:
-clanky:M_wordcount[0]: 1359393 11343459        33156376        456219163       545639836       0       0       0       0
-diskuse: M_wordcount[0]: 2538366 40967896        85894179        1200476627      1475842799      0       0       0       0
-tvorivost: M_wordcount[0]: 2714806 50697692        111534735       1114980826      1416992529      0       0       0       0
+real    414m2.564s
+user    411m59.120s
+sys     0m33.950s
+
+cat accented/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 1512091 12603770        36420958        500635554       598124434       0       0       0       0
+cat accented/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2538367 40967072        86284439        1200428898      1475785501      0       0       0       0
+cat accented/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2713952 50685790        111884548       1113912020      1415745963      0       0       0       0
+cat accented/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 6764410 104256632       234589945       2814976472      3489655898      0       0       0       0
 
 6) language detect + filter
 
-- paragraph-level
-time ( for i in accented/{diskuse,tvorivost}/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
-- takes: 124m (diskuse), 119m (tvorivost)
-
 - document level
 time ( for i in accented/clanky/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs false czech/$j.log; done )
-- takes: 43m
+
+- paragraph-level
+time ( for i in accented/diskuse/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
+
+time ( for i in accented/tvorivost/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
+
+cat czech/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+cat czech/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+cat czech/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+cat czech/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
 
 clanky: M_wordcount[0]: 1352604	11268880	32921318	452585914	541308785	0	0	0	0
 diskuse: M_wordcount[0]: 2518864	38215678	81413650	1143073782	1404072625	0	0	0	0
