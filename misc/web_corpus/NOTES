@@ -66,38 +66,51 @@ M_wordcount[0]: 6764410 104256632       234589945       2814976472      34896558
 
 - document level
 time ( for i in accented/clanky/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs false czech/$j.log; done )
+real    46m28.904s
+user    46m3.100s
+sys     0m15.010s
 
 - paragraph-level
 time ( for i in accented/diskuse/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
+real    123m52.773s
+user    123m13.340s
+sys     0m20.410s
 
 time ( for i in accented/tvorivost/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j.hr.gz language_data/top_words cs true czech/$j.log; done )
+real    116m53.580s
+user    116m7.860s
+sys     0m15.620s
 
 cat czech/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 1505227 12529047        36185513        496998792       593788404       0       0       0       0
 cat czech/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2518865 38214838        81798902        1143025931      1404015135      0       0       0       0
 cat czech/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 2629526 44215948        97894796        982272188       1246330942      0       0       0       0
 cat czech/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-
-clanky: M_wordcount[0]: 1352604	11268880	32921318	452585914	541308785	0	0	0	0
-diskuse: M_wordcount[0]: 2518864	38215678	81413650	1143073782	1404072625	0	0	0	0
-tvorivost: M_wordcount[0]: 2630384	44228416	97558990	983346836	1247586012	0	0	0	0
+M_wordcount[0]: 6653618 94959833        215879211       2622296911      3244134481      0       0       0       0
 
 languages (in words):
 clanky:
-cs	452585914
-sk	3067468
-en	501500
-other	64281
+cs	496998792
+sk	3068696
+en	502645
+other	65421
 diskuse:
-cs	1143073782
-sk	51297087
-other	4616883
-en	1488875
+cs	1143025931
+sk	51297131
+other	4616945
+en	1488891
 tvorivost:
-cs	983346836
-sk	107604069
-other	13067099
-en	10962822
-
+cs	982272188
+sk	107607917
+other	13068492
+en	10963423
+celkem:
+cs	2622296911
+sk	161973744
+other	17750858
+en	12954959
 
 7) split documents into smaller files
 
