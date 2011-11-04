@@ -121,7 +121,9 @@ for i in czech/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)/\1/'`; hector_s
 for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag.sh $i $j; sleep 4; done
 
 9) parse all files
-- takes: ???
+
+#ls tagged/*/*.hr.gz.*|grep -v '\.log$'|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; qsub ./parse.sh $i $j; sleep 4; done
+ls tagged/*/*.hr.gz.*|grep -v '\.log$'|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; if [ ! -f "$j.log" ]; then qsub ./parse.sh $i $j; sleep 4; fi; done
 
 10) concatenate all files back (just plain cat should do in our case)
 
@@ -130,30 +132,18 @@ for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag
 
 12) create Google n-gram compatible format
 
------------------------------------
+- google has:
+Total number of tokens:	1,306,807,412,486
+Total number of sentences:	 150,727,365,731
+Total number of unigrams:	95,998,281
+Total number of bigrams:	646,439,858
+Total number of trigrams:	1,312,972,925
+Total number of fourgrams:	1,396,154,236
+Total number of fivegrams:	1,149,361,413
+Total number of n-grams:	4,600,926,713
 
-5) split
-Split tokenized.hr file back into files according to servers:
-hector_server -c Split.xml -fb split 
+tokens:
+sentences:
+...
 
-Split files, so that we have (upto) 10000 docs in each:
-#for i in deduplicated/*.hr.gz; do j=`echo $i|sed -e 's/.*\/\(.*\)\.hr\.gz$/\1/'`; echo hector_server -c WebCorpus.xml -fb split $i $i 10000; done
-for i in deduplicated/*.hr.gz; do hector_server -c WebCorpus.xml -fb split $i $i 10000; done
-for i in deduplicated/*.hr.gz.*; do j=`echo $i|sed -e 's/\(.*\)\.hr\.gz\.\(.*\)$/\1.hr.\2.gz'`; mv $i $j; done
-
-7) counts for different languages and categories
-
-# count languages
-#for i in language/{clanky,diskuse,tvorivost}; do cat $i/*.hr.gz | hector_server -c WebCorpus.xml -fb dump /dev/stdin |grep "^<doc"|sed -e 's/.*lang="\([^"]*\)".*/\1/'|perl -pe 'while (<>) { chomp; foreach $i (split / /) { print "$i\n"; } }' |sort|uniq -c|sort -n; done
-
-8) filter cs + ? languages
-
-- we do not filter currently, just mark, so we skipt this step
-
-time ( for i in language/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.hr\.gz/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i language_filtered/$j.hr.gz "cs ?" language_filtered/$j.log; done )
-- takes: 1h31m
-- word counts:
-
-languge filter:
-ls tagged/diskuse/*|grep -v '\.log$'| while read i; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\.hr\.gz.*\)$/\1/'`; hector_server -c webcorpus.xml -fb filter_language $i czech/$j language_data/top_words cs true czech/$j.log; done
-ls tagged/{clanky,tvorivost}/*|grep -v '\.log$'| while read i; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\.hr\.gz.*\)$/\1/'`; hector_server -c WebCorpus.xml -fb filter_language $i czech/$j language_data/top_words cs false czech/$j.log; done
+accessoire Annuaire LOEIL	49
