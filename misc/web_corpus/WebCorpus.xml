@@ -344,7 +344,7 @@ WebCorpus: several task that process web corpus files:
 					</Module>
 					<Module id="M_output" lib="PrintTextResource.la">
 						<param name="filename" value="/dev/stdout"/>
-						<param name="horizontal" value="true"/>
+						<param name="horizontal" value="false"/>
 					</Module>
 				</modules>
 			</Processor>

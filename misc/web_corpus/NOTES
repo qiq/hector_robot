@@ -125,9 +125,14 @@ for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag
 #ls tagged/*/*.hr.gz.*|grep -v '\.log$'|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; qsub ./parse.sh $i $j; sleep 4; done
 ls tagged/*/*.hr.gz.*|grep -v '\.log$'|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; if [ ! -f "$j.log" ]; then qsub ./parse.sh $i $j; sleep 4; fi; done
 
+find parsed/ -type f|grep -v ".log$"|xargs cat |hector_server -c WebCorpus.xml -fb word_count /dev/stdin
+M_wordcount[0]: 6653618	94959833	215879211	2622296911	3244134481	3244134481	3244134481	3244134481	3244134481
+
 10) concatenate all files back (just plain cat should do in our case)
+find parsed/*/*.log|sed -e 's/\.hr.gz\.[0-9]*\.log$//'|sort -u|while read i; do n=`echo $i.hr.gz.|wc -c`; target=`echo $i|sed -e 's/parsed\/\(.*\)/finished\/\1.hr.gz/'`; ls $i.*|grep -v '\.log'|sort -k 1.$n -n| xargs cat >$target; done
 
 11) convert files to vertical format
+TODO
 - word counts (sanity check)
 
 12) create Google n-gram compatible format
