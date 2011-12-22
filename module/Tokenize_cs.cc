@@ -139,11 +139,18 @@ extern "C" int fixup(vector<Token*> &tokens, int index) {
 
 		if (last > index) {
 			// concatenate tokens index..last
+			TextResource::Flags flags = TextResource::TOKEN_NONE;
 			string s;
-			for (int i = index; i <= last; i++)
+			for (int i = index; i <= last; i++) {
 				s.append(tokens[i]->GetText());
+				// copy paragraph & sentence starts
+				if (tokens[i]->TestFlag(TextResource::TOKEN_PARAGRAPH_START))
+					flags = (TextResource::Flags)(flags|TextResource::TOKEN_PARAGRAPH_START);
+				if (tokens[i]->TestFlag(TextResource::TOKEN_SENTENCE_START))
+					flags = (TextResource::Flags)(flags|TextResource::TOKEN_SENTENCE_START);
+			}
 			tokens[index]->SetText(s);
-			tokens[index]->SetFlags(tokens[last]->GetFlags());
+			tokens[index]->SetFlags((TextResource::Flags)(flags|tokens[last]->GetFlags()));
 			tokens.erase(tokens.begin()+index+1, tokens.begin()+last+1);
 			// need to restat as we consumed some tokens
 			return true;
