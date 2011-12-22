@@ -88,6 +88,7 @@ Split: split input file according to the TextResource TextId prefix.
 					<nextProcessor ref="P_58" filter="58"/>
 					<nextProcessor ref="P_59" filter="59"/>
 					<nextProcessor ref="P_60" filter="60"/>
+					<nextProcessor ref="P_61" filter="61"/>
                                         <nextProcessor ref="P_default"/>
 				</output>
 			</Processor>
@@ -358,7 +359,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_21" lib="Save.la">
-						<param name="filename" value="deduplicated/clanky/rozhlas-utf-clanky.hr.gz"/>
+						<param name="filename" value="deduplicated/clanky/rozhlas-iso-clanky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -371,7 +372,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_22" lib="Save.la">
-						<param name="filename" value="deduplicated/clanky/tzbinfo-clanky.hr.gz"/>
+						<param name="filename" value="deduplicated/clanky/rozhlas-utf-clanky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -384,7 +385,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_23" lib="Save.la">
-						<param name="filename" value="deduplicated/clanky/zena-clanky.hr.gz"/>
+						<param name="filename" value="deduplicated/clanky/tzbinfo-clanky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -397,7 +398,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_24" lib="Save.la">
-						<param name="filename" value="deduplicated/clanky/zive-clanky.hr.gz"/>
+						<param name="filename" value="deduplicated/clanky/zena-clanky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -410,7 +411,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_25" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/auto-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/clanky/zive-clanky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -423,7 +424,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_26" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/auto-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/auto-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -436,7 +437,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_27" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/babinet-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/auto-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -449,7 +450,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_28" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/babycafe-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/babinet-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -462,7 +463,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_29" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/beremese-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/babycafe-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -475,7 +476,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_30" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/bikeforum-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/beremese-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -488,7 +489,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_31" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/chytrazena-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/bikeforum-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -501,7 +502,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_32" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/czpes-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/chytrazena-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -514,7 +515,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_33" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/doktorka-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/czpes-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -527,7 +528,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_34" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/doupe-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/doktorka-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -540,7 +541,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_35" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/emimino-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/doupe-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -553,7 +554,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_36" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/garaz-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/emimino-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -566,7 +567,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_37" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/idnes-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/garaz-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -579,7 +580,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_38" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/living-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/idnes-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -592,7 +593,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_39" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/mobilmania-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/living-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -605,7 +606,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_40" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/mobilmania-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/mobilmania-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -618,7 +619,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_41" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/modrykonik-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/mobilmania-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -631,7 +632,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_42" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/motorkari-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/modrykonik-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -644,7 +645,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_43" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/omlazeni-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/motorkari-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -657,7 +658,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_44" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/rodina-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/omlazeni-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -670,7 +671,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_45" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/rodina-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/rodina-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -683,7 +684,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_46" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/zena-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/rodina-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -696,7 +697,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_47" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/zive-cldisk.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/zena-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -709,7 +710,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_48" lib="Save.la">
-						<param name="filename" value="deduplicated/diskuse/zive-diskuse.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/zive-cldisk.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -722,7 +723,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_49" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/babycafe-denicky.hr.gz"/>
+						<param name="filename" value="deduplicated/diskuse/zive-diskuse.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -735,7 +736,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_50" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/blog-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/babycafe-denicky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -748,7 +749,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_51" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/blogspot-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/blog-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -761,7 +762,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_52" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/blog-stranky.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/blogspot-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -774,7 +775,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_53" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/bloguje-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/blog-stranky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -787,7 +788,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_54" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/csfd-recenze.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/bloguje-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -800,7 +801,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_55" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/emimino-denicky.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/csfd-recenze.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -813,7 +814,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_56" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/idnes-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/emimino-denicky.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -826,7 +827,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_57" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/lidovky-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/idnes-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -839,7 +840,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_58" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/pismak-basne.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/lidovky-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -852,7 +853,7 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_59" lib="Save.la">
-						<param name="filename" value="deduplicated/tvorivost/respekt-blogy.hr.gz"/>
+						<param name="filename" value="deduplicated/tvorivost/pismak-basne.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>
 					</Module>
@@ -865,6 +866,19 @@ Split: split input file according to the TextResource TextId prefix.
 				<threads>1</threads>
 				<modules>
 					<Module id="M_60" lib="Save.la">
+						<param name="filename" value="deduplicated/tvorivost/respekt-blogy.hr.gz"/>
+						<param name="saveResourceType" value="false"/>
+						<param name="compress" value="true"/>
+					</Module>
+				</modules>
+			</Processor>
+			<Processor id="P_61">
+				<input>
+					<queue maxItems="100"/>
+				</input>
+				<threads>1</threads>
+				<modules>
+					<Module id="M_61" lib="Save.la">
 						<param name="filename" value="deduplicated/tvorivost/sblog-blogy.hr.gz"/>
 						<param name="saveResourceType" value="false"/>
 						<param name="compress" value="true"/>

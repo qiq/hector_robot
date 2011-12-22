@@ -16,7 +16,7 @@ sub ProcessSentence($$) {
 	# prepare data structure
 	my @s2;
 	for (my $i = 0; $i < @{$s}; $i++) {
-		push(@s2, [ '', '', '', '', '', '', '', '', {}, {}, {} ]);
+		push(@s2, [ '', '', '', '', '', '', '', '', '', {}, {}, {} ]);
 	}
 
 	# fill it
@@ -35,18 +35,18 @@ sub ProcessSentence($$) {
 			$parent_lemma = '#root';
 			$parent_pos = '#root';
 		}
-		splice(@{$s2[$i]}, 0, 8, $form, $lcform, $lemma, $pos, $parent, $parent_lemma, $parent_pos, $deprel);
+		splice(@{$s2[$i]}, 0, 9, $form, $lcform, $lemma, $pos, $parent_index, $deprel, $parent, $parent_lemma, $parent_pos);
 		if ($parent_index != 0) {
-			$s2[$parent_index-1]->[8]->{$form} = 1;
-			$s2[$parent_index-1]->[9]->{$lemma} = 1;
-			$s2[$parent_index-1]->[10]->{$pos} = 1;
+			$s2[$parent_index-1]->[9]->{$form} = 1;
+			$s2[$parent_index-1]->[10]->{$lemma} = 1;
+			$s2[$parent_index-1]->[11]->{$pos} = 1;
 		}
 	}
 
 	# print it
 	for (my $i = 0; $i < @s2; $i++) {
 		print "<g/>\n" if ($g->[$i]);
-		print join("\t", @{$s2[$i]}[0..7])."\t".join(" ", keys %{$s2[$i]->[8]})."\t".join(" ", keys %{$s2[$i]->[9]})."\t".join(" ", keys %{$s2[$i]->[10]})."\n";
+		print join("\t", @{$s2[$i]}[0..8])."\t".join(" ", keys %{$s2[$i]->[9]})."\t".join(" ", keys %{$s2[$i]->[10]})."\t".join(" ", keys %{$s2[$i]->[11]})."\n";
 	}
 }
 
