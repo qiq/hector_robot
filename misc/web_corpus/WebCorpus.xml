@@ -29,13 +29,13 @@ WebCorpus: several task that process web corpus files:
 						<param name="filename" value="$1"/>
 						<param name="listInFile" value="true"/>
 					</Module>
+					<Module id="M_normalize" lib="Normalize.la"/>
 					<Module id="M_tokenizer" lib="Tokenize.la">
 						<param name="maxSentenceLength" value="200"/>
 						<param name="maxWordLength" value="100"/>
 						<param name="tokenizerLibrary" value="Tokenize_cs.la"/>
 						<param name="markParagraphs" value="true"/>
 					</Module>
-					<Module id="M_normalize" lib="Normalize.la"/>
 					<Module id="M_output" lib="Save.la">
 						<param name="filename" value="$2"/>
 						<param name="saveResourceType" value="false"/>

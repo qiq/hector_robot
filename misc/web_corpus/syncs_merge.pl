@@ -5,8 +5,8 @@ use warnings;
 use locale;
 use Data::Dumper;
 
-# doing a merge sort (files must be sorted)
-# usage: ./merge_syncs_pdt2.pl file1.syncs file2.syncs ... >data.syncs
+# do a merge sort (files must be sorted)
+# usage: ls file*.sync|./sync_merge.pl >data.syncs
 
 my @heap;
 my @files;

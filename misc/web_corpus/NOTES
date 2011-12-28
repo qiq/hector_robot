@@ -34,8 +34,8 @@ sys     1m8.620s
 - word counts (before/after)
 #M_wc1[0]: 6990582       132839843       306399088       3817057811      4802309174      0       0       0       0
 #M_wc2[0]: 6819394       116223396       259753763       3255271542      4030066932      0       0       0       0
-M_wc1[0]: 7157000       134126806       309642137       3860006399      4853530081      0       0       0       0
-M_wc2[0]: 6975517       117163410       262002702       3285387650      4065440343      0       0       0       0
+final: M_wc1[0]: 7157000       134462453       310415534       3860016346      4863621189      0       0       0       0
+final: M_wc2[0]: 6975869       117402379       262560346       3285087887      4073350543      0       0       0       0
 
 for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list$/\1/'`; echo $j; done|./generate_split.pl >Split.xml
 time ( hector_server -c Split.xml -fb split )
@@ -141,10 +141,23 @@ M_wordcount[0]: 6653618	94959833	215879211	2622296911	3244134481	3244134481	3244
 10) concatenate all files back (just plain cat should do in our case)
 find parsed/*/*.log|sed -e 's/\.hr.gz\.[0-9]*\.log$//'|sort -u|while read i; do n=`echo $i.hr.gz.|wc -c`; target=`echo $i|sed -e 's/parsed\/\(.*\)/finished\/\1.hr.gz/'`; ls $i.*|grep -v '\.log'|sort -k 1.$n -n| xargs cat >$target; done
 
-11) convert files to vertical format and prepare for Manatee import
-for f in finished_*.vert; do ./vert2manatee.pl <$f|./vert_add_attrs.pl time_map.txt url_map.txt |bzip2 -c >~/manatee_registry/new/$f.bz; done
+11) create three big final files (and dumps)
+for f in clanky diskuse tvorivost; do cat finished/$f/*.hr.gz > finished_$f.hr.gz; done
+for f in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb dump finished_${f}.hr.gz > finished_${f}.dump; done
 
-12) create Google n-gram compatible format
+12) convert files to vertical format and prepare for Manatee import
+for f in finished_*.vert; do ./vert2manatee.pl <$f|./vert_add_attrs.pl time_map.txt url_map.txt |bzip2 -c >~/manatee_registry/$f.bz; done
+
+13) create Google n-gram compatible data
+
+1) create smaller files
+for i in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb split finished_{$f}.hr.gz ngram/$j/finished_${j}.hr.gz 10485760; done
+
+2) extract n-grams from every file
+ls ngram/*/*.hr.gz.*|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; if [ ! -f "$j.log" ]; then qsub ./ngrams.sh $i $j; sleep 4; fi; done
+
+for i in ngram/*/*.hr.gz.*; do ./ done
+
 
 - google has:
 Total number of tokens:	1,306,807,412,486
@@ -162,7 +175,7 @@ sentences:
 
 accessoire Annuaire LOEIL	49
 
-Permutations:
+14) create permutations
 
 C++ program:
 1) mmap data file into memory
@@ -172,23 +185,20 @@ C++ program:
 
 g++ -Wall -ggdb -O3 -o shuffle_sentences shuffle_sentences.cc
 
-N-grams:
-- use some tool?
+for f in clanky diskuse tvorivost; do ./shuffle_sentences finished_$f.vert finished_$f.perm >finished_$f_shuffled.vert; done
 
-Collocations:
+15) Collocations:
 
-1) create small files
-
-for i in parsed/*/*.hr.gz; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)/\1/'`; hector_server -c WebCorpus.xml -fb split $i sync/$j 10485760; done
+1) create small files (see ngram generation)
 
 2) dump all files (convert to text representation)
-
+FIXME: z tech mensich souboru
 for i in sync/*/*.hr.gz.*; do j=`echo $i|sed -e 's/\.hr\.gz\.\(.*\)/.hr.\1/'`; hector_server -c WebCorpus.xml -fb dump $i >$j.dump; done
 
 3) run extraction on all files
-
 for i in sync/*/*.dump; do ./extract_syncs_pdt2.pl <$i >$i.tmp; done
 
 4) merge all files together
-
 ls sync/*/*.dump.tmp | ./merge_syncs.pl
+
+5) create index (word-pos -> offset)
