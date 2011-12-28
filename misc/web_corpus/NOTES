@@ -13,17 +13,13 @@ for i in tokenized/*/*.hr.gz; do j=`echo $i|sed -e 's/\.hr\.gz$/.dump/'`; hector
 
 3) word count for different groups:
 cat tokenized/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 1580493 14261018        41530385        568732717       686604997       0       0       0       0
-M_wordcount[0]: 1742463 15524228        44713263        610848438       736784495       0       0       0       0
+M_wordcount[0]: 1742463	15558831	44761605	610849340	737026459	0	0	0	0
 cat tokenized/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 2578840 54527889        114528831       1674143836      2083883744      0       0       0       0
-M_wordcount[0]: 2577228 54527889        114528831       1674143836      2083883744      0       0       0       0
+M_wordcount[0]: 2577228	54599888	114720387	1674143968	2089012818	0	0	0	0
 cat tokenized/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 2831249 64050936        150339872       1574181258      2031820433      0       0       0       0
-M_wordcount[0]: 2837309 64074689        150400043       1575014125      2032861842      0       0       0       0
+M_wordcount[0]: 2837309	64303734	150933542	1575023038	2037581912	0	0	0	0
 cat tokenized/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 6990582 132839843       306399088       3817057811      4802309174      0       0       0       0
-M_wordcount[0]: 7157000 134126806       309642137       3860006399      4853530081      0       0       0       0
+M_wordcount[0]: 7157000	134462453	310415534	3860016346	4863621189	0	0	0	0
 
 4) deduplicate (all at once), split all.hr.gz back into separate files
 
@@ -32,10 +28,8 @@ real    290m39.668s
 user    289m5.890s
 sys     1m8.620s
 - word counts (before/after)
-#M_wc1[0]: 6990582       132839843       306399088       3817057811      4802309174      0       0       0       0
-#M_wc2[0]: 6819394       116223396       259753763       3255271542      4030066932      0       0       0       0
-final: M_wc1[0]: 7157000       134462453       310415534       3860016346      4863621189      0       0       0       0
-final: M_wc2[0]: 6975869       117402379       262560346       3285087887      4073350543      0       0       0       0
+M_wc1[0]: 7157000	134462453	310415534	3860016346	4863621189	0	0	0	0
+M_wc2[0]: 6975869	117402379	262560346	3285087887	4073350543	0	0	0	0
 
 for i in data/*/*.list; do j=`echo $i|sed -e 's/[^\/]*\/\(.*\)\.list$/\1/'`; echo $j; done|./generate_split.pl >Split.xml
 time ( hector_server -c Split.xml -fb split )
@@ -44,17 +38,13 @@ user    107m40.950s
 sys     0m42.720s
 
 cat deduplicated/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 1512260 12617177        36461450        501251489       598926543       0       0       0       0
-M_wordcount[0]: 1663517 13542813        38676184        530924446       633752493       0       0       0       0
+M_wordcount[0]: 1663586	13574159	38719760	530929131	633949478	0	0	0	0
 cat deduplicated/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 2566027 51551081        107697632       1579254326      1938789786      0       0       0       0
-M_wordcount[0]: 2566027 51550437        107695796       1579226328      1938755031      0       0       0       0
+M_wordcount[0]: 2566033	51597217	107854221	1579140642	1943496770	0	0	0	0
 cat deduplicated/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 2741107 52055138        115594681       1174765727      1492350603      0       0       0       0
-M_wordcount[0]: 2745973 52070160        115630722       1175236876      1492932819      0       0       0       0
+M_wordcount[0]: 2746250	52231003	115986365	1175018114	1495904295	0	0	0	0
 cat deduplicated/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-#M_wordcount[0]: 6819394 116223396       259753763       3255271542      4030066932      0       0       0       0
-M_wordcount[0]: 6975517 117163410       262002702       3285387650      4065440343      0       0       0       0
+M_wordcount[0]: 6975869	117402379	262560346	3285087887	4073350543	0	0	0	0
 
 5) detect paragraphs with more unaccented words
 
@@ -64,13 +54,13 @@ user    411m59.120s
 sys     0m33.950s
 
 cat accented/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 1512091 12603770        36420958        500635554       598124434       0       0       0       0
+M_wordcount[0]: 1663358	13559528	38672583	530199011	633012695	0	0	0	0
 cat accented/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[1]: 2538367 40967072        86284439        1200428898      1475785501      0       0       0       0
+M_wordcount[0]: 2538384	40999834	86400645	1200157753	1478993848	0	0	0	0
 cat accented/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 2713952 50685790        111884548       1113912020      1415745963      0       0       0       0
+M_wordcount[0]: 2718960	50854866	112239584	1113841653	1418577199	0	0	0	0
 cat accented/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 6764410 104256632       234589945       2814976472      3489655898      0       0       0       0
+M_wordcount[0]: 6920702	105414228	237312812	2844198417	3530583742	0	0	0	0
 
 6) language detect + filter
 
@@ -92,13 +82,13 @@ user    116m7.860s
 sys     0m15.620s
 
 cat czech/clanky/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 1505227 12529047        36185513        496998792       593788404       0       0       0       0
+M_wordcount[0]: 1654708	13474344	38415495	526264047	628332859	0	0	0	0
 cat czech/diskuse/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 2518865 38214838        81798902        1143025931      1404015135      0       0       0       0
+M_wordcount[0]: 2518913	38245529	81912045	1142799799	1407212397	0	0	0	0
 cat czech/tvorivost/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 2629526 44215948        97894796        982272188       1246330942      0       0       0       0
+M_wordcount[0]: 2634738	44365627	98235887	982444511	1249527108	0	0	0	0
 cat czech/*/*.hr.gz | hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 6653618 94959833        215879211       2622296911      3244134481      0       0       0       0
+M_wordcount[0]: 6808359	96085500	218563427	2651508357	3285072364	0	0	0	0
 
 languages (in words):
 clanky:
@@ -136,7 +126,7 @@ for i in split/*/*.hr.gz.*; do j=`echo $i|sed -e 's/^split/tagged/'`; qsub ./tag
 ls tagged/*/*.hr.gz.*|grep -v '\.log$'|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; if [ ! -f "$j.log" ]; then qsub ./parse.sh $i $j; sleep 4; fi; done
 
 find parsed/ -type f|grep -v ".log$"|xargs cat |hector_server -c WebCorpus.xml -fb word_count /dev/stdin
-M_wordcount[0]: 6653618	94959833	215879211	2622296911	3244134481	3244134481	3244134481	3244134481	3244134481
+M_wordcount[0]: 6808359	96085500	218563427	2651508357	3285072364	3285072364	3285072364	3285072364	3285072364
 
 10) concatenate all files back (just plain cat should do in our case)
 find parsed/*/*.log|sed -e 's/\.hr.gz\.[0-9]*\.log$//'|sort -u|while read i; do n=`echo $i.hr.gz.|wc -c`; target=`echo $i|sed -e 's/parsed\/\(.*\)/finished\/\1.hr.gz/'`; ls $i.*|grep -v '\.log'|sort -k 1.$n -n| xargs cat >$target; done
@@ -169,8 +159,11 @@ gzip -dc finished_tvorivost.dump.shuffled.gz |./vert2export.pl |bzip2 -c >blogs_
 for i in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb split finished_{$f}.hr.gz ngram/$j/finished_${j}.hr.gz 10485760; done
 
 2) extract n-grams from every file
-ls ngram/*/*.hr.gz.*|while read i; do qsub ./ngrams.sh $i ngram; sleep 4; fi; done
+- pouzivat vsude: LC_ALL=cs_CZ.utf8 (!!!)
+ls ngram/*/*.hr.gz.*|while read i; do qsub ./ngram_compute.sh $i ngram; sleep 4; done
 
+3) merge ngrams
+for i in 1 2 3 4 5; do for j in clanky diskuse tvorivost; do qsub ./ngram_merge.sh $j $i; sleep 4; done; done
 
 - google has:
 Total number of tokens:	1,306,807,412,486

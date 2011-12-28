@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use locale;
 use PerlIO::gzip;
 use Data::Dumper;
-use locale;
 
 # do a merge sort (files must be sorted)
 # usage: ls file*.ngram|./ngram_merge.pl >data.ngram
