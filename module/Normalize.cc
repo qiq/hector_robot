@@ -51,7 +51,7 @@ Resource *Normalize::ProcessSimpleSync(Resource *resource) {
 			icu::UnicodeString s16 = icu::UnicodeString::fromUTF8(word);
 			icu::UnicodeString normalized;
 			UErrorCode status = U_ZERO_ERROR;
-			icu::Normalizer::normalize(s16, UNORM_NFC, 0, normalized, status);
+			icu::Normalizer::normalize(s16, UNORM_NFKC, 0, normalized, status);
 			if (!U_FAILURE(status)) {
 				word.clear();
 				tr->SetForm(i, normalized.toUTF8String(word));
@@ -67,7 +67,7 @@ Resource *Normalize::ProcessSimpleSync(Resource *resource) {
 		icu::UnicodeString s16 = icu::UnicodeString::fromUTF8(text);
 		icu::UnicodeString normalized;
 		UErrorCode status = U_ZERO_ERROR;
-		icu::Normalizer::normalize(s16, UNORM_NFC, 0, normalized, status);
+		icu::Normalizer::normalize(s16, UNORM_NFKC, 0, normalized, status);
 		if (!U_FAILURE(status)) {
 			text.clear();
 			tr->SetText(normalized.toUTF8String(text));
