@@ -1,10 +1,13 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use PerlIO::gzip;
 use Data::Dumper;
+use locale;
 
 # do a merge sort (files must be sorted)
 # usage: ls file*.ngram|./ngram_merge.pl >data.ngram
+# run with LC_ALL=cs_CZ.utf8
 
 my @heap;
 my @files;
@@ -84,7 +87,11 @@ sub heap_extract() {
 while (<STDIN>) {
 	chomp;
 	my $fh;
-	open($fh, '<'.$_) or die("Cannot open file: $_");
+	if ($_ =~ /\.gz$/) {
+		open($fh, "<:gzip", $_) or die("Cannot open file: $_");
+	} else {
+		open($fh, '<', $_) or die("Cannot open file: $_");
+	}
 	my $l = &next($fh);
 	push(@heap, [$l->[0], $l->[1], $fh]) if (defined $l);
 	push(@files, $fh);

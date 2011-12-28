@@ -2,6 +2,9 @@
 use strict;
 use warnings;
 use Data::Dumper;
+use locale;
+
+# run with LC_ALL=cs_CZ.utf8
 
 @ARGV > 0 or die("usage: ./ngram_compute.pl file_1gram file_2gram ...");
 

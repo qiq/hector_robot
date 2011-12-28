@@ -148,15 +148,28 @@ for f in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb dump fi
 12) convert files to vertical format and prepare for Manatee import
 for f in finished_*.vert; do ./vert2manatee.pl <$f|./vert_add_attrs.pl time_map.txt url_map.txt |bzip2 -c >~/manatee_registry/$f.bz; done
 
-13) create Google n-gram compatible data
+13) create permutations
+
+C++ program:
+1) mmap data file into memory
+2) get sentence boundaries (start -- end, byte offsets)
+3) make permutation, write it to the file (Knuth shuffles)
+4) go randomly through the file, write parts as necessary
+
+g++ -Wall -ggdb -O3 -o shuffle_sentences shuffle_sentences.cc
+
+for f in clanky diskuse tvorivost; do ./shuffle_sentences finished_$f.vert finished_$f.perm >finished_$f_shuffled.vert; done
+gzip -dc finished_clanky.dump.shuffled.gz |./vert2export.pl |bzip2 -c >articles_shuffled.txt.bz2
+gzip -dc finished_diskuse.dump.shuffled.gz |./vert2export.pl |bzip2 -c >dicussions_shuffled.txt.bz2
+gzip -dc finished_tvorivost.dump.shuffled.gz |./vert2export.pl |bzip2 -c >blogs_shuffled.txt.bz2
+
+14) create Google n-gram compatible data
 
 1) create smaller files
 for i in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb split finished_{$f}.hr.gz ngram/$j/finished_${j}.hr.gz 10485760; done
 
 2) extract n-grams from every file
-ls ngram/*/*.hr.gz.*|while read i; do j=`echo $i|sed -e 's/^tagged/parsed/'`; if [ ! -f "$j.log" ]; then qsub ./ngrams.sh $i $j; sleep 4; fi; done
-
-for i in ngram/*/*.hr.gz.*; do ./ done
+ls ngram/*/*.hr.gz.*|while read i; do qsub ./ngrams.sh $i ngram; sleep 4; fi; done
 
 
 - google has:
@@ -175,17 +188,6 @@ sentences:
 
 accessoire Annuaire LOEIL	49
 
-14) create permutations
-
-C++ program:
-1) mmap data file into memory
-2) get sentence boundaries (start -- end, byte offsets)
-3) make permutation, write it to the file (Knuth shuffles)
-4) go randomly through the file, write parts as necessary
-
-g++ -Wall -ggdb -O3 -o shuffle_sentences shuffle_sentences.cc
-
-for f in clanky diskuse tvorivost; do ./shuffle_sentences finished_$f.vert finished_$f.perm >finished_$f_shuffled.vert; done
 
 15) Collocations:
 
