@@ -136,7 +136,8 @@ for f in clanky diskuse tvorivost; do cat finished/$f/*.hr.gz > finished_$f.hr.g
 for f in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb dump finished_${f}.hr.gz > finished_${f}.dump; done
 
 12) convert files to vertical format and prepare for Manatee import
-for f in finished_*.vert; do ./vert2manatee.pl <$f|./vert_add_attrs.pl time_map.txt url_map.txt |bzip2 -c >~/manatee_registry/$f.bz; done
+bzip2 -dc urls-*.bz2 >url_map.txt
+for f in clanky diskuse tvorivost; do gzip -dc finished_${f}.dump.gz|./vert2manatee.pl|./vert_add_attrs.pl time_map.txt url_map.txt |bzip2 -c >~/manatee_registry/$f_vert.bz2; done
 
 13) create permutations
 
@@ -160,10 +161,16 @@ for i in clanky diskuse tvorivost; do hector_server -c WebCorpus.xml -fb split f
 
 2) extract n-grams from every file
 - pouzivat vsude: LC_ALL=cs_CZ.utf8 (!!!)
+export LC_ALL=cs_CZ.utf8
 ls ngram/*/*.hr.gz.*|while read i; do qsub ./ngram_compute.sh $i ngram; sleep 4; done
 
 3) merge ngrams
+export LC_ALL=cs_CZ.utf8
 for i in 1 2 3 4 5; do for j in clanky diskuse tvorivost; do qsub ./ngram_merge.sh $j $i; sleep 4; done; done
+
+4) complete ngrams
+export LC_ALL=cs_CZ.utf8
+for i in 1 2 3 4 5; do ls ngram/${i}gms/finished_*|grep -v hr|./ngram_merge.pl |gzip -c >ngram/${i}gms/finished_complete.gz; done
 
 - google has:
 Total number of tokens:	1,306,807,412,486
